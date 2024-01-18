@@ -78,7 +78,7 @@ void ScalarFieldLevel::initialData()
     }
 
     //int m,n = 0;
-    int N = m_p.initial_params.N_init;
+    int N = m_p.initial_params.N;
 
     std::string delim = " ";
     double A = 1e-6;

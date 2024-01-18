@@ -32,10 +32,16 @@ class InitialScalarData
         double velocity;
         std::array<double, CH_SPACEDIM>
             center;   //!< Centre of the grid
-        double width; //!< Width of bump in initial SF bubble
-        double mass;
-        int N_init;
+        
+        int N;
+        double L;
+        double m;
         double m_pl = 1.;
+
+        double kstar;
+        double epsilon;
+        double H0;
+        double norm;
     };
 
     //! The constructor
@@ -52,8 +58,8 @@ class InitialScalarData
         auto current_cell_index = current_cell.get_in_index(); // pulls the unitless coordinate, or index
 
         // Pull out the grid parametersß
-        int N = m_params.N_init;
-        double L = N*m_dx;
+        int N = m_params.N;
+        double L = m_params.L;
 
         // Coordinate of this cell in program units
         data_t x = coords.x + L/2;
@@ -102,7 +108,7 @@ class InitialScalarData
             cout << current_cell_index << endl;
             MayDay::Error("Cell index value below zero.");
         }
-        else if(current_cell_index > pow(m_params.N_init, 3.))
+        else if(current_cell_index > pow(m_params.N, 3.))
         {
             cout << current_cell_index << endl;
             MayDay::Error("Cell index greater than resolution^3 at coarsest level.");
@@ -126,7 +132,7 @@ class InitialScalarData
 
         //calculate and store scalar metric variables
         data_t chi = 1.0; // a
-        data_t K = -3.0*sqrt((8. * M_PI/3.)*(0.5*phidot*phidot + 0.5*pow(m_params.mass/m_params.m_pl * phi, 2.0))); // K (Friedman's equations)
+        data_t K = -3.0*sqrt((8. * M_PI/3.)*(0.5*phidot*phidot + 0.5*pow(m_params.m/m_params.m_pl * phi, 2.0))); // K (Friedman's equations)
 
         current_cell.store_vars(chi, c_chi);
         current_cell.store_vars(K, c_K);
