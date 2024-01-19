@@ -21,15 +21,14 @@ class RandomField
 
         template <class data_t> void compute(Cell<data_t> current_cell) const; 
 
+        static void calc_spectrum();
+
     private:
         double** hk;
         double** hx;
 
     protected:
         const InitialScalarData::params_t m_params;
-        //double m_dx;
-        template <class data_t>
-        void calc_spectrum() const;
 
 };
 

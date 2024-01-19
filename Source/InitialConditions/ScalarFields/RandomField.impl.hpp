@@ -28,8 +28,7 @@ void RandomField::compute(Cell<data_t> current_cell) const
     Coordinates<data_t> coords(current_cell, params.L/params.N, params.center);
 }
 
-template <class data_t>
-void RandomField::calc_spectrum() const
+void RandomField::calc_spectrum()
 {
    ; 
 }
