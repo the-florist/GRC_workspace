@@ -24,7 +24,6 @@
 #include "ComputePack.hpp"
 #include "GammaCalculator.hpp"
 #include "InitialScalarData.hpp"
-#include "KerrBH.hpp"
 #include "Potential.hpp"
 #include "ScalarField.hpp"
 #include "SetValue.hpp"
@@ -42,6 +41,7 @@
 // Start time
 #include <ctime>
 #include <typeinfo>
+#include "RandomField.hpp"
 
 // Things to do at each advance step, after the RK4 is calculated 
 void ScalarFieldLevel::specificAdvance()
@@ -153,6 +153,11 @@ void ScalarFieldLevel::initialData()
 
     h.clear();
     hdot.clear();
+
+    BoxLoops::loop(
+        make_compute_pack(SetValue(0.),
+                            RandomField(m_p.initial_params)),
+    m_state_new, m_state_new, INCLUDE_GHOST_CELLS, disable_simd());
     
     fillAllGhosts();
     BoxLoops::loop(GammaCalculator(m_dx), m_state_new, m_state_new,

@@ -17,24 +17,22 @@
 class RandomField
 {
     public:
-        struct params_t
-        {
-            const unsigned int seed1 = 7586572;
-            const unsigned int seed2 = 3539263;
-        };
+        RandomField(InitialScalarData::params_t a_params);
 
-        RandomField(params_t a_params, double a_dx);
+        template <class data_t> void compute(Cell<data_t> current_cell) const; 
 
-        template <class data_t> void compute(Cell<data_t> current_cell, double m_dx) const; 
+    private:
+        double** hk;
+        double** hx;
 
     protected:
-        const params_t m_params;
-        double m_dx
+        const InitialScalarData::params_t m_params;
+        //double m_dx;
         template <class data_t>
-        void calc_spectrum(argtype arg) const;
+        void calc_spectrum() const;
 
-}
+};
 
-#include RandomField.impl.hpp
+#include "RandomField.impl.hpp"
 
 #endif /* RANDOMFIELD_HPP_ */

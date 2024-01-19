@@ -12,7 +12,6 @@
 
 // Problem specific includes:
 #include "InitialScalarData.hpp"
-#include "KerrBH.hpp"
 #include "Potential.hpp"
 #include "MeansVars.hpp"
 
