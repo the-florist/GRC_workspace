@@ -154,6 +154,8 @@ void ScalarFieldLevel::initialData()
     h.clear();
     hdot.clear();
 
+    RandomField::calc_spectrum();
+
     BoxLoops::loop(
         make_compute_pack(SetValue(0.),
                             RandomField(m_p.initial_params)),
