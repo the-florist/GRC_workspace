@@ -37,11 +37,6 @@ class InitialScalarData
         double L;
         double m;
         double m_pl = 1.;
-
-        double kstar;
-        double epsilon;
-        double H0;
-        double norm;
     };
 
     //! The constructor

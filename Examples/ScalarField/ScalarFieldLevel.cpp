@@ -154,11 +154,12 @@ void ScalarFieldLevel::initialData()
     h.clear();
     hdot.clear();
 
-    RandomField::calc_spectrum();
+    RandomField rand_field(m_p.initial_params);
+    rand_field.calc_spectrum();
 
     BoxLoops::loop(
         make_compute_pack(SetValue(0.),
-                            RandomField(m_p.initial_params)),
+                            rand_field),
     m_state_new, m_state_new, INCLUDE_GHOST_CELLS, disable_simd());
     
     fillAllGhosts();

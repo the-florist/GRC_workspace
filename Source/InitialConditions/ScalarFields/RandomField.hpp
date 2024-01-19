@@ -21,11 +21,12 @@ class RandomField
 
         template <class data_t> void compute(Cell<data_t> current_cell) const; 
 
-        static void calc_spectrum();
+        //ouble calc_h_real();
+        void calc_spectrum();
 
     private:
-        double** hk;
-        double** hx;
+        fftw_complex** hk;
+        fftw_complex** hx;
 
     protected:
         const InitialScalarData::params_t m_params;
