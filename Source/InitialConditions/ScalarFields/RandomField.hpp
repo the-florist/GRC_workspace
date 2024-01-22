@@ -21,8 +21,8 @@ class RandomField
 
         template <class data_t> void compute(Cell<data_t> current_cell) const; 
 
-        //ouble calc_h_real();
-        void calc_spectrum();
+        //template <class data_t>
+        void calc_spectrum(std::string spec_type);
 
     private:
         fftw_complex** hk;
@@ -30,6 +30,9 @@ class RandomField
 
     protected:
         const InitialScalarData::params_t m_params;
+        double find_rayleigh_factor(double km, double ks, double ep, std::string spec_type, double H0, double uniform_draw);
+        int flip_index(int I, int N);
+        int invert_index(int I, int N);
 
 };
 

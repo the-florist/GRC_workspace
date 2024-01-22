@@ -155,7 +155,7 @@ void ScalarFieldLevel::initialData()
     hdot.clear();
 
     RandomField rand_field(m_p.initial_params);
-    rand_field.calc_spectrum();
+    rand_field.calc_spectrum("position");
 
     BoxLoops::loop(
         make_compute_pack(SetValue(0.),
