@@ -152,13 +152,15 @@ void ScalarFieldLevel::initialData()
     gw_pos.close();
     gw_vel.close();*/
 
-    RandomField rand_field(m_p.initial_params);
-    rand_field.calc_spectrum("position");
+    RandomField rand_field(m_p.initial_params, "position");
+    rand_field.calc_spectrum();
 
     BoxLoops::loop(
         make_compute_pack(SetValue(0.),
                             rand_field),
     m_state_new, m_state_new, INCLUDE_GHOST_CELLS, disable_simd());
+
+    MayDay::Error("Calculating position ICs ended.");
 
     BoxLoops::loop(
     make_compute_pack(SetValue(0.),
@@ -171,8 +173,6 @@ void ScalarFieldLevel::initialData()
     fillAllGhosts();
     BoxLoops::loop(GammaCalculator(m_dx), m_state_new, m_state_new,
                    EXCLUDE_GHOST_CELLS);
-
-    MayDay::Error("Calculating IC ended.");
 }
 
 #ifdef CH_USE_HDF5

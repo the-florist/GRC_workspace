@@ -41,6 +41,7 @@ class SimulationParameters : public SimulationParametersBase
         pp.load("scalar_mass", initial_params.m, 1e-6);
         pp.load("N_full", initial_params.N, 128);
         pp.load("L_full", initial_params.L, 4.);
+        pp.load("tensor_amplitude", initial_params.A, 1.e-6);
     }
 
     void check_params()

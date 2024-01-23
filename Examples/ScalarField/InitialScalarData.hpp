@@ -37,6 +37,7 @@ class InitialScalarData
         double L;
         double m;
         double m_pl = 1.;
+        double A;
     };
 
     //! The constructor

@@ -10,8 +10,8 @@
  #ifndef RANDOMFIELD_IMPL_HPP_
  #define RANDOMFIELD_IMPL_HPP_
 
- inline RandomField::RandomField(InitialScalarData::params_t a_params)
-    : m_params(a_params)
+ inline RandomField::RandomField(InitialScalarData::params_t a_params, std::string a_spec_type)
+    : m_params(a_params), m_spec_type(a_spec_type)
 {
 }
 
@@ -19,10 +19,95 @@ template <class data_t>
 void RandomField::compute(Cell<data_t> current_cell) const
 {
     Coordinates<data_t> coords(current_cell, m_params.L/m_params.N, m_params.center);
+
+    // Pull out the grid parametersß
+    int N = m_params.N;
+    double L = m_params.L;
+    double dx = L/N;
+
+    // Coordinate of this cell in program units
+    data_t x = coords.x + L/2;
+    double y = coords.y + L/2;
+    double z = coords.z + L/2;
+
+    // Coordinates of this cell, unitless
+    int i = static_cast<int>(x / dx);
+    int j = static_cast<int>(y / dx);
+    int k = static_cast<int>(z / dx);
+
+    // This is to guard against ghost cells that can take you outside 
+    // the domain of dependence of the box. Uses periodic BCs.
+    if(i < 0)
+    {
+        i = N + i;
+    }
+    else if(i >= N)
+    {
+        i = i - N;
+    }
+
+    if(j < 0)
+    {
+        j = N + j;
+    }
+    else if(j >= N)
+    {
+        j = j - N;
+    }
+
+    if(k < 0)
+    {
+        k = N + k;
+    }
+    else if(k >= N)
+    {
+        k = k - N;
+    }
+
+    // The flattened position (leading with z?)
+    int r = k + N*(j + N*i);
+
+    if (r < 0)
+    {
+        cout << r << endl;
+        MayDay::Error("Cell index value below zero.");
+    }
+    else if(r > pow(m_params.N, 3.))
+    {
+        cout << r << endl;
+        MayDay::Error("Cell index greater than resolution^3 at coarsest level.");
+    }
+
+    if(r==1) {cout << "In compute: " << hx[0][r][0] << "\n"; }
+
+    if(m_spec_type == "position")
+    {
+        //store tensor metric variables, g_ij = delta_ij + 1/2 h_ij
+        current_cell.store_vars(1. + m_params.A * 0.5 * hx[0][r][0], c_h11);
+        current_cell.store_vars(m_params.A * 0.5 * hx[1][r][0], c_h12);
+        current_cell.store_vars(m_params.A * 0.5 * hx[2][r][0], c_h13);
+        current_cell.store_vars(1. + m_params.A * 0.5 * hx[4][r][0], c_h22);
+        current_cell.store_vars(m_params.A * 0.5 * hx[5][r][0], c_h23);
+        current_cell.store_vars(1. + m_params.A * 0.5 * hx[8][r][0], c_h33);
+    }
+
+    else if(m_spec_type == "velocity")
+    {
+        current_cell.store_vars(-m_params.A * 0.5 * hx[0][r][0], c_A11);
+        current_cell.store_vars(-m_params.A * 0.5 * hx[1][r][0], c_A12);
+        current_cell.store_vars(-m_params.A * 0.5 * hx[2][r][0], c_A13);
+        current_cell.store_vars(-m_params.A * 0.5 * hx[4][r][0], c_A22);
+        current_cell.store_vars(-m_params.A * 0.5 * hx[5][r][0], c_A23);
+        current_cell.store_vars(-m_params.A * 0.5 * hx[8][r][0], c_A33);
+    }
+
+    else { MayDay::Error("Spec type entered is not a viable option."); }
+
+    fftw_free(**hx);
 }
 
 //template <class data_t>
-void RandomField::calc_spectrum(std::string spec_type)
+void RandomField::calc_spectrum()
 {
     // Set up parameters based on L and N
     double kstar = 16.*(2.*M_PI/m_params.L);
@@ -85,8 +170,8 @@ void RandomField::calc_spectrum(std::string spec_type)
 
     // Set up random number generators
     int seed;
-    if(spec_type == "position") { seed = 3539263; }
-    else if(spec_type == "velocity") { seed = 7586572; }
+    if(m_spec_type == "position") { seed = 3539263; }
+    else if(m_spec_type == "velocity") { seed = 7586572; }
     else { MayDay::Error("Field type incorrectly specified -- please enter position or velocity."); }
 
     default_random_engine engine(seed);
@@ -109,7 +194,7 @@ void RandomField::calc_spectrum(std::string spec_type)
         for(int s=0; s<2; s++) 
         { 
             theta_factors[s] = theta_dist(engine); 
-            rayleigh_factors[s] = find_rayleigh_factor(kmag, kstar, epsilon, spec_type, H0, sigma_dist(engine));
+            rayleigh_factors[s] = find_rayleigh_factor(kmag, kstar, epsilon, m_spec_type, H0, sigma_dist(engine));
         }
 
         // If you're at a special point 
@@ -203,7 +288,7 @@ void RandomField::calc_spectrum(std::string spec_type)
         for(int s=0; s<2; s++) 
         { 
             theta_factors[s] = theta_dist(engine); 
-            rayleigh_factors[s] = find_rayleigh_factor(kmag, kstar, epsilon, spec_type, H0, sigma_dist(engine));
+            rayleigh_factors[s] = find_rayleigh_factor(kmag, kstar, epsilon, m_spec_type, H0, sigma_dist(engine));
         }
 
         if((j == 0 || j == N/2) && (i == 0 || i == N/2))
@@ -274,7 +359,7 @@ void RandomField::calc_spectrum(std::string spec_type)
     fftw_execute(plan1);
     for(int i=0; i<N; i++) for(int j=0; j<N; j++) for(int k=0; k<N; k++)
     {
-        if(hplusx[k + N*(j + N*i)][1] > 1e-12)
+        if(hplusx[k + N*(j + N*i)][1] > 1.e-12)
         {
             MayDay::Error("hx(x) is not yet real"); 
         }
@@ -290,32 +375,33 @@ void RandomField::calc_spectrum(std::string spec_type)
 
     for(int i=0; i<N; i++) for(int j=0; j<N; j++) for(int k=0; k<N; k++) for(int l=0; l<9; l++)
     {
-        if(hx[l][k + N*(j + N*i)][1] > 1e-12) 
+        if(hx[l][k + N*(j + N*i)][1] > 1.e-12) 
         { 
             cout << i << "," << j << "," << k << ": " << hx[l][k + N*(j + N*i)][1] << "\n";
             MayDay::Error("hij(x) is not yet real"); 
         }
     }
 
-    cout << "Freeing everything\n";
+    cout << "In calc: " << hx[0][1][0] << "\n";
 
     // Free everything
     fftw_free(*hplus);
     fftw_free(*hcross);
     //fftw_free(*hplusx);
     fftw_free(**hk);
-    fftw_free(**hk);
-    fftw_destroy_plan(plan1);
 
+    //fftw_destroy_plan(plan1);
     for(int s=0; s<9; s++)
     {
         fftw_destroy_plan(hij_plan[s]);
     }
+
+    cout << "Freed everything\n";
 }
 
 double RandomField::find_rayleigh_factor(double km, double ks, double ep, std::string spec_type, double H0, double uniform_draw)
 {
-    if(km - 0. < 1e-12) { return 0.; }
+    if(km - 0. < 1.e-12) { return 0.; }
 
     double windowed_value = 0.;
     if (spec_type == "position")
@@ -414,7 +500,7 @@ void RandomField::Test_norm(double vec[])
     double norm = 0;
     for (int i=0; i<3; i++) { norm += vec[i]*vec[i]; }
 
-    if (abs(1. - norm) > 1e-12) 
+    if (abs(1. - norm) > 1.e-12) 
     {
         cout << "A basis vector is not normalised! Norm: " << norm << "\n";
         exit(EXIT_FAILURE);
@@ -426,7 +512,7 @@ void RandomField::Test_orth(double vec1[], double vec2[])
     double orth = 0.;
     for(int i=0; i<3; i++) { orth += vec1[i]*vec2[i]; }
 
-    if (abs(orth) > 1e-12) 
+    if (abs(orth) > 1.e-12) 
     {
         cout << "Two basis vectors are not orthogonal! Orth factor: " << orth << "\n";
         exit(EXIT_FAILURE);

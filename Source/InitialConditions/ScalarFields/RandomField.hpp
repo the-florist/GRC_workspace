@@ -18,12 +18,12 @@
 class RandomField
 {
     public:
-        RandomField(InitialScalarData::params_t a_params);
+        RandomField(InitialScalarData::params_t a_params, std::string a_spec_type);
 
         template <class data_t> void compute(Cell<data_t> current_cell) const; 
 
         //template <class data_t>
-        void calc_spectrum(std::string spec_type);
+        void calc_spectrum();
 
     private:
         fftw_complex** hk;
@@ -31,6 +31,8 @@ class RandomField
 
     protected:
         const InitialScalarData::params_t m_params;
+        std::string m_spec_type;
+        
         double find_rayleigh_factor(double km, double ks, double ep, std::string spec_type, double H0, double uniform_draw);
         int flip_index(int I, int N);
         int invert_index(int I, int N);
