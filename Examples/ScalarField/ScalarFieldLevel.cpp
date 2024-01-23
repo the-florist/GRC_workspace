@@ -67,7 +67,17 @@ void ScalarFieldLevel::initialData()
 
     //Load in data from .dat files, for h and hdot initialisation
 
-    ifstream gw_pos;
+    int N = m_p.initial_params.N;
+    std::vector<std::vector<double> > h(std::pow(N, 3.), std::vector<double>(6)); // input array memory allocation
+    std::vector<std::vector<double> > hdot(std::pow(N, 3.), std::vector<double>(6));
+
+    for(int i=0; i<N*N*N; i++) for(int j=0; j<6; j++)
+    {
+        h[i][j] = 0.;
+        hdot[i][j] = 0.;
+    }
+
+    /*ifstream gw_pos;
     ifstream gw_vel;
     gw_pos.open("./gw-re-pos.dat", ios::in); //open the file with the waves in it
     gw_vel.open("./gw-re-vel.dat", ios::in);
@@ -78,7 +88,6 @@ void ScalarFieldLevel::initialData()
     }
 
     //int m,n = 0;
-    int N = m_p.initial_params.N;
 
     std::string delim = " ";
     double A = 1e-6;
@@ -87,9 +96,6 @@ void ScalarFieldLevel::initialData()
     std::string v_datline;
     std::stringstream p_number;
     std::stringstream v_number;
-
-    std::vector<std::vector<double> > h(std::pow(N, 3.), std::vector<double>(6)); // input array memory allocation
-    std::vector<std::vector<double> > hdot(std::pow(N, 3.), std::vector<double>(6));
 
     int n=0; //box position counter
     for (int i=0; i < std::pow(N, 3.); i++) //
@@ -144,15 +150,7 @@ void ScalarFieldLevel::initialData()
     }
 
     gw_pos.close();
-    gw_vel.close();
-
-    BoxLoops::loop(
-    make_compute_pack(SetValue(0.),
-                        InitialScalarData(m_p.initial_params, m_dx, h, hdot)),
-    m_state_new, m_state_new, INCLUDE_GHOST_CELLS,disable_simd());
-
-    h.clear();
-    hdot.clear();
+    gw_vel.close();*/
 
     RandomField rand_field(m_p.initial_params);
     rand_field.calc_spectrum("position");
@@ -161,10 +159,20 @@ void ScalarFieldLevel::initialData()
         make_compute_pack(SetValue(0.),
                             rand_field),
     m_state_new, m_state_new, INCLUDE_GHOST_CELLS, disable_simd());
+
+    BoxLoops::loop(
+    make_compute_pack(SetValue(0.),
+                        InitialScalarData(m_p.initial_params, m_dx, h, hdot)),
+    m_state_new, m_state_new, INCLUDE_GHOST_CELLS,disable_simd());
+
+    h.clear();
+    hdot.clear();
     
     fillAllGhosts();
     BoxLoops::loop(GammaCalculator(m_dx), m_state_new, m_state_new,
                    EXCLUDE_GHOST_CELLS);
+
+    MayDay::Error("Calculating IC ended.");
 }
 
 #ifdef CH_USE_HDF5

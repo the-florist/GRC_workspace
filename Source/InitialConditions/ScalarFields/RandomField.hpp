@@ -33,6 +33,7 @@ class RandomField
         double find_rayleigh_factor(double km, double ks, double ep, std::string spec_type, double H0, double uniform_draw);
         int flip_index(int I, int N);
         int invert_index(int I, int N);
+        void calc_transferse_vectors(int x, int y, int z, double MHat[3], double NHat[3], double a = 0.);
 
 };
 
