@@ -19,8 +19,6 @@ template <class data_t>
 void RandomField::compute(Cell<data_t> current_cell) const
 {
     Coordinates<data_t> coords(current_cell, m_params.L/m_params.N, m_params.center);
-
-    //calc_spectrum("position");
 }
 
 //template <class data_t>
@@ -55,9 +53,10 @@ void RandomField::calc_spectrum(std::string spec_type)
     hcross = (fftw_complex*) malloc(sizeof(fftw_complex) * N * N * N);
 
     // Extra memory for reality check on h+
-    fftw_complex (*hplusx);
+    /*fftw_complex (*hplusx);
     hplusx = (fftw_complex*) malloc(sizeof(fftw_complex) * N * N * N);
-    fftw_plan plan1 = fftw_plan_dft_3d(N, N, N, hplus, hplusx, FFTW_BACKWARD, FFTW_ESTIMATE);
+    fftw_plan plan1 = fftw_plan_dft_3d(N, N, N, hcross, hplusx, FFTW_BACKWARD, FFTW_ESTIMATE);*/
+    
 
     // Set all arrays to 0
     for(int i=0; i<N; i++) for(int j=0; j<N; j++) for(int k=0; k<N; k++) for(int s=0; s<2; s++)
@@ -121,6 +120,17 @@ void RandomField::calc_spectrum(std::string spec_type)
 
             hcross[k + N*(j + N*i)][0] = rayleigh_factors[1] * cos(theta_factors[1]);
             hcross[k + N*(j + N*i)][1] = 0.;
+
+            // Find hij from the mode functions
+            calc_transferse_vectors(i, j, k, mhat, nhat);
+            for (int l=0; l<3; l++) for (int p=0; p<3; p++)
+            {
+                hk[lut[l][p]][k + N*(j + N*i)][0] = ((mhat[l]*mhat[p] - nhat[l]*nhat[p]) * hplus[k + N*(j + N*i)][0]
+                                                    + (mhat[l]*nhat[p] + nhat[l]*mhat[p]) * hcross[k + N*(j + N*i)][0]) / sqrt(2.0);
+
+                hk[lut[l][p]][k + N*(j + N*i)][1] = ((mhat[l]*mhat[p] - nhat[l]*nhat[p]) * hplus[k + N*(j + N*i)][1]
+                                                    + (mhat[l]*nhat[p] + nhat[l]*mhat[p]) * hcross[k + N*(j + N*i)][1]) / sqrt(2.0);
+            }
         }
 
         // If you're on a special axis or plane, excluing k > N/2
@@ -134,6 +144,12 @@ void RandomField::calc_spectrum(std::string spec_type)
 
                 hcross[k + N*(j + N*i)][0] = hcross[k + N*(invert_index(j, N) + N*invert_index(i, N))][0];
                 hcross[k + N*(j + N*i)][1] = -hcross[k + N*(invert_index(j, N) + N*invert_index(i, N))][1];
+
+                for(int s=0; s<9; s++)
+                {
+                    hk[s][k + N*(j + N*i)][0] = hk[s][k + N*(invert_index(j, N) + N*invert_index(i, N))][0];
+                    hk[s][k + N*(j + N*i)][1] = -hk[s][k + N*(invert_index(j, N) + N*invert_index(i, N))][1];
+                }
             }
             // Special plane on either k-norm plane
             else if(j > N/2)
@@ -143,6 +159,12 @@ void RandomField::calc_spectrum(std::string spec_type)
 
                 hcross[k + N*(j + N*i)][0] = hcross[k + N*(invert_index(j, N) + N*flip_index(i, N))][0];
                 hcross[k + N*(j + N*i)][1] = -hcross[k + N*(invert_index(j, N) + N*flip_index(i, N))][1];
+
+                for(int s=0; s<9; s++)
+                {
+                    hk[s][k + N*(j + N*i)][0] = hk[s][k + N*(invert_index(j, N) + N*flip_index(i, N))][0];
+                    hk[s][k + N*(j + N*i)][1] = -hk[s][k + N*(invert_index(j, N) + N*flip_index(i, N))][1];
+                }
             }
         }
 
@@ -154,17 +176,17 @@ void RandomField::calc_spectrum(std::string spec_type)
 
             hcross[k + N*(j + N*i)][0] = rayleigh_factors[1] * cos(theta_factors[1]);
             hcross[k + N*(j + N*i)][1] = rayleigh_factors[1] * sin(theta_factors[1]);
-        }
 
-        // Find hij from the mode functions
-        calc_transferse_vectors(i, j, k, mhat, nhat);
-        for (int l=0; l<3; l++) for (int p=0; p<3; p++)
-        {
-            hk[lut[l][p]][k + N*(j + N*i)][0] = ((mhat[l]*mhat[p] - nhat[l]*nhat[p]) * hplus[k + N*(j + N*i)][0]
-                                                + (mhat[l]*nhat[p] + nhat[l]*mhat[p]) * hcross[k + N*(j + N*i)][0]) / sqrt(2.0);
+            // Find hij from the mode functions
+            calc_transferse_vectors(i, j, k, mhat, nhat);
+            for (int l=0; l<3; l++) for (int p=0; p<3; p++)
+            {
+                hk[lut[l][p]][k + N*(j + N*i)][0] = ((mhat[l]*mhat[p] - nhat[l]*nhat[p]) * hplus[k + N*(j + N*i)][0]
+                                                    + (mhat[l]*nhat[p] + nhat[l]*mhat[p]) * hcross[k + N*(j + N*i)][0]) / sqrt(2.0);
 
-            hk[lut[l][p]][k + N*(j + N*i)][1] = ((mhat[l]*mhat[p] - nhat[l]*nhat[p]) * hplus[k + N*(j + N*i)][1]
-                                                + (mhat[l]*nhat[p] + nhat[l]*mhat[p]) * hcross[k + N*(j + N*i)][1]) / sqrt(2.0);
+                hk[lut[l][p]][k + N*(j + N*i)][1] = ((mhat[l]*mhat[p] - nhat[l]*nhat[p]) * hplus[k + N*(j + N*i)][1]
+                                                    + (mhat[l]*nhat[p] + nhat[l]*mhat[p]) * hcross[k + N*(j + N*i)][1]) / sqrt(2.0);
+            }
         }
     }
 
@@ -191,7 +213,14 @@ void RandomField::calc_spectrum(std::string spec_type)
 
             hcross[k + N*(j + N*i)][0] = hcross[invert_index(k, N) + N*(j + N*i)][0];
             hcross[k + N*(j + N*i)][1] = -hcross[invert_index(k, N) + N*(j + N*i)][1];
+
+            for(int s=0; s<9; s++)
+            {
+                hk[s][k + N*(j + N*i)][0] = hk[s][invert_index(k, N) + N*(j + N*i)][0];
+                hk[s][k + N*(j + N*i)][1] = -hk[s][invert_index(k, N) + N*(j + N*i)][1];
+            }
         }
+
         else if(j == 0 || j == N/2)
         {
             hplus[k + N*(j + N*i)][0] = hplus[invert_index(k, N) + N*(j + N*flip_index(i, N))][0];
@@ -199,7 +228,14 @@ void RandomField::calc_spectrum(std::string spec_type)
 
             hcross[k + N*(j + N*i)][0] = hcross[invert_index(k, N) + N*(j + N*flip_index(i, N))][0];
             hcross[k + N*(j + N*i)][1] = -hcross[invert_index(k, N) + N*(j + N*flip_index(i, N))][1];
+
+            for(int s=0; s<9; s++)
+            {
+                hk[s][k + N*(j + N*i)][0] = hk[s][invert_index(k, N) + N*(j + N*flip_index(i, N))][0];
+                hk[s][k + N*(j + N*i)][1] = -hk[s][invert_index(k, N) + N*(j + N*flip_index(i, N))][1];
+            }
         }
+
         else if(i == 0 || i == N/2)
         {
             hplus[k + N*(j + N*i)][0] = hplus[invert_index(k, N) + N*(flip_index(j, N) + N*i)][0];
@@ -207,7 +243,14 @@ void RandomField::calc_spectrum(std::string spec_type)
 
             hcross[k + N*(j + N*i)][0] = hcross[invert_index(k, N) + N*(flip_index(j, N) + N*i)][0];
             hcross[k + N*(j + N*i)][1] = -hcross[invert_index(k, N) + N*(flip_index(j, N) + N*i)][1];
+
+            for(int s=0; s<9; s++)
+            {
+                hk[s][k + N*(j + N*i)][0] = hk[s][invert_index(k, N) + N*(flip_index(j, N) + N*i)][0];
+                hk[s][k + N*(j + N*i)][1] = -hk[s][invert_index(k, N) + N*(flip_index(j, N) + N*i)][1];
+            }
         }
+
         else
         {
             hplus[k + N*(j + N*i)][0] = hplus[invert_index(k, N) + N*(flip_index(j, N) + N*flip_index(i, N))][0];
@@ -215,30 +258,43 @@ void RandomField::calc_spectrum(std::string spec_type)
 
             hcross[k + N*(j + N*i)][0] = hcross[invert_index(k, N) + N*(flip_index(j, N) + N*flip_index(i, N))][0];
             hcross[k + N*(j + N*i)][1] = -hcross[invert_index(k, N) + N*(flip_index(j, N) + N*flip_index(i, N))][1];
-        }
 
-        calc_transferse_vectors(i, j, k, mhat, nhat);
-        for (int l=0; l<3; l++) for (int p=0; p<3; p++)
-        {
-            hk[lut[l][p]][k + N*(j + N*i)][0] = ((mhat[l]*mhat[p] - nhat[l]*nhat[p]) * hplus[k + N*(j + N*i)][0]
-                                                + (mhat[l]*nhat[p] + nhat[l]*mhat[p]) * hcross[k + N*(j + N*i)][0]) / sqrt(2.0);
-
-            hk[lut[l][p]][k + N*(j + N*i)][1] = ((mhat[l]*mhat[p] - nhat[l]*nhat[p]) * hplus[k + N*(j + N*i)][1]
-                                                + (mhat[l]*nhat[p] + nhat[l]*mhat[p]) * hcross[k + N*(j + N*i)][1]) / sqrt(2.0);
+            for(int s=0; s<9; s++)
+            {
+                hk[s][k + N*(j + N*i)][0] = hk[s][invert_index(k, N) + N*(flip_index(j, N) + N*flip_index(i, N))][0];
+                hk[s][k + N*(j + N*i)][1] = -hk[s][invert_index(k, N) + N*(flip_index(j, N) + N*flip_index(i, N))][1];
+            }
         }
     }
 
     cout << "Checking h+(x) for reality.\n";
 
+    /*std::ofstream hpxcheck("./h-plus-im-check.dat");
+
     fftw_execute(plan1);
     for(int i=0; i<N; i++) for(int j=0; j<N; j++) for(int k=0; k<N; k++)
     {
-        if(hplusx[k + N*(j + N*i)][1] > 1e-12) { MayDay::Error("h+(x) is not yet real"); }
+        if(hplusx[k + N*(j + N*i)][1] > 1e-12)
+        {
+            MayDay::Error("hx(x) is not yet real"); 
+        }
+        hpxcheck << i << "," << j << "," << k << ": " << hplusx[k + N*(j + N*i)][0] << "\n";
     }
+
+    hpxcheck.close();*/
 
     for(int s=0; s<9; s++)
     {
         fftw_execute(hij_plan[s]);
+    }
+
+    for(int i=0; i<N; i++) for(int j=0; j<N; j++) for(int k=0; k<N; k++) for(int l=0; l<9; l++)
+    {
+        if(hx[l][k + N*(j + N*i)][1] > 1e-12) 
+        { 
+            cout << i << "," << j << "," << k << ": " << hx[l][k + N*(j + N*i)][1] << "\n";
+            MayDay::Error("hij(x) is not yet real"); 
+        }
     }
 
     cout << "Freeing everything\n";
@@ -344,6 +400,37 @@ void RandomField::calc_transferse_vectors(int x, int y, int z, double MHat[3], d
     }
 
     for(int l=0; l<3; l++) { MHat[l] = cos(a)*mh[l] + sin(a)*nh[l]; NHat[l] = -sin(a)*mh[l] + cos(a)*nh[l]; }
+
+    if (x != 0 && y != 0 && z != 0) 
+    {
+        Test_norm(MHat);
+        Test_norm(NHat);
+        Test_orth(MHat, NHat);
+    }
+}
+
+void RandomField::Test_norm(double vec[]) 
+{
+    double norm = 0;
+    for (int i=0; i<3; i++) { norm += vec[i]*vec[i]; }
+
+    if (abs(1. - norm) > 1e-12) 
+    {
+        cout << "A basis vector is not normalised! Norm: " << norm << "\n";
+        exit(EXIT_FAILURE);
+    }
+}
+
+void RandomField::Test_orth(double vec1[], double vec2[]) 
+{
+    double orth = 0.;
+    for(int i=0; i<3; i++) { orth += vec1[i]*vec2[i]; }
+
+    if (abs(orth) > 1e-12) 
+    {
+        cout << "Two basis vectors are not orthogonal! Orth factor: " << orth << "\n";
+        exit(EXIT_FAILURE);
+    }
 }
 
 #endif /* RANDOMFIELD_IMPL_HPP_*/

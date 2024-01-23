@@ -13,6 +13,7 @@
 #include "Coordinates.hpp"
 #include "fftw3.h"
 #include <random> // needed for random number generator
+#include <fstream>
 
 class RandomField
 {
@@ -34,6 +35,8 @@ class RandomField
         int flip_index(int I, int N);
         int invert_index(int I, int N);
         void calc_transferse_vectors(int x, int y, int z, double MHat[3], double NHat[3], double a = 0.);
+        void Test_norm(double vec[]);
+        void Test_orth(double vec1[], double vec2[]);
 
 };
 
