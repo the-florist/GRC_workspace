@@ -19,6 +19,8 @@ template <class data_t>
 void RandomField::compute(Cell<data_t> current_cell) const
 {
     Coordinates<data_t> coords(current_cell, m_params.L/m_params.N, m_params.center);
+
+    //calc_spectrum("position");
 }
 
 //template <class data_t>
@@ -31,12 +33,21 @@ void RandomField::calc_spectrum(std::string spec_type)
     double norm = pow(m_params.N, 3.);
     int N = m_params.N;
 
+    // Polarisation basis vectors
+    double mhat[3] = {0., 0., 0.};
+    double nhat[3] = {0., 0., 0.}; 
+
     // Allocate memory for hij and mode functions
     hk = (fftw_complex**) malloc(sizeof(fftw_complex*) * 9);
-    for(int i=0; i<9; i++)
+    hx = (fftw_complex**) malloc(sizeof(fftw_complex*) * 9);
+    fftw_plan hij_plan[9];
+
+    for(int l=0; l<9; l++)
     {
-        hk[i] = (fftw_complex*) malloc(sizeof(fftw_complex) * N * N * N);
-    } 
+        hk[l] = (fftw_complex*) malloc(sizeof(fftw_complex) * N * N * N);
+        hx[l] = (fftw_complex*) malloc(sizeof(fftw_complex) * N * N * N);
+        hij_plan[l] = fftw_plan_dft_3d(N, N, N, hk[l], hx[l], FFTW_BACKWARD, FFTW_ESTIMATE);
+    }
 
     fftw_complex (*hplus);
     fftw_complex (*hcross);
@@ -48,13 +59,6 @@ void RandomField::calc_spectrum(std::string spec_type)
     hplusx = (fftw_complex*) malloc(sizeof(fftw_complex) * N * N * N);
     fftw_plan plan1 = fftw_plan_dft_3d(N, N, N, hplus, hplusx, FFTW_BACKWARD, FFTW_ESTIMATE);
 
-    /*fftw_plan (*hij_plan);
-    hij_plan = (fftw_plan*) malloc(sizeof(fftw_plan) * 9);
-    for(int l=0; l<9; l++)
-    {
-        hij_plan[l] = fftw_plan_dft_3d(N, N, N, hk[l], hx[l], FFTW_BACKWARD, FFTW_ESTIMATE);
-    }*/
-
     // Set all arrays to 0
     for(int i=0; i<N; i++) for(int j=0; j<N; j++) for(int k=0; k<N; k++) for(int s=0; s<2; s++)
     {
@@ -63,11 +67,13 @@ void RandomField::calc_spectrum(std::string spec_type)
         for (int m=0; m<9; m++)
         {
             hk[m][k + N*(j + N*i)][s] = 0.;
+            hx[m][k + N*(j + N*i)][s] = 0.;
         }
     }
 
-    int lut[3][3];
-
+    // Setting the lut that maps polarisation vectors to 
+    // polarisation tensors.
+    int lut[3][3];  
     lut[0][0] = 0;
     lut[0][1] = 1;
     lut[0][2] = 2;
@@ -90,8 +96,6 @@ void RandomField::calc_spectrum(std::string spec_type)
 
     double rayleigh_factors[2] = {0., 0.};
     double theta_factors[2] = {0., 0.};
-    double mhat[3] = {0., 0., 0.};
-    double nhat[3] = {0., 0., 0.}; 
 
     cout << "Starting Loop 1 (k <= N/2).\n";
 
@@ -232,14 +236,25 @@ void RandomField::calc_spectrum(std::string spec_type)
         if(hplusx[k + N*(j + N*i)][1] > 1e-12) { MayDay::Error("h+(x) is not yet real"); }
     }
 
-    cout << "Freeing array\n";
+    for(int s=0; s<9; s++)
+    {
+        fftw_execute(hij_plan[s]);
+    }
+
+    cout << "Freeing everything\n";
 
     // Free everything
     fftw_free(*hplus);
     fftw_free(*hcross);
     //fftw_free(*hplusx);
     fftw_free(**hk);
+    fftw_free(**hk);
     fftw_destroy_plan(plan1);
+
+    for(int s=0; s<9; s++)
+    {
+        fftw_destroy_plan(hij_plan[s]);
+    }
 }
 
 double RandomField::find_rayleigh_factor(double km, double ks, double ep, std::string spec_type, double H0, double uniform_draw)
