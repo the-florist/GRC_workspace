@@ -160,7 +160,7 @@ void ScalarFieldLevel::initialData()
                             rand_field),
     m_state_new, m_state_new, INCLUDE_GHOST_CELLS, disable_simd());
 
-    MayDay::Error("Calculating position ICs ended.");
+    cout << "Calculating position ICs ended.\n";
 
     BoxLoops::loop(
     make_compute_pack(SetValue(0.),

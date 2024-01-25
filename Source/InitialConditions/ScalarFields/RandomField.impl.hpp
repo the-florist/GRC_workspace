@@ -78,9 +78,33 @@ void RandomField::compute(Cell<data_t> current_cell) const
         MayDay::Error("Cell index greater than resolution^3 at coarsest level.");
     }
 
-    if(r==1) {cout << "In compute: " << hx[0][r][0] << "\n"; }
+    if(r==1) {cout << "In compute: " << hx[0][r][0] << "," << m_params.A*hx[0][r][0] << "\n"; }
+
+    if(std::isnan(hx[0][r][0])) { MayDay::Error("Values are nan in the RandomField compute"); }
 
     if(m_spec_type == "position")
+    {
+        //store tensor metric variables, g_ij = delta_ij + 1/2 h_ij
+        current_cell.store_vars(1., c_h11);
+        current_cell.store_vars(0., c_h12);
+        current_cell.store_vars(0., c_h13);
+        current_cell.store_vars(1., c_h22);
+        current_cell.store_vars(0., c_h23);
+        current_cell.store_vars(1., c_h33);
+    }
+
+    else if(m_spec_type == "velocity")
+    {
+        current_cell.store_vars(0., c_A11);
+        current_cell.store_vars(0., c_A12);
+        current_cell.store_vars(0., c_A13);
+        current_cell.store_vars(0., c_A22);
+        current_cell.store_vars(0., c_A23);
+        current_cell.store_vars(0., c_A33);
+    }
+
+
+    /*if(m_spec_type == "position")
     {
         //store tensor metric variables, g_ij = delta_ij + 1/2 h_ij
         current_cell.store_vars(1. + m_params.A * 0.5 * hx[0][r][0], c_h11);
@@ -99,7 +123,7 @@ void RandomField::compute(Cell<data_t> current_cell) const
         current_cell.store_vars(-m_params.A * 0.5 * hx[4][r][0], c_A22);
         current_cell.store_vars(-m_params.A * 0.5 * hx[5][r][0], c_A23);
         current_cell.store_vars(-m_params.A * 0.5 * hx[8][r][0], c_A33);
-    }
+    }*/
 
     else { MayDay::Error("Spec type entered is not a viable option."); }
 
@@ -138,9 +162,9 @@ void RandomField::calc_spectrum()
     hcross = (fftw_complex*) malloc(sizeof(fftw_complex) * N * N * N);
 
     // Extra memory for reality check on h+
-    /*fftw_complex (*hplusx);
+    fftw_complex (*hplusx);
     hplusx = (fftw_complex*) malloc(sizeof(fftw_complex) * N * N * N);
-    fftw_plan plan1 = fftw_plan_dft_3d(N, N, N, hcross, hplusx, FFTW_BACKWARD, FFTW_ESTIMATE);*/
+    fftw_plan plan1 = fftw_plan_dft_3d(N, N, N, hcross, hplusx, FFTW_BACKWARD, FFTW_ESTIMATE);
     
 
     // Set all arrays to 0
@@ -181,7 +205,7 @@ void RandomField::calc_spectrum()
     double rayleigh_factors[2] = {0., 0.};
     double theta_factors[2] = {0., 0.};
 
-    cout << "Starting Loop 1 (k <= N/2).\n";
+    //cout << "Starting Loop 1 (k <= N/2).\n";
 
     for(int i=0; i<N; i++) for(int j=0; j<N; j++) for(int k=0; k<N/2+1; k++)
     {
@@ -275,7 +299,7 @@ void RandomField::calc_spectrum()
         }
     }
 
-    cout << "Starting Loop 2 (k > N/2).\n";
+    //cout << "Starting Loop 2 (k > N/2).\n";
 
     for(int i=0; i<N; i++) for(int j=0; j<N; j++) for(int k=N/2 + 1; k<N; k++)
     {
@@ -352,7 +376,7 @@ void RandomField::calc_spectrum()
         }
     }
 
-    cout << "Checking h+(x) for reality.\n";
+    //cout << "Checking h+(x) for reality.\n";
 
     /*std::ofstream hpxcheck("./h-plus-im-check.dat");
 
@@ -382,21 +406,22 @@ void RandomField::calc_spectrum()
         }
     }
 
-    cout << "In calc: " << hx[0][1][0] << "\n";
+    //cout << "In calc: " << hx[0][1][0] << "\n";
 
     // Free everything
     fftw_free(*hplus);
     fftw_free(*hcross);
     //fftw_free(*hplusx);
     fftw_free(**hk);
+    //fftw_free(**hx);
 
-    //fftw_destroy_plan(plan1);
+    fftw_destroy_plan(plan1);
     for(int s=0; s<9; s++)
     {
         fftw_destroy_plan(hij_plan[s]);
     }
 
-    cout << "Freed everything\n";
+    //cout << "Freed everything\n";
 }
 
 double RandomField::find_rayleigh_factor(double km, double ks, double ep, std::string spec_type, double H0, double uniform_draw)
