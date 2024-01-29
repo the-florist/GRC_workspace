@@ -82,7 +82,7 @@ void RandomField::compute(Cell<data_t> current_cell) const
 
     if(std::isnan(hx[0][r][0])) { MayDay::Error("Values are nan in the RandomField compute"); }
 
-    if(m_spec_type == "position")
+    /*if(m_spec_type == "position")
     {
         //store tensor metric variables, g_ij = delta_ij + 1/2 h_ij
         current_cell.store_vars(1., c_h11);
@@ -101,10 +101,10 @@ void RandomField::compute(Cell<data_t> current_cell) const
         current_cell.store_vars(0., c_A22);
         current_cell.store_vars(0., c_A23);
         current_cell.store_vars(0., c_A33);
-    }
+    }*/
 
 
-    /*if(m_spec_type == "position")
+    if(m_spec_type == "position")
     {
         //store tensor metric variables, g_ij = delta_ij + 1/2 h_ij
         current_cell.store_vars(1. + m_params.A * 0.5 * hx[0][r][0], c_h11);
@@ -123,7 +123,7 @@ void RandomField::compute(Cell<data_t> current_cell) const
         current_cell.store_vars(-m_params.A * 0.5 * hx[4][r][0], c_A22);
         current_cell.store_vars(-m_params.A * 0.5 * hx[5][r][0], c_A23);
         current_cell.store_vars(-m_params.A * 0.5 * hx[8][r][0], c_A33);
-    }*/
+    }
 
     else { MayDay::Error("Spec type entered is not a viable option."); }
 
@@ -139,6 +139,8 @@ void RandomField::calc_spectrum()
     double H0 = -3.0*sqrt((8.0 * M_PI/3.0/m_params.m_pl/m_params.m_pl)*(0.5*m_params.velocity*m_params.velocity + 0.5*pow(m_params.m * m_params.amplitude, 2.0)));
     double norm = pow(m_params.N, 3.);
     int N = m_params.N;
+
+    //double kstar = 0.4*pow((pow(N, 2.0) + pow(N, 2.0) + pow(N/2, 2.0))*4.*M_PI*M_PI/m_params.L/m_params.L, 0.5);
 
     // Polarisation basis vectors
     double mhat[3] = {0., 0., 0.};
@@ -404,6 +406,25 @@ void RandomField::calc_spectrum()
             cout << i << "," << j << "," << k << ": " << hx[l][k + N*(j + N*i)][1] << "\n";
             MayDay::Error("hij(x) is not yet real"); 
         }
+    }
+
+    std::string name;
+    if(m_spec_type == "position")
+    {
+        name = "./hk-position.dat";
+    }
+    else if(m_spec_type == "velocity")
+    {
+        name = "./hk-velocity.dat";
+    }
+
+    ofstream hx_check(name);
+
+    int r;
+    for(int i=0; i<N; i++) for(int j=0; j<N; j++) for(int k=0; k<N; k++)
+    {
+        r = k + N*(j + N*i);
+        hx_check << hplus[k + N*(j + N*i)][0] << "," << hplus[k + N*(j + N*i)][1] << "," << hcross[k + N*(j + N*i)][0] << "," << hcross[k + N*(j + N*i)][1] << "\n";
     }
 
     //cout << "In calc: " << hx[0][1][0] << "\n";

@@ -134,7 +134,7 @@ class InitialScalarData
         current_cell.store_vars(K, c_K);
 
         //store tensor metric variables, g_ij = delta_ij + 1/2 h_ij
-        current_cell.store_vars(1. + 0.5*m_h[r][0], c_h11);
+        /*current_cell.store_vars(1. + 0.5*m_h[r][0], c_h11);
         current_cell.store_vars(0.5*m_h[r][1], c_h12);
         current_cell.store_vars(0.5*m_h[r][2], c_h13);
         current_cell.store_vars(1. + 0.5*m_h[r][3], c_h22);
@@ -146,7 +146,7 @@ class InitialScalarData
         current_cell.store_vars(-m_hdot[r][2], c_A13);
         current_cell.store_vars(-m_hdot[r][3], c_A22);
         current_cell.store_vars(-m_hdot[r][4], c_A23);
-        current_cell.store_vars(-m_hdot[r][5], c_A33);
+        current_cell.store_vars(-m_hdot[r][5], c_A33);*/
     }
 
   protected:

@@ -77,95 +77,32 @@ void ScalarFieldLevel::initialData()
         hdot[i][j] = 0.;
     }
 
-    /*ifstream gw_pos;
-    ifstream gw_vel;
-    gw_pos.open("./gw-re-pos.dat", ios::in); //open the file with the waves in it
-    gw_vel.open("./gw-re-vel.dat", ios::in);
-
-    if (!gw_pos)
-    {
-        MayDay::Error("GW position or velocity file failed to open.");
-    }
-
-    //int m,n = 0;
-
-    std::string delim = " ";
-    double A = 1e-6;
-
-    std::string p_datline;
-    std::string v_datline;
-    std::stringstream p_number;
-    std::stringstream v_number;
-
-    int n=0; //box position counter
-    for (int i=0; i < std::pow(N, 3.); i++) //
-    {
-        p_datline = "";
-        std::getline(gw_pos, p_datline);
-        int m=0; //tensor index counter
-
-        for(int j=0; j<p_datline.length(); j++)
-        {
-            if(p_datline[j] != delim[0])
-            {
-                p_number << p_datline[j];
-            }
-            else
-            {
-                p_number >> h[n][m];
-                h[n][m] *= A;
-                p_number.clear();
-                m++;
-            }
-        }
-
-        v_datline = "";
-        std::getline(gw_vel, v_datline);
-        m=0;
-
-        for(int j=0; j<v_datline.length(); j++)
-        {
-            if(v_datline[j] != delim[0])
-            {
-                v_number << p_datline[j];
-            }
-            else
-            {
-                v_number >> hdot[n][m];
-                hdot[n][m] *= A;
-                v_number.clear();
-                m++;
-            }
-        }
-
-        n++;
-
-        p_number.clear();
-        v_number.clear();
-
-        if(n > std::pow(N, 3.))
-        {
-            MayDay::Error("File length has exceeded N^3.");
-        }
-    }
-
-    gw_pos.close();
-    gw_vel.close();*/
-
-    RandomField rand_field(m_p.initial_params, "position");
-    rand_field.calc_spectrum();
+    RandomField position_field(m_p.initial_params, "position");
+    position_field.calc_spectrum();
 
     BoxLoops::loop(
         make_compute_pack(SetValue(0.),
-                            rand_field),
+                            position_field),
     m_state_new, m_state_new, INCLUDE_GHOST_CELLS, disable_simd());
 
     cout << "Calculating position ICs ended.\n";
+
+    RandomField velocity_field(m_p.initial_params, "velocity");
+    velocity_field.calc_spectrum();
+
+    BoxLoops::loop(
+        make_compute_pack(SetValue(0.),
+                            velocity_field),
+    m_state_new, m_state_new, INCLUDE_GHOST_CELLS, disable_simd());
+
+    cout << "Calculating velocity ICs ended.\n";
 
     BoxLoops::loop(
     make_compute_pack(SetValue(0.),
                         InitialScalarData(m_p.initial_params, m_dx, h, hdot)),
     m_state_new, m_state_new, INCLUDE_GHOST_CELLS,disable_simd());
+
+    MayDay::Error("IC set-up ended.");
 
     h.clear();
     hdot.clear();
