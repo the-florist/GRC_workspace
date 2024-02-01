@@ -138,7 +138,7 @@ void RandomField::calc_spectrum()
     double epsilon = 2./m_params.L;
     double H0 = -3.0*sqrt((8.0 * M_PI/3.0/m_params.m_pl/m_params.m_pl)*(0.5*m_params.velocity*m_params.velocity + 0.5*pow(m_params.m * m_params.amplitude, 2.0)));
     double norm = pow(m_params.N, 3.);
-    int N = 10;
+    int N = m_params.N;
 
     //double kstar = 0.4*pow((pow(N, 2.0) + pow(N, 2.0) + pow(N/2, 2.0))*4.*M_PI*M_PI/m_params.L/m_params.L, 0.5);
 
@@ -211,9 +211,13 @@ void RandomField::calc_spectrum()
 
     for(int i=0; i<N/2+1; i++) for(int j=0; j<N; j++) for(int k=0; k<N; k++)
     {
-        int J,K;
+        int J = j;
+        int K = k;
+
         if(k > N/2) { K = invert_index(k, N); }
         if(j > N/2) { J = invert_index(j, N); }
+
+        cout << i << "," << j << "," << k << ": " << J << "," << K << "\n";
 
         double kmag = pow((pow(i, 2.0) + pow(J, 2.0) + pow(K, 2.0))*4.*M_PI*M_PI/m_params.L/m_params.L, 0.5);
 
@@ -308,7 +312,47 @@ void RandomField::calc_spectrum()
         else if(j==0 || j == N/2)
         {
             // Special axis on either k-norm plane
-            if((k > N/2 && i == 0) || (k > N/2 && i == N/2)) // (i > N/2 && k == 0) || (i > N/2 && k == N/2) ||
+            if((k > N/2 && i == 0) || (k > N/2 && i == N/2)) 
+            {
+                hplus[k + N*(j + N*i)][0] = hplus[invert_index(k, N) + N*(j + N*invert_index(i, N))][0];
+                hplus[k + N*(j + N*i)][1] = -hplus[invert_index(k, N) + N*(j + N*invert_index(i, N))][1];
+
+                hcross[k + N*(j + N*i)][0] = hcross[invert_index(k, N) + N*(j + N*invert_index(i, N))][0];
+                hcross[k + N*(j + N*i)][1] = -hcross[invert_index(k, N) + N*(j + N*invert_index(i, N))][1];
+
+                for(int s=0; s<9; s++)
+                {
+                    hk[s][k + N*(j + N*i)][0] = hk[s][invert_index(k, N) + N*(j + N*invert_index(i, N))][0];
+                    hk[s][k + N*(j + N*i)][1] = -hk[s][invert_index(k, N) + N*(j + N*invert_index(i, N))][1];
+                }
+            }
+        }
+
+        else if(k == 0 || k == N/2)
+        {
+            // Special axis on either k-norm plane
+            if((i == 0 && j > N/2) || (i == N/2 && j > N/2)) // 
+            {
+                hplus[k + N*(j + N*i)][0] = hplus[k + N*(invert_index(j, N) + N*invert_index(i, N))][0];
+                hplus[k + N*(j + N*i)][1] = -hplus[k + N*(invert_index(j, N) + N*invert_index(i, N))][1];
+
+                hcross[k + N*(j + N*i)][0] = hcross[k + N*(invert_index(j, N) + N*invert_index(i, N))][0];
+                hcross[k + N*(j + N*i)][1] = -hcross[k + N*(invert_index(j, N) + N*invert_index(i, N))][1];
+
+                for(int s=0; s<9; s++)
+                {
+                    hk[s][k + N*(j + N*i)][0] = hk[s][k + N*(invert_index(j, N) + N*invert_index(i, N))][0];
+                    hk[s][k + N*(j + N*i)][1] = -hk[s][k + N*(invert_index(j, N) + N*invert_index(i, N))][1];
+                }
+            }
+        }
+    }
+
+    for(int i=N/2+1; i<N; i++) for(int j=0; j<N; j++) for(int k=0; k<N; k++)
+    {
+        if(j==0 || j==N/2)
+        {
+            if((i > N/2 && k == 0) || (i > N/2 && k == N/2))
             {
                 hplus[k + N*(j + N*i)][0] = hplus[invert_index(k, N) + N*(j + N*invert_index(i, N))][0];
                 hplus[k + N*(j + N*i)][1] = -hplus[invert_index(k, N) + N*(j + N*invert_index(i, N))][1];
@@ -323,26 +367,25 @@ void RandomField::calc_spectrum()
                 }
             }
 
-            else if(k > N/2)
+            else if(i > N/2)
             {
-                hplus[k + N*(j + N*i)][0] = hplus[invert_index(k, N) + N*(j + N*flip_index(i, N))][0];
-                hplus[k + N*(j + N*i)][1] = -hplus[invert_index(k, N) + N*(j + N*flip_index(i, N))][1];
+                hplus[k + N*(j + N*i)][0] = hplus[flip_index(k, N) + N*(j + N*invert_index(i, N))][0];
+                hplus[k + N*(j + N*i)][1] = -hplus[flip_index(k, N) + N*(j + N*invert_index(i, N))][1];
 
-                hcross[k + N*(j + N*i)][0] = hcross[invert_index(k, N) + N*(j + N*flip_index(i, N))][0];
-                hcross[k + N*(j + N*i)][1] = -hcross[invert_index(k, N) + N*(j + N*flip_index(i, N))][1];
+                hcross[k + N*(j + N*i)][0] = hcross[flip_index(k, N) + N*(j + N*invert_index(i, N))][0];
+                hcross[k + N*(j + N*i)][1] = -hcross[flip_index(k, N) + N*(j + N*invert_index(i, N))][1];
 
                 for(int s=0; s<9; s++)
                 {
-                    hk[s][k + N*(j + N*i)][0] = hk[s][invert_index(k, N) + N*(j + N*flip_index(i, N))][0];
-                    hk[s][k + N*(j + N*i)][1] = -hk[s][invert_index(k, N) + N*(j + N*flip_index(i, N))][1];
+                    hk[s][k + N*(j + N*i)][0] = hk[s][flip_index(k, N) + N*(j + N*invert_index(i, N))][0];
+                    hk[s][k + N*(j + N*i)][1] = -hk[s][flip_index(k, N) + N*(j + N*invert_index(i, N))][1];
                 }
             }
         }
 
-        else if(k == 0 || k == N/2)
+        else if(k==0 || k==N/2)
         {
-            // Special axis on either k-norm plane
-            if((i == 0 && j > N/2) || (i == N/2 && j > N/2)) // (i > N/2 && j == 0) || (i > N/2 || j == N/2)
+            if((i > N/2 && j == 0) || (i > N/2 && j == N/2))
             {
                 hplus[k + N*(j + N*i)][0] = hplus[k + N*(invert_index(j, N) + N*invert_index(i, N))][0];
                 hplus[k + N*(j + N*i)][1] = -hplus[k + N*(invert_index(j, N) + N*invert_index(i, N))][1];
@@ -356,39 +399,55 @@ void RandomField::calc_spectrum()
                     hk[s][k + N*(j + N*i)][1] = -hk[s][k + N*(invert_index(j, N) + N*invert_index(i, N))][1];
                 }
             }
-            // Special plane on either k-norm plane
-            else if(j > N/2)
-            {
-                hplus[k + N*(j + N*i)][0] = hplus[k + N*(invert_index(j, N) + N*flip_index(i, N))][0];
-                hplus[k + N*(j + N*i)][1] = -hplus[k + N*(invert_index(j, N) + N*flip_index(i, N))][1];
 
-                hcross[k + N*(j + N*i)][0] = hcross[k + N*(invert_index(j, N) + N*flip_index(i, N))][0];
-                hcross[k + N*(j + N*i)][1] = -hcross[k + N*(invert_index(j, N) + N*flip_index(i, N))][1];
+            // Special plane on either k-norm plane
+            else if(i > N/2)
+            {
+                hplus[k + N*(j + N*i)][0] = hplus[k + N*(flip_index(j, N) + N*invert_index(i, N))][0];
+                hplus[k + N*(j + N*i)][1] = -hplus[k + N*(flip_index(j, N) + N*invert_index(i, N))][1];
+
+                hcross[k + N*(j + N*i)][0] = hcross[k + N*(flip_index(j, N) + N*invert_index(i, N))][0];
+                hcross[k + N*(j + N*i)][1] = -hcross[k + N*(flip_index(j, N) + N*invert_index(i, N))][1];
 
                 for(int s=0; s<9; s++)
                 {
-                    hk[s][k + N*(j + N*i)][0] = hk[s][k + N*(invert_index(j, N) + N*flip_index(i, N))][0];
-                    hk[s][k + N*(j + N*i)][1] = -hk[s][k + N*(invert_index(j, N) + N*flip_index(i, N))][1];
+                    hk[s][k + N*(j + N*i)][0] = hk[s][k + N*(flip_index(j, N) + N*invert_index(i, N))][0];
+                    hk[s][k + N*(j + N*i)][1] = -hk[s][k + N*(flip_index(j, N) + N*invert_index(i, N))][1];
                 }
+            }
+        }
+
+        else
+        {
+            hplus[k + N*(j + N*i)][0] = hplus[flip_index(k, N) + N*(flip_index(j, N) + N*invert_index(i, N))][0];
+            hplus[k + N*(j + N*i)][1] = -hplus[flip_index(k, N) + N*(flip_index(j, N) + N*invert_index(i, N))][1];
+
+            hcross[k + N*(j + N*i)][0] = hcross[flip_index(k, N) + N*(flip_index(j, N) + N*invert_index(i, N))][0];
+            hcross[k + N*(j + N*i)][1] = -hcross[flip_index(k, N) + N*(flip_index(j, N) + N*invert_index(i, N))][1];
+
+            for(int s=0; s<9; s++)
+            {
+                hk[s][k + N*(j + N*i)][0] = hk[s][flip_index(k, N) + N*(flip_index(j, N) + N*invert_index(i, N))][0];
+                hk[s][k + N*(j + N*i)][1] = -hk[s][flip_index(k, N) + N*(flip_index(j, N) + N*invert_index(i, N))][1];
             }
         }
     }
 
-    std::ofstream hpxcheck("./h-plus-mode-check.dat");
+    /*std::ofstream hpxcheck("./h-plus-mode-check.dat");
 
-    for(int i=0; i<N/2+1; i++) for(int j=0; j<N; j++) for(int k=0; k<N; k++)
+    for(int i=0; i<N; i++) for(int j=0; j<N; j++) for(int k=0; k<N; k++)
     {
-        hpxcheck << i << "," << j << "," << k << ": ";
+        //hpxcheck << i << "," << j << "," << k << ": ";
         hpxcheck << hplus[k + N*(j + N*i)][0] << "," << hplus[k + N*(j + N*i)][1] << "\n";
     }
 
     hpxcheck.close();
 
-    MayDay::Error("Check file done");
+    MayDay::Error("Check file done");*/
 
     //cout << "Starting Loop 2 (k > N/2).\n";
 
-    for(int i=0; i<N; i++) for(int j=0; j<N; j++) for(int k=N/2 + 1; k<N; k++)
+    /*for(int i=0; i<N; i++) for(int j=0; j<N; j++) for(int k=N/2 + 1; k<N; k++)
     {
         int I,J;
         if(i > N/2) { I = flip_index(i, N); }
@@ -417,7 +476,7 @@ void RandomField::calc_spectrum()
             }
         }
 
-        /*else if(j == 0 || j == N/2)
+        else if(j == 0 || j == N/2)
         {
             hplus[k + N*(j + N*i)][0] = hplus[invert_index(k, N) + N*(j + N*flip_index(i, N))][0];
             hplus[k + N*(j + N*i)][1] = -hplus[invert_index(k, N) + N*(j + N*flip_index(i, N))][1];
@@ -445,7 +504,7 @@ void RandomField::calc_spectrum()
                 hk[s][k + N*(j + N*i)][0] = hk[s][invert_index(k, N) + N*(flip_index(j, N) + N*i)][0];
                 hk[s][k + N*(j + N*i)][1] = -hk[s][invert_index(k, N) + N*(flip_index(j, N) + N*i)][1];
             }
-        }*/
+        }
 
         else
         {
@@ -461,23 +520,24 @@ void RandomField::calc_spectrum()
                 hk[s][k + N*(j + N*i)][1] = -hk[s][invert_index(k, N) + N*(flip_index(j, N) + N*flip_index(i, N))][1];
             }
         }
-    }
+    }*/
 
-    //cout << "Checking h+(x) for reality.\n";
+    cout << "Checking h+(x) for reality.\n";
 
-    /*std::ofstream hpxcheck("./h-plus-im-check.dat");
+    //std::ofstream hpxcheck("./h-plus-im-check.dat");
 
     fftw_execute(plan1);
     for(int i=0; i<N; i++) for(int j=0; j<N; j++) for(int k=0; k<N; k++)
     {
         if(hplusx[k + N*(j + N*i)][1] > 1.e-12)
         {
+            cout << i << "," << j << "," << k << ": " << hplusx[k + N*(j + N*i)][1] << "\n";
             MayDay::Error("hx(x) is not yet real"); 
         }
-        hpxcheck << i << "," << j << "," << k << ": " << hplusx[k + N*(j + N*i)][0] << "\n";
+        //hpxcheck << i << "," << j << "," << k << ": " << hplusx[k + N*(j + N*i)][0] << "\n";
     }
 
-    hpxcheck.close();*/
+    //hpxcheck.close();
 
     for(int s=0; s<9; s++)
     {
