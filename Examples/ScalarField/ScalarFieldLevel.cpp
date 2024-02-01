@@ -102,7 +102,7 @@ void ScalarFieldLevel::initialData()
                         InitialScalarData(m_p.initial_params, m_dx, h, hdot)),
     m_state_new, m_state_new, INCLUDE_GHOST_CELLS,disable_simd());
 
-    MayDay::Error("IC set-up ended.");
+    //MayDay::Error("IC set-up ended.");
 
     h.clear();
     hdot.clear();
