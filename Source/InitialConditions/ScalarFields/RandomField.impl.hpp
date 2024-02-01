@@ -217,7 +217,7 @@ void RandomField::calc_spectrum()
         if(k > N/2) { K = invert_index(k, N); }
         if(j > N/2) { J = invert_index(j, N); }
 
-        cout << i << "," << j << "," << k << ": " << J << "," << K << "\n";
+        //cout << i << "," << j << "," << k << ": " << J << "," << K << "\n";
 
         double kmag = pow((pow(i, 2.0) + pow(J, 2.0) + pow(K, 2.0))*4.*M_PI*M_PI/m_params.L/m_params.L, 0.5);
 
@@ -529,7 +529,7 @@ void RandomField::calc_spectrum()
     fftw_execute(plan1);
     for(int i=0; i<N; i++) for(int j=0; j<N; j++) for(int k=0; k<N; k++)
     {
-        if(hplusx[k + N*(j + N*i)][1] > 1.e-12)
+        if(hplusx[k + N*(j + N*i)][1] > 1.e-10)
         {
             cout << i << "," << j << "," << k << ": " << hplusx[k + N*(j + N*i)][1] << "\n";
             MayDay::Error("hx(x) is not yet real"); 
@@ -546,7 +546,7 @@ void RandomField::calc_spectrum()
 
     for(int i=0; i<N; i++) for(int j=0; j<N; j++) for(int k=0; k<N; k++) for(int l=0; l<9; l++)
     {
-        if(hx[l][k + N*(j + N*i)][1] > 1.e-12) 
+        if(hx[l][k + N*(j + N*i)][1] > 1.e-10) 
         { 
             cout << i << "," << j << "," << k << ": " << hx[l][k + N*(j + N*i)][1] << "\n";
             MayDay::Error("hij(x) is not yet real"); 
@@ -588,6 +588,7 @@ void RandomField::calc_spectrum()
     }
 
     //cout << "Freed everything\n";
+    //MayDay::Error("Position file finished printing.");
 }
 
 double RandomField::find_rayleigh_factor(double km, double ks, double ep, std::string spec_type, double H0, double uniform_draw)
@@ -597,14 +598,14 @@ double RandomField::find_rayleigh_factor(double km, double ks, double ep, std::s
     double windowed_value = 0.;
     if (spec_type == "position")
     {
-        windowed_value = 0.5*km;//(0.5*(1.0/km + H0*H0/km/km/km));
+        windowed_value = (0.5*(1.0/km + H0*H0/km/km/km));
     }
     else if (spec_type == "velocity")
     {
         windowed_value = (0.5*(km - H0*H0/km + H0*H0*H0*H0/km/km/km));
     }
 
-    //windowed_value *= 0.5 * (1.0 - tanh(ep * (km - ks)));
+    windowed_value *= 0.5 * (1.0 - tanh(ep * (km - ks)));
 
     return windowed_value * sqrt(2./M_PI) * sqrt(-2. * log(uniform_draw));
 }
