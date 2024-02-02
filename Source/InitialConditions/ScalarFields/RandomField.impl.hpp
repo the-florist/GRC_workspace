@@ -65,7 +65,7 @@ void RandomField::compute(Cell<data_t> current_cell) const
 
     //if(std::isnan(hx[0][r][0])) { MayDay::Error("Values are nan in the RandomField compute"); }
 
-    if(m_spec_type == "position")
+    /*if(m_spec_type == "position")
     {
         //store tensor metric variables, g_ij = delta_ij + 1/2 h_ij
         current_cell.store_vars(1., c_h11);
@@ -84,10 +84,10 @@ void RandomField::compute(Cell<data_t> current_cell) const
         current_cell.store_vars(0., c_A22);
         current_cell.store_vars(0., c_A23);
         current_cell.store_vars(0., c_A33);
-    }
+    }*/
 
 
-    /*if(m_spec_type == "position")
+    if(m_spec_type == "position")
     {
         //store tensor metric variables, g_ij = delta_ij + 1/2 h_ij
         current_cell.store_vars(1. + m_params.A * 0.5 * hx[0][r][0], c_h11);
@@ -106,9 +106,9 @@ void RandomField::compute(Cell<data_t> current_cell) const
         current_cell.store_vars(-m_params.A * 0.5 * hx[4][r][0], c_A22);
         current_cell.store_vars(-m_params.A * 0.5 * hx[5][r][0], c_A23);
         current_cell.store_vars(-m_params.A * 0.5 * hx[8][r][0], c_A33);
-    }*/
+    }
 
-    //else { MayDay::Error("Spec type entered is not a viable option."); }
+    else { MayDay::Error("Spec type entered is not a viable option."); }
 
     // freeing the class memory that stores the config-space fields
     fftw_free(**hx);
