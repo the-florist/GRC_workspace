@@ -85,24 +85,22 @@ void ScalarFieldLevel::initialData()
                             position_field),
     m_state_new, m_state_new, INCLUDE_GHOST_CELLS, disable_simd());
 
-    cout << "Calculating position ICs ended.\n";
+    pout() << "Calculating position ICs ended.\n";
 
     RandomField velocity_field(m_p.initial_params, "velocity");
     velocity_field.calc_spectrum();
 
     BoxLoops::loop(
-        make_compute_pack(SetValue(0.),
-                            velocity_field),
+        make_compute_pack(velocity_field),
     m_state_new, m_state_new, INCLUDE_GHOST_CELLS, disable_simd());
 
-    cout << "Calculating velocity ICs ended.\n";
+    pout() << "Calculating velocity ICs ended.\n";
 
     BoxLoops::loop(
-    make_compute_pack(SetValue(0.),
-                        InitialScalarData(m_p.initial_params, m_dx, h, hdot)),
+        make_compute_pack(InitialScalarData(m_p.initial_params, m_dx, h, hdot)),
     m_state_new, m_state_new, INCLUDE_GHOST_CELLS,disable_simd());
 
-    //MayDay::Error("IC set-up ended.");
+    pout() << "IC set-up ended.\n";
 
     h.clear();
     hdot.clear();
