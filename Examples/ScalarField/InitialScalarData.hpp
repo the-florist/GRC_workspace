@@ -41,75 +41,14 @@ class InitialScalarData
     };
 
     //! The constructor
-    InitialScalarData(params_t a_params, double a_dx, std::vector<std::vector<double> > a_h, std::vector<std::vector<double> > a_hdot)
-        : m_params(a_params), m_dx(a_dx), m_h(a_h), m_hdot(a_hdot)
+    InitialScalarData(params_t a_params)
+        : m_params(a_params)
     {
     }
 
     //! Function to compute the value of all the initial vars on the grid
     template <class data_t> void compute(Cell<data_t> current_cell) const
     {
-        // where am i?
-        Coordinates<data_t> coords(current_cell, m_dx, m_params.center); // note: coords.x, etc. are in program units
-        auto current_cell_index = current_cell.get_in_index(); // pulls the unitless coordinate, or index
-
-        // Pull out the grid parametersß
-        int N = m_params.N;
-        double L = m_params.L;
-
-        // Coordinate of this cell in program units
-        data_t x = coords.x + L/2;
-        double y = coords.y + L/2;
-        double z = coords.z + L/2;
-
-        // Coordinates of this cell, unitless
-        int i = static_cast<int>(x / m_dx);
-        int j = static_cast<int>(y / m_dx);
-        int k = static_cast<int>(z / m_dx);
-
-        // This is to guard against ghost cells that can take you outside 
-        // the domain of dependence of the box. Uses periodic BCs.
-        if(i < 0)
-        {
-            i = N + i;
-        }
-        else if(i >= N)
-        {
-            i = i - N;
-        }
-
-        if(j < 0)
-        {
-            j = N + j;
-        }
-        else if(j >= N)
-        {
-            j = j - N;
-        }
-
-        if(k < 0)
-        {
-            k = N + k;
-        }
-        else if(k >= N)
-        {
-            k = k - N;
-        }
-
-        // The flattened position (leading with z?)
-        int r = k + N*(j + N*i);
-
-        if (current_cell_index < 0)
-        {
-            cout << current_cell_index << endl;
-            MayDay::Error("Cell index value below zero.");
-        }
-        else if(current_cell_index > pow(m_params.N, 3.))
-        {
-            cout << current_cell_index << endl;
-            MayDay::Error("Cell index greater than resolution^3 at coarsest level.");
-        }
-
         // calculate and store the scalar field value
         const data_t phi = m_params.amplitude/m_params.m_pl;
         const data_t phidot = m_params.velocity/m_params.m_pl/m_params.m_pl;
@@ -132,28 +71,10 @@ class InitialScalarData
 
         current_cell.store_vars(chi, c_chi);
         current_cell.store_vars(K, c_K);
-
-        //store tensor metric variables, g_ij = delta_ij + 1/2 h_ij
-        /*current_cell.store_vars(1. + 0.5*m_h[r][0], c_h11);
-        current_cell.store_vars(0.5*m_h[r][1], c_h12);
-        current_cell.store_vars(0.5*m_h[r][2], c_h13);
-        current_cell.store_vars(1. + 0.5*m_h[r][3], c_h22);
-        current_cell.store_vars(0.5*m_h[r][4], c_h23);
-        current_cell.store_vars(1. + 0.5*m_h[r][5], c_h33);
-
-        current_cell.store_vars(-m_hdot[r][0], c_A11);
-        current_cell.store_vars(-m_hdot[r][1], c_A12);
-        current_cell.store_vars(-m_hdot[r][2], c_A13);
-        current_cell.store_vars(-m_hdot[r][3], c_A22);
-        current_cell.store_vars(-m_hdot[r][4], c_A23);
-        current_cell.store_vars(-m_hdot[r][5], c_A33);*/
     }
 
   protected:
-    double m_dx;
     const params_t m_params; //!< The matter initial condition params
-    std::vector< std::vector<double>> m_h;
-    std::vector<std::vector<double> > m_hdot;
 };
 
 #endif /* INITIALSCALARDATA_HPP_ */

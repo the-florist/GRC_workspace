@@ -97,7 +97,7 @@ void ScalarFieldLevel::initialData()
     pout() << "Calculating velocity ICs ended.\n";
 
     BoxLoops::loop(
-        make_compute_pack(InitialScalarData(m_p.initial_params, m_dx, h, hdot)),
+        make_compute_pack(InitialScalarData(m_p.initial_params)),
     m_state_new, m_state_new, INCLUDE_GHOST_CELLS,disable_simd());
 
     pout() << "IC set-up ended.\n";

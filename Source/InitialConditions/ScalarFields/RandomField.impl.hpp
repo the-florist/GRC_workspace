@@ -18,12 +18,12 @@
 template <class data_t>
 void RandomField::compute(Cell<data_t> current_cell) const
 {
-    Coordinates<data_t> coords(current_cell, m_params.L/m_params.N, m_params.center);
-
     // Pull out the grid parameters
     int N = m_params.N;
     double L = m_params.L;
     double dx = L/N;
+
+    Coordinates<data_t> coords(current_cell, dx, m_params.center);
 
     // Coordinate of this cell in program units
     data_t x = coords.x + L/2;
@@ -60,32 +60,6 @@ void RandomField::compute(Cell<data_t> current_cell) const
         cout << r << endl;
         MayDay::Error("Cell index greater than resolution^3 at coarsest level.");
     }
-
-    //if(r==1) {cout << "In compute: " << hx[0][r][0] << "," << m_params.A*hx[0][r][0] << "\n"; }
-
-    //if(std::isnan(hx[0][r][0])) { MayDay::Error("Values are nan in the RandomField compute"); }
-
-    /*if(m_spec_type == "position")
-    {
-        //store tensor metric variables, g_ij = delta_ij + 1/2 h_ij
-        current_cell.store_vars(1., c_h11);
-        current_cell.store_vars(0., c_h12);
-        current_cell.store_vars(0., c_h13);
-        current_cell.store_vars(1., c_h22);
-        current_cell.store_vars(0., c_h23);
-        current_cell.store_vars(1., c_h33);
-    }
-
-    else if(m_spec_type == "velocity")
-    {
-        current_cell.store_vars(0., c_A11);
-        current_cell.store_vars(0., c_A12);
-        current_cell.store_vars(0., c_A13);
-        current_cell.store_vars(0., c_A22);
-        current_cell.store_vars(0., c_A23);
-        current_cell.store_vars(0., c_A33);
-    }*/
-
 
     if(m_spec_type == "position")
     {
@@ -416,8 +390,6 @@ void RandomField::calc_spectrum()
 
     pout() << "Checking fields for reality.\n";
 
-    //std::ofstream hpxcheck("./h-plus-im-check.dat");
-
     fftw_execute(plan1);
     for(int i=0; i<N; i++) for(int j=0; j<N; j++) for(int k=0; k<N; k++)
     {
@@ -426,10 +398,7 @@ void RandomField::calc_spectrum()
             cout << i << "," << j << "," << k << ": " << hplusx[k + N*(j + N*i)][1] << "\n";
             MayDay::Error("hx(x) is not yet real"); 
         }
-        //hpxcheck << 0.5 * m_params.A * hplusx[k + N*(j + N*i)][0] << "," << hplusx[k + N*(j + N*i)][1] << "\n";
     }
-
-    //hpxcheck.close();
 
     for(int s=0; s<9; s++)
     {
@@ -444,24 +413,6 @@ void RandomField::calc_spectrum()
             MayDay::Error("hij(x) is not yet real"); 
         }
     }
-
-    /*std::string name;
-    if(m_spec_type == "position") { name = "./hk-position.dat"; }
-    else if(m_spec_type == "velocity") { name = "./hk-velocity.dat"; }
-
-    ofstream hx_check(name);
-
-    int r;
-    for(int i=0; i<N; i++) for(int j=0; j<N; j++) for(int k=0; k<N; k++)
-    {
-        r = k + N*(j + N*i);
-        for(int s=0; s<9; s++)
-        {
-            hx_check << hx[s][r][0] << ",";
-        }
-        hx_check << "\n";
-        //hx_check << hplus[k + N*(j + N*i)][0] << "," << hplus[k + N*(j + N*i)][1] << "," << hcross[k + N*(j + N*i)][0] << "," << hcross[k + N*(j + N*i)][1] << "\n";
-    }*/
 
     // Free everything
     fftw_free(*hplus);
