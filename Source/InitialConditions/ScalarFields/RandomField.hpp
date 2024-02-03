@@ -31,6 +31,11 @@ class RandomField
     protected:
         const InitialScalarData::params_t m_params;
         std::string m_spec_type;
+
+        double kstar;
+        double epsilon;
+        double H0;
+        double norm;
         
         double find_rayleigh_factor(double km, double ks, double ep, std::string spec_type, double H0, double uniform_draw);
         int flip_index(int I, int N);

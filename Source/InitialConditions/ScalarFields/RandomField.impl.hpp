@@ -13,6 +13,11 @@
  inline RandomField::RandomField(InitialScalarData::params_t a_params, std::string a_spec_type)
     : m_params(a_params), m_spec_type(a_spec_type)
 {
+    kstar = 64.*(2.*M_PI/m_params.L);
+    epsilon = 2./m_params.L;
+    H0 = -3.0*sqrt((8.0 * M_PI/3.0/m_params.m_pl/m_params.m_pl)*(0.5*m_params.velocity*m_params.velocity + 0.5*pow(m_params.m * m_params.amplitude, 2.0)));
+    norm = pow(m_params.N, 3.);
+
     calc_spectrum();
 }
 
@@ -92,11 +97,6 @@ void RandomField::compute(Cell<data_t> current_cell) const
 //template <class data_t>
 void RandomField::calc_spectrum()
 {
-    // Set up parameters based on L and N
-    double kstar = 64.*(2.*M_PI/m_params.L);
-    double epsilon = 2./m_params.L;
-    double H0 = -3.0*sqrt((8.0 * M_PI/3.0/m_params.m_pl/m_params.m_pl)*(0.5*m_params.velocity*m_params.velocity + 0.5*pow(m_params.m * m_params.amplitude, 2.0)));
-    double norm = pow(m_params.N, 3.);
     int N = m_params.N;
 
     // Polarisation basis vectors
@@ -126,7 +126,6 @@ void RandomField::calc_spectrum()
     hplusx = (fftw_complex*) malloc(sizeof(fftw_complex) * N * N * N);
     fftw_plan plan1 = fftw_plan_dft_3d(N, N, N, hcross, hplusx, FFTW_BACKWARD, FFTW_ESTIMATE);
     
-
     // Set all arrays to 0
     for(int i=0; i<N; i++) for(int j=0; j<N; j++) for(int k=0; k<N; k++) for(int s=0; s<2; s++)
     {
@@ -183,7 +182,7 @@ void RandomField::calc_spectrum()
         for(int s=0; s<2; s++) 
         { 
             theta_factors[s] = theta_dist(engine); 
-            rayleigh_factors[s] = find_rayleigh_factor(kmag, kstar, epsilon, m_spec_type, H0, sigma_dist(engine));
+            rayleigh_factors[s] = find_rayleigh_factor(kmag, m_spec_type, sigma_dist(engine));
         }
 
         //Start of with random numbers filling the entire array
@@ -402,10 +401,7 @@ void RandomField::calc_spectrum()
         }
     }
 
-    for(int s=0; s<9; s++)
-    {
-        fftw_execute(hij_plan[s]);
-    }
+    for(int s=0; s<9; s++) { fftw_execute(hij_plan[s]); }
 
     for(int i=0; i<N; i++) for(int j=0; j<N; j++) for(int k=0; k<N; k++) for(int l=0; l<9; l++)
     {
@@ -423,16 +419,13 @@ void RandomField::calc_spectrum()
     fftw_free(**hk);
 
     fftw_destroy_plan(plan1);
-    for(int s=0; s<9; s++)
-    {
-        fftw_destroy_plan(hij_plan[s]);
-    }
+    for(int s=0; s<9; s++) { fftw_destroy_plan(hij_plan[s]); }
 }
 
 int RandomField::flip_index(int I, int N) { return (int)abs(N - I); }
 int RandomField::invert_index(int I, int N) { return (int)(N/2 - abs(N/2 - I)); }
 
-double RandomField::find_rayleigh_factor(double km, double ks, double ep, std::string spec_type, double H0, double uniform_draw)
+double RandomField::find_rayleigh_factor(double km, std::string spec_type, double uniform_draw)
 {
     if(km - 0. < 1.e-12) { return 0.; }
 
@@ -446,7 +439,7 @@ double RandomField::find_rayleigh_factor(double km, double ks, double ep, std::s
         windowed_value = (0.5*(km - H0*H0/km + H0*H0*H0*H0/km/km/km));
     }
 
-    windowed_value *= 0.5 * (1.0 - tanh(ep * (km - ks)));
+    windowed_value *= 0.5 * (1.0 - tanh(epsilon * (km - kstar)));
 
     return windowed_value * sqrt(2./M_PI) * sqrt(-2. * log(uniform_draw));
 }
