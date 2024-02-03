@@ -65,33 +65,15 @@ void ScalarFieldLevel::initialData()
     CH_TIME("ScalarFieldLevel::initialData");
     if (m_verbosity) { pout() << "ScalarFieldLevel::initialData " << m_level << endl; }
 
-    //Load in data from .dat files, for h and hdot initialisation
-
-    int N = m_p.initial_params.N;
-    std::vector<std::vector<double> > h(std::pow(N, 3.), std::vector<double>(6)); // input array memory allocation
-    std::vector<std::vector<double> > hdot(std::pow(N, 3.), std::vector<double>(6));
-
-    for(int i=0; i<N*N*N; i++) for(int j=0; j<6; j++)
-    {
-        h[i][j] = 0.;
-        hdot[i][j] = 0.;
-    }
-
-    RandomField position_field(m_p.initial_params, "position");
-    position_field.calc_spectrum();
-
     BoxLoops::loop(
         make_compute_pack(SetValue(0.),
-                            position_field),
+                            RandomField(m_p.initial_params, "position")),
     m_state_new, m_state_new, INCLUDE_GHOST_CELLS, disable_simd());
 
     pout() << "Calculating position ICs ended.\n";
 
-    RandomField velocity_field(m_p.initial_params, "velocity");
-    velocity_field.calc_spectrum();
-
     BoxLoops::loop(
-        make_compute_pack(velocity_field),
+        make_compute_pack(RandomField(m_p.initial_params, "velocity")),
     m_state_new, m_state_new, INCLUDE_GHOST_CELLS, disable_simd());
 
     pout() << "Calculating velocity ICs ended.\n";
@@ -101,9 +83,6 @@ void ScalarFieldLevel::initialData()
     m_state_new, m_state_new, INCLUDE_GHOST_CELLS,disable_simd());
 
     pout() << "IC set-up ended.\n";
-
-    h.clear();
-    hdot.clear();
     
     fillAllGhosts();
     BoxLoops::loop(GammaCalculator(m_dx), m_state_new, m_state_new,

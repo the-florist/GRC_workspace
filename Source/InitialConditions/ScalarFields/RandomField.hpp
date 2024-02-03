@@ -26,7 +26,6 @@ class RandomField
         void calc_spectrum();
 
     private:
-        fftw_complex** hk;
         fftw_complex** hx;
 
     protected:

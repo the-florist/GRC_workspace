@@ -13,6 +13,7 @@
  inline RandomField::RandomField(InitialScalarData::params_t a_params, std::string a_spec_type)
     : m_params(a_params), m_spec_type(a_spec_type)
 {
+    calc_spectrum();
 }
 
 template <class data_t>
@@ -103,6 +104,7 @@ void RandomField::calc_spectrum()
     double nhat[3] = {0., 0., 0.}; 
 
     // Allocate memory for hij, mode functions and plans
+    fftw_complex** hk;
     hk = (fftw_complex**) malloc(sizeof(fftw_complex*) * 9);
     hx = (fftw_complex**) malloc(sizeof(fftw_complex*) * 9);
     fftw_plan hij_plan[9];
