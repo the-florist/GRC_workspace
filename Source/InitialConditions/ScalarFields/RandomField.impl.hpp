@@ -15,7 +15,8 @@
 {
     kstar = 64.*(2.*M_PI/m_params.L);
     epsilon = 2./m_params.L;
-    H0 = -3.0*sqrt((8.0 * M_PI/3.0/m_params.m_pl/m_params.m_pl)*(0.5*m_params.velocity*m_params.velocity + 0.5*pow(m_params.m * m_params.amplitude, 2.0)));
+    H0 = -3.0*sqrt((8.0 * M_PI/3.0/m_params.m_pl/m_params.m_pl)
+            *(0.5*m_params.velocity*m_params.velocity + 0.5*pow(m_params.m * m_params.amplitude, 2.0)));
     norm = pow(m_params.N, 3.);
 
     calc_spectrum();

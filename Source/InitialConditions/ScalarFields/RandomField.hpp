@@ -22,7 +22,6 @@ class RandomField
 
         template <class data_t> void compute(Cell<data_t> current_cell) const; 
 
-        //template <class data_t>
         void calc_spectrum();
 
     private:
@@ -37,7 +36,7 @@ class RandomField
         double H0;
         double norm;
         
-        double find_rayleigh_factor(double km, double ks, double ep, std::string spec_type, double H0, double uniform_draw);
+        double find_rayleigh_factor(double km, std::string spec_type, double uniform_draw);
         int flip_index(int I, int N);
         int invert_index(int I, int N);
         void calc_transferse_vectors(int x, int y, int z, double MHat[3], double NHat[3], double a = 0.);
