@@ -433,11 +433,11 @@ double RandomField::find_rayleigh_factor(double km, std::string spec_type, doubl
     double windowed_value = 0.;
     if (spec_type == "position")
     {
-        windowed_value = (0.5*(1.0/km + H0*H0/km/km/km));
+        windowed_value = (sqrt(0.5*(1.0/km + H0*H0/km/km/km)));
     }
     else if (spec_type == "velocity")
     {
-        windowed_value = (0.5*(km - H0*H0/km + H0*H0*H0*H0/km/km/km));
+        windowed_value = (sqrt(0.5*(km - H0*H0/km + H0*H0*H0*H0/km/km/km)));
     }
 
     windowed_value *= 0.5 * (1.0 - tanh(epsilon * (km - kstar)));
