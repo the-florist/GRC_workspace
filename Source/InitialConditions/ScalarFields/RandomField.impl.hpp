@@ -168,8 +168,8 @@ void RandomField::calc_spectrum()
     uniform_real_distribution<double> theta_dist(0, 2*M_PI);
     uniform_real_distribution<double> sigma_dist(0, 1);
 
-    double rayleigh_factors[2] = {0., 0.};
-    double theta_factors[2] = {0., 0.};
+    //double rayleigh_factors[2] = {0., 0.};
+    //double theta_factors[2] = {0., 0.};
 
     pout() << "Starting RandomField loop for " << m_spec_type << " field.\n";
 
@@ -184,20 +184,20 @@ void RandomField::calc_spectrum()
         double kmag = pow((pow(i, 2.0) + pow(J, 2.0) + pow(K, 2.0))*4.*M_PI*M_PI/m_params.L/m_params.L, 0.5);
 
         // find random magnitude and argument for each field
-        for(int s=0; s<2; s++) 
+        /*for(int s=0; s<2; s++) 
         { 
-            theta_factors[s] = theta_dist(engine); 
-            rayleigh_factors[s] = find_rayleigh_factor(kmag, m_spec_type, sigma_dist(engine));
-        }
+            //theta_factors[s] = theta_dist(engine); 
+            //rayleigh_factors[s] = find_rayleigh_factor(kmag, m_spec_type, sigma_dist(engine));
+        }*/
 
         //Start of with random numbers filling the entire array
         //h+ mode function
-        hplus[k + N*(j + N*i)][0] = rayleigh_factors[0] * cos(theta_factors[0]);
-        hplus[k + N*(j + N*i)][1] = rayleigh_factors[0] * sin(theta_factors[0]);
+        hplus[k + N*(j + N*i)][0] = find_rayleigh_factor(kmag, m_spec_type, sigma_dist(engine), 0) * cos(theta_dist(engine));
+        hplus[k + N*(j + N*i)][1] = find_rayleigh_factor(kmag, m_spec_type, sigma_dist(engine), 1) * sin(theta_dist(engine));
 
         //hx mode function
-        hcross[k + N*(j + N*i)][0] = rayleigh_factors[1] * cos(theta_factors[1]);
-        hcross[k + N*(j + N*i)][1] = rayleigh_factors[1] * sin(theta_factors[1]);
+        hcross[k + N*(j + N*i)][0] = find_rayleigh_factor(kmag, m_spec_type, sigma_dist(engine), 0) * cos(theta_dist(engine));
+        hcross[k + N*(j + N*i)][1] = find_rayleigh_factor(kmag, m_spec_type, sigma_dist(engine), 1) * sin(theta_dist(engine));
 
         //hij mode functions
         calc_transferse_vectors(i, j, k, mhat, nhat);
@@ -214,23 +214,12 @@ void RandomField::calc_spectrum()
 
     for(int i=0; i<N/2+1; i++) for(int j=0; j<N; j++) for(int k=0; k<N; k++)
     {
-        // If you're at a "special point"
+        // If you're at a "special point", set the imaginary component to 0
         if ((i == 0 || i == N/2) && (j == 0 || j == N/2) && (k == 0 || k == N/2)) 
         { 
-            hplus[k + N*(j + N*i)][0] = rayleigh_factors[0] * cos(theta_factors[0]);
             hplus[k + N*(j + N*i)][1] = 0.;
-
-            hcross[k + N*(j + N*i)][0] = rayleigh_factors[1] * cos(theta_factors[1]);
             hcross[k + N*(j + N*i)][1] = 0.;
-
-            calc_transferse_vectors(i, j, k, mhat, nhat);
-            for (int l=0; l<3; l++) for (int p=0; p<3; p++)
-            {
-                hk[lut[l][p]][k + N*(j + N*i)][0] = ((mhat[l]*mhat[p] - nhat[l]*nhat[p]) * hplus[k + N*(j + N*i)][0]
-                                                    + (mhat[l]*nhat[p] + nhat[l]*mhat[p]) * hcross[k + N*(j + N*i)][0]) / sqrt(2.0);
-
-                hk[lut[l][p]][k + N*(j + N*i)][1] = 0.;
-            }
+            for (int l=0; l<9; l++) { hk[l][k + N*(j + N*i)][1] = 0.; }
         }
 
 
@@ -440,18 +429,24 @@ void RandomField::calc_spectrum()
 int RandomField::flip_index(int I, int N) { return (int)abs(N - I); }
 int RandomField::invert_index(int I, int N) { return (int)(N/2 - abs(N/2 - I)); }
 
-double RandomField::find_rayleigh_factor(double km, std::string spec_type, double uniform_draw)
+double RandomField::find_rayleigh_factor(double km, std::string spec_type, double uniform_draw, int comp)
 {
     if(km - 0. < 1.e-12) { return 0.; }
 
     double windowed_value = 0.;
     if (spec_type == "position")
     {
-        windowed_value = (sqrt(0.5*(1.0/km + H0*H0/km/km/km)));
+        if(comp == 0) { windowed_value = (sin(km/H0) + H0 * cos(km/H0)/km)/sqrt(2 * km); }
+        else if(comp == 1) { windowed_value = (H0 * sin(km/H0)/km + cos(km/H0))/sqrt(2 * km); }
+        else { MayDay::Error("RandomField class: component other than real or imaginary has been requested."); }
+        //windowed_value = (sqrt(0.5*(1.0/km + H0*H0/km/km/km)));
     }
     else if (spec_type == "velocity")
     {
-        windowed_value = (sqrt(0.5*(km - H0*H0/km + H0*H0*H0*H0/km/km/km)));
+        if(comp == 0) { windowed_value = (cos(km/H0) * (H0*H0/km - km) - H0 * sin(km/H0)/km)/sqrt(2 * km); }
+        else if(comp == 1) { windowed_value = (H0*cos(km/H0)/km + sin(km/H0) * (H0*H0/km - km))/sqrt(2 * km); }
+        else { MayDay::Error("RandomField class: component other than real or imaginary has been requested."); }
+        //windowed_value = (sqrt(0.5*(km - H0*H0/km + H0*H0*H0*H0/km/km/km)));
     }
 
     windowed_value *= 0.5 * (1.0 - tanh(epsilon * (km - kstar)));
