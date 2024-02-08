@@ -15,8 +15,8 @@
 {
     kstar = 64.*(2.*M_PI/m_params.L);
     epsilon = 2./m_params.L;
-    H0 = -3.0*sqrt((8.0 * M_PI/3.0/m_params.m_pl/m_params.m_pl)
-            *(0.5*m_params.velocity*m_params.velocity + 0.5*pow(m_params.m * m_params.amplitude, 2.0)));
+    H0 = 0.204692;//-3.0*sqrt((8.0 * M_PI/3.0/m_params.m_pl/m_params.m_pl)
+            //*(0.5*m_params.velocity*m_params.velocity + 0.5*pow(m_params.m * m_params.amplitude, 2.0)));
     norm = pow(m_params.N, 3.);
 
     calc_spectrum();
@@ -168,9 +168,6 @@ void RandomField::calc_spectrum()
     uniform_real_distribution<double> theta_dist(0, 2*M_PI);
     uniform_real_distribution<double> sigma_dist(0, 1);
 
-    //double rayleigh_factors[2] = {0., 0.};
-    //double theta_factors[2] = {0., 0.};
-
     pout() << "Starting RandomField loop for " << m_spec_type << " field.\n";
 
     for(int i=0; i<N/2+1; i++) for(int j=0; j<N; j++) for(int k=0; k<N; k++)
@@ -182,13 +179,6 @@ void RandomField::calc_spectrum()
         if(j > N/2) { J = invert_index(j, N); }
 
         double kmag = pow((pow(i, 2.0) + pow(J, 2.0) + pow(K, 2.0))*4.*M_PI*M_PI/m_params.L/m_params.L, 0.5);
-
-        // find random magnitude and argument for each field
-        /*for(int s=0; s<2; s++) 
-        { 
-            //theta_factors[s] = theta_dist(engine); 
-            //rayleigh_factors[s] = find_rayleigh_factor(kmag, m_spec_type, sigma_dist(engine));
-        }*/
 
         //Start of with random numbers filling the entire array
         //h+ mode function
@@ -210,6 +200,8 @@ void RandomField::calc_spectrum()
                                                 + (mhat[l]*nhat[p] + nhat[l]*mhat[p]) * hcross[k + N*(j + N*i)][1]) / sqrt(2.0);
         }
     }
+
+    pout() << "All independent values have been assigned.\n";
 
 
     for(int i=0; i<N/2+1; i++) for(int j=0; j<N; j++) for(int k=0; k<N; k++)
@@ -296,6 +288,8 @@ void RandomField::calc_spectrum()
             }
         }
     }
+
+    pout() << "First half symmetry rules applied.\n";
 
     // the entire i > N/2 plane, on special planes and in the bulk
     for(int i=N/2+1; i<N; i++) for(int j=0; j<N; j++) for(int k=0; k<N; k++)
@@ -385,8 +379,8 @@ void RandomField::calc_spectrum()
 
     pout() << "Checking fields for reality.\n";
 
-    ofstream hcrosscheck("./hx-mode-fn.dat");
-    ofstream hpluscheck("./hp-mode-fn.dat");
+    //ofstream hcrosscheck("./hx-mode-fn.dat");
+    //ofstream hpluscheck("./hp-mode-fn.dat");
 
     fftw_execute(plan1);
     fftw_execute(plan2);
@@ -398,12 +392,12 @@ void RandomField::calc_spectrum()
             cout << i << "," << j << "," << k << ": " << hplusx[k + N*(j + N*i)][1] << "\n";
             MayDay::Error("hx(x) is not yet real"); 
         }
-        hpluscheck << hplusx[k + N*(j + N*i)][0] << "," << hplusx[k + N*(j + N*i)][1] << "\n";
-        hcrosscheck << hcrossx[k + N*(j + N*i)][0] << "," << hcrossx[k + N*(j + N*i)][1] << "\n";
+        //hpluscheck << hplusx[k + N*(j + N*i)][0] << "," << hplusx[k + N*(j + N*i)][1] << "\n";
+        //hcrosscheck << hcrossx[k + N*(j + N*i)][0] << "," << hcrossx[k + N*(j + N*i)][1] << "\n";
     }
 
-    hpluscheck.close();
-    hcrosscheck.close();
+    //hpluscheck.close();
+    //hcrosscheck.close();
 
     for(int s=0; s<9; s++) { fftw_execute(hij_plan[s]); }
 
@@ -443,8 +437,8 @@ double RandomField::find_rayleigh_factor(double km, std::string spec_type, doubl
     }
     else if (spec_type == "velocity")
     {
-        if(comp == 0) { windowed_value = (cos(km/H0) * (H0*H0/km - km) - H0 * sin(km/H0)/km)/sqrt(2 * km); }
-        else if(comp == 1) { windowed_value = (H0*cos(km/H0)/km + sin(km/H0) * (H0*H0/km - km))/sqrt(2 * km); }
+        if(comp == 0) { windowed_value = (cos(km/H0) * (km - H0*H0/km) + H0 * sin(km/H0)/km)/sqrt(2 * km); }
+        else if(comp == 1) { windowed_value = (sin(km/H0) * (km - H0*H0/km) - H0*cos(km/H0)/km)/sqrt(2 * km); }
         else { MayDay::Error("RandomField class: component other than real or imaginary has been requested."); }
         //windowed_value = (sqrt(0.5*(km - H0*H0/km + H0*H0*H0*H0/km/km/km)));
     }
