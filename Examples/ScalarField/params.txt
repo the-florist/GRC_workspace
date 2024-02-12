@@ -16,7 +16,7 @@ restart_file = ScalarField_000000.3d.hdf5
 checkpoint_interval = 500
 # set to 0 to turn off plot files (except at t=0 and t=stop_time)
 # set to -1 to never ever print plotfiles
-plot_interval = 200
+plot_interval = 100
 num_plot_vars = 7
 plot_vars = chi h11 h12 h13 h22 h23 h33
 
@@ -41,8 +41,8 @@ G_Newton = 1.0
 m_pl = 1.0
 
 # Scalar field initial data
-scalar_amplitude = 10.0
-scalar_velocity = -0.00162846
+scalar_amplitude = 0.0 # 10.0
+scalar_velocity = 0.0 # -0.00162846
 scalar_mass = 0.01
 
 #################################################
