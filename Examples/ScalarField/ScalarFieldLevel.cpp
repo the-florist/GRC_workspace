@@ -84,7 +84,7 @@ void ScalarFieldLevel::initialData()
 
     pout() << "IC set-up ended.\n";
 
-    //MayDay::Error("Check the mode function files.");
+    //MayDay::Error("Check for crash.");
     
     fillAllGhosts();
     BoxLoops::loop(GammaCalculator(m_dx), m_state_new, m_state_new,

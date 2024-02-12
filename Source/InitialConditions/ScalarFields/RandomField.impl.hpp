@@ -123,20 +123,21 @@ void RandomField::calc_spectrum()
     hcross = (fftw_complex*) malloc(sizeof(fftw_complex) * N * N * N);
 
     // Extra memory for reality check on h+ (only for debug)
-    fftw_complex (*hplusx);
+    /*fftw_complex (*hplusx);
     hplusx = (fftw_complex*) malloc(sizeof(fftw_complex) * N * N * N);
     fftw_complex (*hcrossx);
-    hcrossx = (fftw_complex*) malloc(sizeof(fftw_complex) * N * N * N);
+    hcrossx = (fftw_complex*) malloc(sizeof(fftw_complex) * N * N * N);*/
 
-    fftw_plan plan1 = fftw_plan_dft_3d(N, N, N, hplus, hplusx, FFTW_BACKWARD, FFTW_ESTIMATE);
-    fftw_plan plan2 = fftw_plan_dft_3d(N, N, N, hcross, hcrossx, FFTW_BACKWARD, FFTW_ESTIMATE);
+    //fftw_plan plan1 = fftw_plan_dft_3d(N, N, N, hplus, hplusx, FFTW_BACKWARD, FFTW_ESTIMATE);
+    //fftw_plan plan2 = fftw_plan_dft_3d(N, N, N, hcross, hcrossx, FFTW_BACKWARD, FFTW_ESTIMATE);
     
     // Set all arrays to 0
     for(int i=0; i<N; i++) for(int j=0; j<N; j++) for(int k=0; k<N; k++) for(int s=0; s<2; s++)
     {
         hplus[k + N*(j + N*i)][s] = 0.;
         hcross[k + N*(j + N*i)][s] = 0.;
-        hplusx[k + N*(j + N*i)][s] = 0.;
+        //hplusx[k + N*(j + N*i)][s] = 0.;
+        //hcrossx[k + N*(j + N*i)][s] = 0.;
 
         for (int m=0; m<9; m++)
         {
@@ -379,10 +380,7 @@ void RandomField::calc_spectrum()
 
     pout() << "Checking fields for reality.\n";
 
-    //ofstream hcrosscheck("./hx-mode-fn.dat");
-    //ofstream hpluscheck("./hp-mode-fn.dat");
-
-    fftw_execute(plan1);
+    /*fftw_execute(plan1);
     fftw_execute(plan2);
 
     for(int i=0; i<N; i++) for(int j=0; j<N; j++) for(int k=0; k<N; k++)
@@ -392,12 +390,7 @@ void RandomField::calc_spectrum()
             cout << i << "," << j << "," << k << ": " << hplusx[k + N*(j + N*i)][1] << "\n";
             MayDay::Error("hx(x) is not yet real"); 
         }
-        //hpluscheck << hplusx[k + N*(j + N*i)][0] << "," << hplusx[k + N*(j + N*i)][1] << "\n";
-        //hcrosscheck << hcrossx[k + N*(j + N*i)][0] << "," << hcrossx[k + N*(j + N*i)][1] << "\n";
-    }
-
-    //hpluscheck.close();
-    //hcrosscheck.close();
+    }*/
 
     for(int s=0; s<9; s++) { fftw_execute(hij_plan[s]); }
 
@@ -414,9 +407,11 @@ void RandomField::calc_spectrum()
     fftw_free(*hplus);
     fftw_free(*hcross);
     //fftw_free(*hplusx);
+    //fftw_free(*hcrossx);
     fftw_free(**hk);
 
-    fftw_destroy_plan(plan1);
+    //fftw_destroy_plan(plan1);
+    //fftw_destroy_plan(plan2);
     for(int s=0; s<9; s++) { fftw_destroy_plan(hij_plan[s]); }
 }
 
