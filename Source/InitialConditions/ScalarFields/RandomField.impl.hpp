@@ -183,12 +183,12 @@ void RandomField::calc_spectrum()
 
         //Start of with random numbers filling the entire array
         //h+ mode function
-        hplus[k + N*(j + N*i)][0] = find_rayleigh_factor(kmag, m_spec_type, sigma_dist(engine), 0) * cos(theta_dist(engine));
-        hplus[k + N*(j + N*i)][1] = find_rayleigh_factor(kmag, m_spec_type, sigma_dist(engine), 1) * sin(theta_dist(engine));
+        hplus[k + N*(j + N*i)][0] = find_rayleigh_factor(kmag, m_spec_type, sigma_dist(engine), 0);// * cos(theta_dist(engine));
+        hplus[k + N*(j + N*i)][1] = find_rayleigh_factor(kmag, m_spec_type, sigma_dist(engine), 1);// * sin(theta_dist(engine));
 
         //hx mode function
-        hcross[k + N*(j + N*i)][0] = find_rayleigh_factor(kmag, m_spec_type, sigma_dist(engine), 0) * cos(theta_dist(engine));
-        hcross[k + N*(j + N*i)][1] = find_rayleigh_factor(kmag, m_spec_type, sigma_dist(engine), 1) * sin(theta_dist(engine));
+        hcross[k + N*(j + N*i)][0] = find_rayleigh_factor(kmag, m_spec_type, sigma_dist(engine), 0);// * cos(theta_dist(engine));
+        hcross[k + N*(j + N*i)][1] = find_rayleigh_factor(kmag, m_spec_type, sigma_dist(engine), 1);// * sin(theta_dist(engine));
 
         //hij mode functions
         calc_transferse_vectors(i, j, k, mhat, nhat);
@@ -394,6 +394,17 @@ void RandomField::calc_spectrum()
 
     for(int s=0; s<9; s++) { fftw_execute(hij_plan[s]); }
 
+    ofstream spec_check("./spectrum-check.dat");
+
+    for(int i=0; i<N; i++) for(int j=0; j<N; j++) for(int k=0; k<N; k++)
+    {
+    	spec_check << hx[0][k + N*(j + N*i)][0] << "," << hx[1][k + N*(j + N*i)][0] << "," << hx[2][k + N*(j + N*i)][0] << ","
+		<< hx[4][k + N*(j + N*i)][0] << "," << hx[5][k + N*(j + N*i)][0] << "," << hx[8][k + N*(j + N*i)][0] << "\n";
+    }
+
+    spec_check.close();
+
+
     for(int i=0; i<N; i++) for(int j=0; j<N; j++) for(int k=0; k<N; k++) for(int l=0; l<9; l++)
     {
         if(hx[l][k + N*(j + N*i)][1] > 1.e-10) 
@@ -402,6 +413,8 @@ void RandomField::calc_spectrum()
             MayDay::Error("hij(x) is not yet real"); 
         }
     }
+
+    MayDay::Error("Check the spectrum with BunchDavies extractor");
 
     // Free everything
     fftw_free(*hplus);
@@ -438,9 +451,9 @@ double RandomField::find_rayleigh_factor(double km, std::string spec_type, doubl
         //windowed_value = (sqrt(0.5*(km - H0*H0/km + H0*H0*H0*H0/km/km/km)));
     }
 
-    windowed_value *= 0.5 * (1.0 - tanh(epsilon * (km - kstar)));
+    //windowed_value *= 0.5 * (1.0 - tanh(epsilon * (km - kstar)));
 
-    return windowed_value * sqrt(2./M_PI) * sqrt(-2. * log(uniform_draw));
+    return windowed_value;// * sqrt(2./M_PI) * sqrt(-2. * log(uniform_draw));
 }
 
 void RandomField::calc_transferse_vectors(int x, int y, int z, double MHat[3], double NHat[3], double a)
