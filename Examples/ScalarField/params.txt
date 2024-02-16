@@ -7,10 +7,10 @@
 verbosity = 0
 
 # location / naming of output files
-output_path = "/nfs/st01/hpc-gr-epss/eaf49" # Main path for all files. Must exist!
+output_path = "/nfs/st01/hpc-gr-epss/eaf49/dump" # Main path for all files. Must exist!
 chk_prefix = ScalarField_
 plot_prefix = ScalarFieldp_
-restart_file = ScalarField_001000.3d.hdf5
+# restart_file = ScalarField_001000.3d.hdf5
 
 # HDF5files are written every dt = L/N*dt_multiplier*checkpoint_interval
 checkpoint_interval = 500
@@ -41,8 +41,8 @@ G_Newton = 1.0
 m_pl = 1.0
 
 # Scalar field initial data
-scalar_amplitude = 0.0 # 10.0
-scalar_velocity = 0.0 # -0.00162846
+scalar_amplitude = 10.0
+scalar_velocity = -0.00162846
 scalar_mass = 0.01
 
 #################################################
