@@ -438,8 +438,8 @@ double RandomField::find_rayleigh_factor(double km, std::string spec_type, doubl
     double windowed_value = 0.;
     if (spec_type == "position")
     {
-        if(comp == 0) { windowed_value = (sin(km/H0) + H0 * cos(km/H0)/km)/sqrt(2 * km); }
-        else if(comp == 1) { windowed_value = (H0 * sin(km/H0)/km + cos(km/H0))/sqrt(2 * km); }
+        if(comp == 0) { windowed_value = pow(2.*km, -0.5); }//(sin(km/H0) + H0 * cos(km/H0)/km)/sqrt(2 * km); }
+        else if(comp == 1) { windowed_value = pow(2.*km, -0.5); }//(H0 * sin(km/H0)/km + cos(km/H0))/sqrt(2 * km); }
         else { MayDay::Error("RandomField class: component other than real or imaginary has been requested."); }
         //windowed_value = (sqrt(0.5*(1.0/km + H0*H0/km/km/km)));
     }
