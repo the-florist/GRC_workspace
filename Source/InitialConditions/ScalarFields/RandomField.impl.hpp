@@ -414,7 +414,7 @@ void RandomField::calc_spectrum()
     fftw_free(*hplus);
     fftw_free(*hcross);
     //fftw_free(*hplusx);
-    fftw_free(**hk);
+    //fftw_free(**hk);
 
     fftw_destroy_plan(plan1);
     for(int s=0; s<9; s++) { fftw_destroy_plan(hij_plan[s]); }
