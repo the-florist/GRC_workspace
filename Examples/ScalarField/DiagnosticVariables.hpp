@@ -22,6 +22,8 @@ enum
 
     c_Ham,
     c_Mom,
+    c_Ham_abs_terms,
+    c_Moms_abs_terms,
 
     NUM_DIAGNOSTIC_VARS
 };
@@ -40,7 +42,9 @@ static const std::array<std::string, NUM_DIAGNOSTIC_VARS> variable_names = {
     "KinED",
     
     "Ham",
-    "Mom"};
+    "Mom",
+    "Ham_abs_terms",
+    "Mom_abs_terms"};
 }
 
 #endif /* DIAGNOSTICVARIABLES_HPP */
