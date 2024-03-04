@@ -23,7 +23,7 @@ enum
     c_Ham,
     c_Mom,
     c_Ham_abs_terms,
-    c_Moms_abs_terms,
+    c_Mom_abs_terms,
 
     NUM_DIAGNOSTIC_VARS
 };

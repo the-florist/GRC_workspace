@@ -7,7 +7,7 @@
 verbosity = 0
 
 # location / naming of output files
-output_path = "/home/eaf49/rds/hpc-work/HM-abs-print" # Main path for all files. Must exist!
+output_path = "/home/eaf49/rds/hpc-work" # Main path for all files. Must exist!
 chk_prefix = ScalarField_
 plot_prefix = ScalarFieldp_
 # restart_file = ScalarField_000000.3d.hdf5
@@ -18,7 +18,7 @@ checkpoint_interval = 500
 # set to -1 to never ever print plotfiles
 plot_interval = 100
 num_plot_vars = 11
-plot_vars = chi h11 h12 h13 h22 h23 h33 Ham Mom Ham_abs_term Mom_abs_terms
+plot_vars = chi h11 h12 h13 h22 h23 h33 Ham Mom Ham_abs_terms Mom_abs_terms
 
 # subpaths - specific directories for hdf5, pout, extraction data
 # (these are created at runtime)

@@ -168,7 +168,8 @@ void ScalarFieldLevel::prePlotLevel()
     ScalarFieldWithPotential scalar_field(potential);
     BoxLoops::loop(
         MatterConstraints<ScalarFieldWithPotential>(
-            scalar_field, m_dx, m_p.G_Newton, c_Ham, Interval(c_Mom, c_Mom), m_p.min_chi),
+            scalar_field, m_dx, m_p.G_Newton, c_Ham, Interval(c_Mom, c_Mom), m_p.min_chi, 
+	    c_Ham_abs_terms, Interval(c_Mom_abs_terms, c_Mom_abs_terms)),
         m_state_new, m_state_diagnostics, EXCLUDE_GHOST_CELLS);
 }
 #endif
@@ -258,7 +259,7 @@ void ScalarFieldLevel::specificPostTimeStep()
     double hambar = amr_reductions.sum(c_Ham)/vol;
     double mombar = amr_reductions.sum(c_Mom)/vol;
     double habsbar = amr_reductions.sum(c_Ham_abs_terms)/vol;
-    double mabsbar = amr_reductions.sum(c_Moms_abs_terms)/vol;
+    double mabsbar = amr_reductions.sum(c_Mom_abs_terms)/vol;
 
     //Calculates energy components and the slow-roll parameters
     double kinb = 0.5*pibar*pibar;
