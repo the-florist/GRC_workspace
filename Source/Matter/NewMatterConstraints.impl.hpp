@@ -46,8 +46,6 @@ void MatterConstraints<matter_t>::compute(Cell<data_t> current_cell) const
     {
         out.Ham += -16.0 * M_PI * m_G_Newton * emtensor.rho;
         out.Ham_abs_terms += 16.0 * M_PI * m_G_Newton * abs(emtensor.rho);
-
-        out.Ham /= out.Ham_abs_terms;
     }
 
     // Momentum constraints
@@ -58,8 +56,6 @@ void MatterConstraints<matter_t>::compute(Cell<data_t> current_cell) const
             out.Mom[i] += -8.0 * M_PI * m_G_Newton * emtensor.Si[i];
             out.Mom_abs_terms[i] +=
                 8.0 * M_PI * m_G_Newton * abs(emtensor.Si[i]);
-
-            out.Mom[i] /= out.Mom_abs_terms[i];
         }
     }
     // Write the constraints into the output FArrayBox

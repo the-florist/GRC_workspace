@@ -17,8 +17,8 @@ checkpoint_interval = 500
 # set to 0 to turn off plot files (except at t=0 and t=stop_time)
 # set to -1 to never ever print plotfiles
 plot_interval = 100
-num_plot_vars = 7
-plot_vars = chi h11 h12 h13 h22 h23 h33
+num_plot_vars = 11
+plot_vars = chi h11 h12 h13 h22 h23 h33 Ham Mom Ham_abs_terms Mom_abs_terms
 
 # subpaths - specific directories for hdf5, pout, extraction data
 # (these are created at runtime)
@@ -123,8 +123,8 @@ extrapolating_vars = phi Pi
 
 # dt will be dx*dt_multiplier on each grid level
 dt_multiplier = 0.25
-stop_time = 80
-max_steps = 6000
+stop_time = 40
+max_steps = 4000
 
 # Spatial derivative order (only affects CCZ4 RHS)
 max_spatial_derivative_order = 4 # can be 4 or 6
