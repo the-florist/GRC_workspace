@@ -178,7 +178,7 @@ void RandomField::calc_spectrum()
     uniform_real_distribution<double> theta_dist(0, 2*M_PI);
     uniform_real_distribution<double> sigma_dist(0, 1);
 
-    pout() << "Starting RandomField loop for " << m_spec_type << " field.\n";
+    cout << "Starting RandomField loop for " << m_spec_type << " field.\n";
 
     for(int i=0; i<N; i++) for(int j=0; j<N; j++) for(int k=0; k<=N/2; k++)
     {
@@ -222,7 +222,7 @@ void RandomField::calc_spectrum()
         }
     }
 
-    pout() << "All independent values have been assigned.\n Applying symmetry rules.\n";
+    cout << "All independent values have been assigned.\n Applying symmetry rules.\n";
 
     for(int i=0; i<N; i++) for(int j=0; j<N; j++) for(int k=0; k<=N/2; k++)
     {
@@ -231,7 +231,7 @@ void RandomField::calc_spectrum()
         for(int s=0; s<9; s++) { apply_symmetry_rules(i, j, k, hk[s], N); }
     }
 
-    pout() << "Moving to configuration space.\n";
+    cout << "Moving to configuration space.\n";
 
     fftw_execute(plan1);
     fftw_execute(plan2);
