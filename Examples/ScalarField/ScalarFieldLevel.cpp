@@ -63,26 +63,26 @@ void ScalarFieldLevel::initialData()
 {
     time_t t;
     CH_TIME("ScalarFieldLevel::initialData");
-    if (m_verbosity) { pout() << "ScalarFieldLevel::initialData " << m_level << endl; }
+    cout << "ScalarFieldLevel::initialData " << m_level << endl;
 
     BoxLoops::loop(
         make_compute_pack(SetValue(0.),
                             RandomField(m_p.initial_params, "position")),
     m_state_new, m_state_new, INCLUDE_GHOST_CELLS, disable_simd());
 
-    pout() << "Calculating position ICs ended.\n";
+    cout << "Calculating position ICs ended.\n";
 
     BoxLoops::loop(
         make_compute_pack(RandomField(m_p.initial_params, "velocity")),
     m_state_new, m_state_new, INCLUDE_GHOST_CELLS, disable_simd());
 
-    pout() << "Calculating velocity ICs ended.\n";
+    cout << "Calculating velocity ICs ended.\n";
 
     BoxLoops::loop(
         make_compute_pack(InitialScalarData(m_p.initial_params)),
     m_state_new, m_state_new, INCLUDE_GHOST_CELLS,disable_simd());
 
-    pout() << "IC set-up ended.\n";
+    cout << "IC set-up ended.\n";
 
     //MayDay::Error("Check for crash.");
     
