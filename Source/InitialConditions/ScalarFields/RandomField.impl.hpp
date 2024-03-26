@@ -20,6 +20,17 @@
     norm = pow(m_params.N, 3.);
 
     calc_spectrum();
+
+    //for(int s=0; s<9; s++) { free(hx[s]); } // This causes a seg fault as is
+    //MayDay::Error("Ended spectrum set-up.");
+}
+
+inline RandomField::~RandomField()
+{
+    // freeing the class memory that stores the config-space fields
+    for(int s=0; s<9; s++) { free(hx[s]); } // This causes a seg fault as is
+    free(hx);
+    //cout << hx[0][0] << "\n";
 }
 
 template <class data_t>
@@ -91,8 +102,7 @@ void RandomField::compute(Cell<data_t> current_cell) const
 
     else { MayDay::Error("RandomField: Spec type entered is not a viable option."); }
 
-    // freeing the class memory that stores the config-space fields
-    free(hx);
+    //MayDay::Error("Finished setting up first point.");
 }
 
 //template <class data_t>
@@ -108,13 +118,17 @@ void RandomField::calc_spectrum()
     // Allocate memory for hij, mode functions and plans
     fftw_complex** hk;
     hk = (fftw_complex**) malloc(sizeof(fftw_complex*) * 9);
-    hx = (double**) malloc(sizeof(double*) * 9);
     fftw_plan hij_plan[9];
+
+    hx = (double**) malloc(sizeof(double*) * 9);
+    //hx[0] = (double*) malloc(sizeof(double) * 9 * N * N * N);
+    //hx[1] = hx[0] + pow(N, 3);
 
     for(int l=0; l<9; l++)
     {
         hk[l] = (fftw_complex*) malloc(sizeof(fftw_complex) * N * N * (N/2+1));
         hx[l] = (double*) malloc(sizeof(double) * N * N * N);
+        //if(l>0) { hx[l] = hx[0] + (double*)(l*pow(N, 3)); }
         hij_plan[l] = fftw_plan_dft_c2r_3d(N, N, N, hk[l], hx[l], FFTW_ESTIMATE);
     }
 
@@ -178,7 +192,7 @@ void RandomField::calc_spectrum()
     uniform_real_distribution<double> theta_dist(0, 2*M_PI);
     uniform_real_distribution<double> sigma_dist(0, 1);
 
-    cout << "Starting RandomField loop for " << m_spec_type << " field.\n";
+    pout() << "Starting RandomField loop for " << m_spec_type << " field.\n";
 
     for(int i=0; i<N; i++) for(int j=0; j<N; j++) for(int k=0; k<=N/2; k++)
     {
@@ -222,7 +236,7 @@ void RandomField::calc_spectrum()
         }
     }
 
-    cout << "All independent values have been assigned.\n Applying symmetry rules.\n";
+    pout() << "All independent values have been assigned.\n Applying symmetry rules.\n";
 
     for(int i=0; i<N; i++) for(int j=0; j<N; j++) for(int k=0; k<=N/2; k++)
     {
@@ -231,7 +245,7 @@ void RandomField::calc_spectrum()
         for(int s=0; s<9; s++) { apply_symmetry_rules(i, j, k, hk[s], N); }
     }
 
-    cout << "Moving to configuration space.\n";
+    pout() << "Moving to configuration space.\n";
 
     fftw_execute(plan1);
     fftw_execute(plan2);

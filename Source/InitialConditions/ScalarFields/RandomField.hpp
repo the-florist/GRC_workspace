@@ -19,6 +19,7 @@ class RandomField
 {
     public:
         RandomField(InitialScalarData::params_t a_params, std::string a_spec_type);
+        ~RandomField();
 
         template <class data_t> void compute(Cell<data_t> current_cell) const; 
 
