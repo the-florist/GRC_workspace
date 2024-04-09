@@ -21,17 +21,8 @@
 
     calc_spectrum();
 
-    //for(int s=0; s<9; s++) { free(hx[s]); } // This causes a seg fault as is
-    //MayDay::Error("Ended spectrum set-up.");
 }
 
-inline RandomField::~RandomField()
-{
-    // freeing the class memory that stores the config-space fields
-    for(int s=0; s<9; s++) { free(hx[s]); } // This causes a seg fault as is
-    free(hx);
-    //cout << hx[0][0] << "\n";
-}
 
 template <class data_t>
 void RandomField::compute(Cell<data_t> current_cell) const
@@ -101,11 +92,15 @@ void RandomField::compute(Cell<data_t> current_cell) const
     }
 
     else { MayDay::Error("RandomField: Spec type entered is not a viable option."); }
-
-    //MayDay::Error("Finished setting up first point.");
 }
 
-//template <class data_t>
+void RandomField::clear_data()
+{
+    pout() << "Clearing memory allocated to hx array.\n";
+    for(int s=0; s<9; s++) { free(hx[s]); } // This causes a seg fault as is
+    free(hx);
+}
+
 void RandomField::calc_spectrum()
 {
     int N = m_params.N;

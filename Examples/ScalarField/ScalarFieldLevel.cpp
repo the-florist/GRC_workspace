@@ -63,7 +63,7 @@ void ScalarFieldLevel::initialData()
 {
     time_t t;
     CH_TIME("ScalarFieldLevel::initialData");
-    cout << "ScalarFieldLevel::initialData " << m_level << endl;
+    pout() << "ScalarFieldLevel::initialData " << m_level << endl;
 
     RandomField pfield(m_p.initial_params, "position");
 
@@ -72,8 +72,9 @@ void ScalarFieldLevel::initialData()
                             pfield),
     m_state_new, m_state_new, INCLUDE_GHOST_CELLS, disable_simd());
 
-    //cout << "Calculating position ICs ended.\n";
-    //MayDay::Error("Calculating position ICs ended.");
+    pfield.clear_data();
+    pout() << "Calculating position ICs ended.\n";
+   // MayDay::Error("Calculating position ICs ended.");
 
     RandomField vfield(m_p.initial_params, "velocity");
 
@@ -81,7 +82,8 @@ void ScalarFieldLevel::initialData()
         make_compute_pack(vfield),
     m_state_new, m_state_new, INCLUDE_GHOST_CELLS, disable_simd());
 
-    cout << "Calculating velocity ICs ended.\n";
+    vfield.clear_data();
+    pout() << "Calculating velocity ICs ended.\n";
 
     BoxLoops::loop(
         make_compute_pack(InitialScalarData(m_p.initial_params)),

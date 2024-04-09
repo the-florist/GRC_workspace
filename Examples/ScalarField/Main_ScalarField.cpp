@@ -64,15 +64,15 @@ int main(int argc, char *argv[])
 {
     mainSetup(argc, argv);
 
-    //std::cout << "GRChombo setup complete. Starting main program..." << endl;
+    //pout() << "GRChombo setup complete. Starting main program..." << endl;
 
-    //int status = runGRChombo(argc, argv);
+    int status = runGRChombo(argc, argv);
 
-    /*if (status == 0)
+    if (status == 0)
         pout() << "GRChombo finished." << std::endl;
     else
         pout() << "GRChombo failed with return code " << status << std::endl;
 
-    mainFinalize();*/
-    return 0; //status;
+    mainFinalize();
+    return status;
 }
