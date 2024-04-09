@@ -205,6 +205,7 @@ void RandomField::calc_spectrum()
         hcross[k + (N/2+1)*(j + N*i)][0] = find_rayleigh_factor(kmag, m_spec_type, sigma_dist(engine), 0) * cos(theta_dist(engine));
 
         calc_transferse_vectors(i, j, k, mhat, nhat);
+
         for (int l=0; l<3; l++) for (int p=0; p<3; p++)
         {
             hk[lut[l][p]][k + (N/2+1)*(j + N*i)][0] = ((mhat[l]*mhat[p] - nhat[l]*nhat[p]) * hplus[k + (N/2+1)*(j + N*i)][0]
@@ -259,6 +260,11 @@ void RandomField::calc_spectrum()
 
 int RandomField::flip_index(int I, int N) { return (int)abs(N - I); }
 int RandomField::invert_index(int I, int N) { return (int)(N/2 - abs(N/2 - I)); }
+int RandomField::invert_index_with_sign(int I, int N)
+{
+    if(I <= N/2) { return I; }
+    else { return abs(N/2 - I) - N/2; }
+}
 
 void RandomField::apply_symmetry_rules(int i, int j, int k, double field[][2], int N)
 {
@@ -312,30 +318,38 @@ void RandomField::calc_transferse_vectors(int x, int y, int z, double MHat[3], d
         MayDay::Error("RandomField: Please choose a shift factor between 0 and 2 pi."); 
     }
 
+    int X = x;
+    int Y = y;
+
+    if(x > N/2 && y > N/2) { X = invert_index_with_sign(x); Y = invert_index_with_sign(y); }
+    else if(x > N/2) { X = invert_index_with_sign(x); }
+    else if(y > N/2) { Y = invert_index_with_sign(y); }
+    else { ; }
+
     if (z > 0.) 
     {
-        if (x == 0. && y == 0.) { mh[0] = 1.; mh[1] = 0.; mh[2] = 0.; 
+        if (X == 0. && Y == 0.) { mh[0] = 1.; mh[1] = 0.; mh[2] = 0.; 
                                   nh[0] = 0.; nh[1] = 1.; nh[2] = 0.; 
                                 }
 
-        else { mh[0] = y/sqrt(x*x+y*y); mh[1] = -x/sqrt(x*x+y*y); mh[2] = 0.L;
-               nh[0] = z*x/sqrt(z*z*(x*x + y*y) + pow(x*x + y*y, 2.));
-               nh[1] = z*y/sqrt(z*z*(x*x + y*y) + pow(x*x + y*y, 2.));
-               nh[2] = -(x*x + y*y)/sqrt(z*z*(x*x + y*y) + pow(x*x + y*y, 2.)); 
+        else { mh[0] = Y/sqrt(X*X+Y*Y); mh[1] = -X/sqrt(X*X+Y*Y); mh[2] = 0.L;
+               nh[0] = z*X/sqrt(z*z*(X*X + Y*Y) + pow(X*X + Y*Y, 2.));
+               nh[1] = z*Y/sqrt(z*z*(X*X + Y*Y) + pow(X*X + Y*Y, 2.));
+               nh[2] = -(X*X + Y*Y)/sqrt(z*z*(X*X + Y*Y) + pow(X*X + Y*Y, 2.)); 
              }
     }
 
-    else if (y > 0) { mh[0] = 0.; mh[1] = 0.; mh[2] = -1.;
-                      nh[0] = -y/sqrt(y*y + x*x);
-                      nh[1] = x/sqrt(y*y + x*x);
+    else if (abs(Y) > 0) { mh[0] = 0.; mh[1] = 0.; mh[2] = -1.;
+                      nh[0] = -Y/sqrt(Y*Y + X*X);
+                      nh[1] = X/sqrt(Y*Y + X*X);
                       nh[2] = 0.; 
                     }
 
-    else if (x > 0) { mh[0] = 0.; mh[1] = 1.; mh[2] = 0.;
+    else if (abs(X) > 0) { mh[0] = 0.; mh[1] = 1.; mh[2] = 0.;
                       nh[0] = 0.; nh[1] = 0.; nh[2] = 1.;
                     }
 
-    else if (x==0 && y==0 && z==0) { ; }
+    else if (X==0 && Y==0 && z==0) { ; }
 
     else 
     {
@@ -344,7 +358,7 @@ void RandomField::calc_transferse_vectors(int x, int y, int z, double MHat[3], d
 
     for(int l=0; l<3; l++) { MHat[l] = cos(a)*mh[l] + sin(a)*nh[l]; NHat[l] = -sin(a)*mh[l] + cos(a)*nh[l]; }
 
-    if (x != 0 && y != 0 && z != 0) { Test_norm(MHat); Test_norm(NHat); Test_orth(MHat, NHat); }
+    if (X != 0 && Y != 0 && z != 0) { Test_norm(MHat); Test_norm(NHat); Test_orth(MHat, NHat); }
 }
 
 void RandomField::Test_norm(double vec[]) 
