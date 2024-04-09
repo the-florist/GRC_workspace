@@ -7,10 +7,10 @@
 verbosity = 0
 
 # location / naming of output files
-output_path = "/home/eaf49/rds/hpc-work" # Main path for all files. Must exist!
+output_path = "/home/eaf49/rds/hpc-work/hdf5-mnhat-flip-with-sign" # Main path for all files. Must exist!
 chk_prefix = ScalarField_
 plot_prefix = ScalarFieldp_
-# restart_file = ScalarField_000000.3d.hdf5
+# restart_file = ScalarField_002000.3d.hdf5
 
 # HDF5files are written every dt = L/N*dt_multiplier*checkpoint_interval
 checkpoint_interval = 500
@@ -124,7 +124,7 @@ extrapolating_vars = phi Pi
 # dt will be dx*dt_multiplier on each grid level
 dt_multiplier = 0.25
 stop_time = 40
-max_steps = 4000
+max_steps = 5000
 
 # Spatial derivative order (only affects CCZ4 RHS)
 max_spatial_derivative_order = 4 # can be 4 or 6

@@ -88,8 +88,8 @@ void ScalarFieldLevel::initialData()
     std::stringstream p_number;
     std::stringstream v_number;
 
-    std::vector<std::vector<double> > h(std::pow(N, 3.), std::vector<double>(6)); // input array memory allocation
-    std::vector<std::vector<double> > hdot(std::pow(N, 3.), std::vector<double>(6));
+    std::vector<std::vector<double> > h(std::pow(N, 3.), std::vector<double>(6, 0.)); // input array memory allocation
+    std::vector<std::vector<double> > hdot(std::pow(N, 3.), std::vector<double>(6, 0.));
 
     int n=0; //box position counter
     for (int i=0; i < std::pow(N, 3.); i++) //
