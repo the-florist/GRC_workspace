@@ -19,11 +19,10 @@ class RandomField
 {
     public:
         RandomField(InitialScalarData::params_t a_params, std::string a_spec_type);
-       // ~RandomField();
 
         template <class data_t> void compute(Cell<data_t> current_cell) const; 
 
-	void clear_data();
+	    void clear_data();
         void calc_spectrum();
 
     private:
@@ -46,7 +45,6 @@ class RandomField
         void calc_transferse_vectors(int x, int y, int z, double MHat[3], double NHat[3], double a = 0.);
         void Test_norm(double vec[]);
         void Test_orth(double vec1[], double vec2[]);
-
 };
 
 #include "RandomField.impl.hpp"
