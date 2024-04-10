@@ -44,6 +44,7 @@ m_pl = 1.0
 scalar_amplitude = 10.0
 scalar_velocity = -0.00162846
 scalar_mass = 0.01
+tensor_amplitude = 1.e-6
 
 #################################################
 # Grid parameters

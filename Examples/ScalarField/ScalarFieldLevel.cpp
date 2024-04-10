@@ -24,7 +24,6 @@
 #include "ComputePack.hpp"
 #include "GammaCalculator.hpp"
 #include "InitialScalarData.hpp"
-#include "KerrBH.hpp"
 #include "Potential.hpp"
 #include "ScalarField.hpp"
 #include "SetValue.hpp"
@@ -42,6 +41,7 @@
 // Start time
 #include <ctime>
 #include <typeinfo>
+#include "RandomField.hpp"
 
 // Things to do at each advance step, after the RK4 is calculated 
 void ScalarFieldLevel::specificAdvance()
@@ -63,96 +63,35 @@ void ScalarFieldLevel::initialData()
 {
     time_t t;
     CH_TIME("ScalarFieldLevel::initialData");
-    if (m_verbosity) { pout() << "ScalarFieldLevel::initialData " << m_level << endl; }
+    pout() << "ScalarFieldLevel::initialData " << m_level << endl;
 
-    //Load in data from .dat files, for h and hdot initialisation
-
-    ifstream gw_pos;
-    ifstream gw_vel;
-    gw_pos.open("./gw-re-pos.dat", ios::in); //open the file with the waves in it
-    gw_vel.open("./gw-re-vel.dat", ios::in);
-
-    if (!gw_pos)
-    {
-        MayDay::Error("GW position or velocity file failed to open.");
-    }
-
-    //int m,n = 0;
-    int N = m_p.initial_params.N_init;
-
-    std::string delim = " ";
-    double A = 1e-6;
-
-    std::string p_datline;
-    std::string v_datline;
-    std::stringstream p_number;
-    std::stringstream v_number;
-
-    std::vector<std::vector<double> > h(std::pow(N, 3.), std::vector<double>(6, 0.)); // input array memory allocation
-    std::vector<std::vector<double> > hdot(std::pow(N, 3.), std::vector<double>(6, 0.));
-
-    int n=0; //box position counter
-    for (int i=0; i < std::pow(N, 3.); i++) //
-    {
-        p_datline = "";
-        std::getline(gw_pos, p_datline);
-        int m=0; //tensor index counter
-
-        for(int j=0; j<p_datline.length(); j++)
-        {
-            if(p_datline[j] != delim[0])
-            {
-                p_number << p_datline[j];
-            }
-            else
-            {
-                p_number >> h[n][m];
-                h[n][m] *= A;
-                p_number.clear();
-                m++;
-            }
-        }
-
-        v_datline = "";
-        std::getline(gw_vel, v_datline);
-        m=0;
-
-        for(int j=0; j<v_datline.length(); j++)
-        {
-            if(v_datline[j] != delim[0])
-            {
-                v_number << p_datline[j];
-            }
-            else
-            {
-                v_number >> hdot[n][m];
-                hdot[n][m] *= A;
-                v_number.clear();
-                m++;
-            }
-        }
-
-        n++;
-
-        p_number.clear();
-        v_number.clear();
-
-        if(n > std::pow(N, 3.))
-        {
-            MayDay::Error("File length has exceeded N^3.");
-        }
-    }
-
-    gw_pos.close();
-    gw_vel.close();
+    RandomField pfield(m_p.initial_params, "position");
 
     BoxLoops::loop(
-    make_compute_pack(SetValue(0.),
-                        InitialScalarData(m_p.initial_params, m_dx, h, hdot)),
+        make_compute_pack(SetValue(0.),
+                            pfield),
+    m_state_new, m_state_new, INCLUDE_GHOST_CELLS, disable_simd());
+
+    pfield.clear_data();
+    pout() << "Calculating position ICs ended.\n";
+   // MayDay::Error("Calculating position ICs ended.");
+
+    RandomField vfield(m_p.initial_params, "velocity");
+
+    BoxLoops::loop(
+        make_compute_pack(vfield),
+    m_state_new, m_state_new, INCLUDE_GHOST_CELLS, disable_simd());
+
+    vfield.clear_data();
+    pout() << "Calculating velocity ICs ended.\n";
+
+    BoxLoops::loop(
+        make_compute_pack(InitialScalarData(m_p.initial_params)),
     m_state_new, m_state_new, INCLUDE_GHOST_CELLS,disable_simd());
 
-    h.clear();
-    hdot.clear();
+    cout << "IC set-up ended.\n";
+
+    //MayDay::Error("Check for crash.");
     
     fillAllGhosts();
     BoxLoops::loop(GammaCalculator(m_dx), m_state_new, m_state_new,

@@ -12,7 +12,6 @@
 
 // Problem specific includes:
 #include "InitialScalarData.hpp"
-#include "KerrBH.hpp"
 #include "Potential.hpp"
 #include "MeansVars.hpp"
 
@@ -37,15 +36,12 @@ class SimulationParameters : public SimulationParametersBase
         //pp.load("max_level", grid_params.max_level, 0);
         pp.load("scalar_amplitude", initial_params.amplitude, 10.0);
         pp.load("scalar_velocity", initial_params.velocity, -0.001);
-        pp.load("scalar_width", initial_params.width, 1.0);
-        pp.load("scalar_mass", potential_params.scalar_mass, 0.1);
-        pp.load("scalar_mass", initial_params.mass, 1e-6);
-        pp.load("N_full", initial_params.N_init, 0);
 
-        // Initial Kerr data
-        /*pp.load("kerr_mass", kerr_params.mass, 1.0);
-        pp.load("kerr_spin", kerr_params.spin, 0.0);
-        pp.load("kerr_center", kerr_params.center, center);*/
+        pp.load("scalar_mass", potential_params.scalar_mass, 0.1);
+        pp.load("scalar_mass", initial_params.m, 1e-6);
+        pp.load("N_full", initial_params.N, 128);
+        pp.load("L_full", initial_params.L, 4.);
+        pp.load("tensor_amplitude", initial_params.A, 1.e-6);
     }
 
     void check_params()
@@ -62,7 +58,6 @@ class SimulationParameters : public SimulationParametersBase
     double m_pl;
     InitialScalarData::params_t initial_params;
     Potential::params_t potential_params;
-    //KerrBH::params_t kerr_params;
     MeansVars::params_t grid_params;
 };
 
