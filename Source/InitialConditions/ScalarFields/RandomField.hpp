@@ -27,6 +27,7 @@ class RandomField
 
     private:
         double** hx;
+        int N;
 
     protected:
         const InitialScalarData::params_t m_params;

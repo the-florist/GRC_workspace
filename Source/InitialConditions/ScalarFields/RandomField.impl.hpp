@@ -13,6 +13,7 @@
  inline RandomField::RandomField(InitialScalarData::params_t a_params, std::string a_spec_type)
     : m_params(a_params), m_spec_type(a_spec_type)
 {
+    N = m_params.N;
     kstar = 32.*(2.*M_PI/m_params.L);
     epsilon = 0.05;
     H0 = -3.0*sqrt((8.0 * M_PI/3.0/m_params.m_pl/m_params.m_pl)
@@ -27,7 +28,6 @@ template <class data_t>
 void RandomField::compute(Cell<data_t> current_cell) const
 {
     // Pull out the grid parameters
-    int N = m_params.N;
     double L = m_params.L;
     double dx = L/N;
 
