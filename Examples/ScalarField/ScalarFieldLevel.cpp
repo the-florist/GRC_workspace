@@ -74,7 +74,6 @@ void ScalarFieldLevel::initialData()
 
     pfield.clear_data();
     pout() << "Calculating position ICs ended.\n";
-   // MayDay::Error("Calculating position ICs ended.");
 
     RandomField vfield(m_p.initial_params, "velocity");
 
@@ -90,8 +89,6 @@ void ScalarFieldLevel::initialData()
     m_state_new, m_state_new, INCLUDE_GHOST_CELLS,disable_simd());
 
     cout << "IC set-up ended.\n";
-
-    //MayDay::Error("Check for crash.");
     
     fillAllGhosts();
     BoxLoops::loop(GammaCalculator(m_dx), m_state_new, m_state_new,
