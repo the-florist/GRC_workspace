@@ -102,8 +102,6 @@ void RandomField::clear_data()
 
 void RandomField::calc_spectrum()
 {
-    int N = m_params.N;
-
     // Polarisation basis vectors and k
     double mhat[3] = {0., 0., 0.};
     double nhat[3] = {0., 0., 0.}; 
@@ -190,8 +188,8 @@ void RandomField::calc_spectrum()
         // Putting the 0 mode in the right spot in memory
         int I = i;
         int J = j;
-        if(i > N/2) { I = invert_index(i, N); }
-        if(j > N/2) { J = invert_index(j, N); }
+        if(i > N/2) { I = invert_index(i); }
+        if(j > N/2) { J = invert_index(j); }
 
         kmag = pow((pow(I, 2.0) + pow(J, 2.0) + pow(k, 2.0))*4.*M_PI*M_PI/m_params.L/m_params.L, 0.5);
 
@@ -234,9 +232,9 @@ void RandomField::calc_spectrum()
 
     for(int i=0; i<N; i++) for(int j=0; j<N; j++) for(int k=0; k<=N/2; k++)
     {
-        apply_symmetry_rules(i, j, k, hplus, N);
-        apply_symmetry_rules(i, j, k, hcross, N);
-        for(int s=0; s<9; s++) { apply_symmetry_rules(i, j, k, hk[s], N); }
+        apply_symmetry_rules(i, j, k, hplus);
+        apply_symmetry_rules(i, j, k, hcross);
+        for(int s=0; s<9; s++) { apply_symmetry_rules(i, j, k, hk[s]); }
 
         for(int l=0; l<2; l++)
         {
@@ -265,27 +263,27 @@ void RandomField::calc_spectrum()
     for(int s=0; s<9; s++) { fftw_destroy_plan(hij_plan[s]); }
 }
 
-int RandomField::flip_index(int I, int N) { return (int)abs(N - I); }
-int RandomField::invert_index(int I, int N) { return (int)(N/2 - abs(N/2 - I)); }
-int RandomField::invert_index_with_sign(int I, int N)
+int RandomField::flip_index(int I) { return (int)abs(N - I); }
+int RandomField::invert_index(int I) { return (int)(N/2 - abs(N/2 - I)); }
+int RandomField::invert_index_with_sign(int I)
 {
     if(I <= N/2) { return I; }
     else { return abs(N/2 - I) - N/2; }
 }
 
-void RandomField::apply_symmetry_rules(int i, int j, int k, double field[][2], int N)
+void RandomField::apply_symmetry_rules(int i, int j, int k, double field[][2])
 {
     if (k==0 || k==N/2) 
     {
         if((i>N/2 && j==N/2) || (i==0 && j>N/2) || (i>N/2 && j==0) || (i==N/2 && j>N/2)) // Special lines
         {
-            field[k + (N/2+1)*(j + N*i)][0] = field[k + (N/2+1)*(invert_index(j, N) + N*invert_index(i, N))][0];
-            field[k + (N/2+1)*(j + N*i)][1] = -field[k + (N/2+1)*(invert_index(j, N) + N*invert_index(i, N))][1];
+            field[k + (N/2+1)*(j + N*i)][0] = field[k + (N/2+1)*(invert_index(j) + N*invert_index(i))][0];
+            field[k + (N/2+1)*(j + N*i)][1] = -field[k + (N/2+1)*(invert_index(j) + N*invert_index(i))][1];
         }
         else if(j > N/2) // Special plane bulk
         {
-            field[k + (N/2+1)*(j + N*i)][0] = field[k + (N/2+1)*(invert_index(j, N) + N*flip_index(i, N))][0];
-            field[k + (N/2+1)*(j + N*i)][1] = -field[k + (N/2+1)*(invert_index(j, N) + N*flip_index(i, N))][1];
+            field[k + (N/2+1)*(j + N*i)][0] = field[k + (N/2+1)*(invert_index(j) + N*flip_index(i))][0];
+            field[k + (N/2+1)*(j + N*i)][1] = -field[k + (N/2+1)*(invert_index(j) + N*flip_index(i))][1];
         }
     }
 }
@@ -328,10 +326,8 @@ void RandomField::calc_transferse_vectors(int x, int y, int z, double MHat[3], d
     int X = x;
     int Y = y;
 
-    if(x > m_params.N/2 && y > m_params.N/2) { X = invert_index_with_sign(x, m_params.N); Y = invert_index_with_sign(y, m_params.N); }
-    else if(x > m_params.N/2) { X = invert_index_with_sign(x, m_params.N); }
-    else if(y > m_params.N/2) { Y = invert_index_with_sign(y, m_params.N); }
-    else { ; }
+    if(x > N/2) { X = invert_index_with_sign(x); }
+    if(y > N/2) { Y = invert_index_with_sign(y); }
 
     if (z > 0.) 
     {
