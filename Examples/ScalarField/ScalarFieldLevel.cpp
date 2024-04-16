@@ -74,7 +74,6 @@ void ScalarFieldLevel::initialData()
 
     pfield.clear_data();
     pout() << "Calculating position ICs ended.\n";
-   // MayDay::Error("Calculating position ICs ended.");
 
     std::vector<std::vector<double> > h(std::pow(N, 3.), std::vector<double>(6, 0.)); // input array memory allocation
     std::vector<std::vector<double> > hdot(std::pow(N, 3.), std::vector<double>(6, 0.));
@@ -90,9 +89,7 @@ void ScalarFieldLevel::initialData()
         make_compute_pack(InitialScalarData(m_p.initial_params)),
     m_state_new, m_state_new, INCLUDE_GHOST_CELLS,disable_simd());
 
-    cout << "IC set-up ended.\n";
-
-    //MayDay::Error("Check for crash.");
+    pout() << "IC set-up ended.\n";
     
     fillAllGhosts();
     BoxLoops::loop(GammaCalculator(m_dx), m_state_new, m_state_new,
@@ -197,6 +194,7 @@ void ScalarFieldLevel::specificPostTimeStep()
     double H = -amr_reductions.sum(c_H)/vol/3.;
 
     double hambar = amr_reductions.sum(c_Ham)/vol;
+    double hamabspbpSum = amr_reductions.sum(c_Ham_abs_pbp)/vol;
     double mombar = amr_reductions.sum(c_Mom)/vol;
     double habsbar = amr_reductions.sum(c_Ham_abs_terms)/vol;
     double mabsbar = amr_reductions.sum(c_Mom_abs_terms)/vol;
@@ -222,7 +220,8 @@ void ScalarFieldLevel::specificPostTimeStep()
     if(first_step) 
     {
         means_file.write_header_line({"Scalar field mean","Scalar field variance","Pi mean","Scale factor","Conformal factor variance","Hubble factor",
-            "Kinetic ED","Potential ED","First SRP","Second SRP","Avg Ham constr","Avg Mom constr","Avg Ham abs term","Avg Mom abs term","Avg lapse"});
+            "Kinetic ED","Potential ED","First SRP","Second SRP","Avg Ham constr","Avg |Ham| constr (point by point)","Avg Mom constr",
+            "Avg Ham abs term","Avg Mom abs term","Avg lapse"});
     }
-    means_file.write_time_data_line({phibar, phivar, pibar, a, chivar, H, kinb, potb, epsilon, delta, hambar, mombar, habsbar, mabsbar, lapse});
+    means_file.write_time_data_line({phibar, phivar, pibar, a, chivar, H, kinb, potb, epsilon, delta, hambar, hamabspbpSum, mombar, habsbar, mabsbar, lapse});
 }

@@ -15,8 +15,8 @@
 {
     kstar = 32.*(2.*M_PI/m_params.L);
     epsilon = 0.05;
-    H0 = 0.204692;//-3.0*sqrt((8.0 * M_PI/3.0/m_params.m_pl/m_params.m_pl)
-            //*(0.5*m_params.velocity*m_params.velocity + 0.5*pow(m_params.m * m_params.amplitude, 2.0)));
+    H0 = -3.0*sqrt((8.0 * M_PI/3.0/m_params.m_pl/m_params.m_pl)
+            *(0.5*m_params.velocity*m_params.velocity + 0.5*pow(m_params.m * m_params.amplitude, 2.0)));
     norm = pow(m_params.N, 3.);
 
     calc_spectrum();
@@ -197,8 +197,8 @@ void RandomField::calc_spectrum()
 
         // Start of with random numbers filling the entire array
         // Real parts of h+, hx and hij
-        hplus[k + (N/2+1)*(j + N*i)][0] = find_rayleigh_factor(kmag, m_spec_type, sigma_dist(engine), 0);// * cos(theta_dist(engine));
-        hcross[k + (N/2+1)*(j + N*i)][0] = find_rayleigh_factor(kmag, m_spec_type, sigma_dist(engine), 0);// * cos(theta_dist(engine));
+        hplus[k + (N/2+1)*(j + N*i)][0] = find_rayleigh_factor(kmag, m_spec_type, sigma_dist(engine), 0) * cos(theta_dist(engine));
+        hcross[k + (N/2+1)*(j + N*i)][0] = find_rayleigh_factor(kmag, m_spec_type, sigma_dist(engine), 0) * cos(theta_dist(engine));
 
         calc_transferse_vectors(i, j, k, mhat, nhat);
 
@@ -218,8 +218,8 @@ void RandomField::calc_spectrum()
         // Else, fill the imaginary part of each field appropriately
         else
         {
-            hplus[k + (N/2+1)*(j + N*i)][1] = find_rayleigh_factor(kmag, m_spec_type, sigma_dist(engine), 1);// * sin(theta_dist(engine));
-            hcross[k + (N/2+1)*(j + N*i)][1] = find_rayleigh_factor(kmag, m_spec_type, sigma_dist(engine), 1);// * sin(theta_dist(engine));
+            hplus[k + (N/2+1)*(j + N*i)][1] = find_rayleigh_factor(kmag, m_spec_type, sigma_dist(engine), 1) * sin(theta_dist(engine));
+            hcross[k + (N/2+1)*(j + N*i)][1] = find_rayleigh_factor(kmag, m_spec_type, sigma_dist(engine), 1) * sin(theta_dist(engine));
             for (int l=0; l<3; l++) for (int p=0; p<3; p++)
             {
                 hk[lut[l][p]][k + (N/2+1)*(j + N*i)][1] = ((mhat[l]*mhat[p] - nhat[l]*nhat[p]) * hplus[k + (N/2+1)*(j + N*i)][1]
@@ -246,7 +246,7 @@ void RandomField::calc_spectrum()
     }
 
     hkprint.close();
-    MayDay::Error("Printed file for comparison with stand-alone IC generator.");
+    //MayDay::Error("Printed file for comparison with stand-alone IC generator.");
 
     pout() << "Moving to configuration space.\n";
 
@@ -310,7 +310,7 @@ double RandomField::find_rayleigh_factor(double km, std::string spec_type, doubl
     }
 
     // Apply the tanh window function and the uniform draw
-    windowed_value *= 0.5 * (1.0 - tanh(epsilon * (km - kstar)));// * sqrt(-2. * log(uniform_draw));
+    windowed_value *= 0.5 * (1.0 - tanh(epsilon * (km - kstar))) * sqrt(-2. * log(uniform_draw));
     return windowed_value;
 }
 
