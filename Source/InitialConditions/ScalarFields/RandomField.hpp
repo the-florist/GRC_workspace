@@ -33,6 +33,7 @@ class RandomField
         const InitialScalarData::params_t m_params;
         std::string m_spec_type;
 
+        bool debug;
         double kstar;
         double epsilon;
         double H0;
@@ -41,7 +42,7 @@ class RandomField
         int flip_index(int I);
         int invert_index(int I);
         int invert_index_with_sign(int I);
-        double find_rayleigh_factor(double km, std::string spec_type, double uniform_draw, int comp);
+        double find_rayleigh_factor(double km, std::string spec_type, double rand_amp, double rand_phase, int comp);
         void apply_symmetry_rules(int i, int j, int k, double field[][2]);
         void calc_transferse_vectors(int x, int y, int z, double MHat[3], double NHat[3], double a = 0.);
         void Test_norm(double vec[]);
