@@ -310,7 +310,7 @@ double RandomField::find_rayleigh_factor(double km, std::string spec_type, doubl
     }
 
     // Apply the tanh window function and the uniform draw
-    windowed_value *= 0.5 * (1.0 - tanh(epsilon * (km - kstar)));// * sqrt(-2. * log(uniform_draw));
+    windowed_value *= 0.5 * (1.0 - tanh(epsilon * (km - kstar))) * sqrt(-2. * log(uniform_draw));
     return windowed_value;
 }
 

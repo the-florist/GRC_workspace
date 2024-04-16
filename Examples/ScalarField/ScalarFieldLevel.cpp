@@ -192,13 +192,11 @@ void ScalarFieldLevel::specificPostTimeStep()
     double a = 1./sqrt(amr_reductions.sum(c_a)/vol);
     double H = -amr_reductions.sum(c_H)/vol/3.;
 
-    double hambar = amr_reductions.sum(c_Ham);///vol;
-    double mombar = amr_reductions.sum(c_Mom);///vol;
-    double habsbar = amr_reductions.sum(c_Ham_abs_terms);///vol;
-    double mabsbar = amr_reductions.sum(c_Mom_abs_terms);///vol;
-
-    cout << m_time << ", " << vol << ", " << hambar << ", " << mombar << ", " << habsbar << ", " << mabsbar << "\n";
-    MayDay::Error("Check cout for avg terms.");
+    double hambar = amr_reductions.sum(c_Ham)/vol;
+    double hamabspbpSum = amr_reductions.sum(c_Ham_abs_pbp)/vol;
+    double mombar = amr_reductions.sum(c_Mom)/vol;
+    double habsbar = amr_reductions.sum(c_Ham_abs_terms)/vol;
+    double mabsbar = amr_reductions.sum(c_Mom_abs_terms)/vol;
 
     //Calculates energy components and the slow-roll parameters
     double kinb = 0.5*pibar*pibar;
@@ -221,7 +219,8 @@ void ScalarFieldLevel::specificPostTimeStep()
     if(first_step) 
     {
         means_file.write_header_line({"Scalar field mean","Scalar field variance","Pi mean","Scale factor","Conformal factor variance","Hubble factor",
-            "Kinetic ED","Potential ED","First SRP","Second SRP","Avg Ham constr","Avg Mom constr","Avg Ham abs term","Avg Mom abs term","Avg lapse"});
+            "Kinetic ED","Potential ED","First SRP","Second SRP","Avg Ham constr","Avg |Ham| constr (point by point)","Avg Mom constr",
+            "Avg Ham abs term","Avg Mom abs term","Avg lapse"});
     }
-    means_file.write_time_data_line({phibar, phivar, pibar, a, chivar, H, kinb, potb, epsilon, delta, hambar, mombar, habsbar, mabsbar, lapse});
+    means_file.write_time_data_line({phibar, phivar, pibar, a, chivar, H, kinb, potb, epsilon, delta, hambar, hamabspbpSum, mombar, habsbar, mabsbar, lapse});
 }
