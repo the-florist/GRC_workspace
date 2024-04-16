@@ -88,7 +88,7 @@ void ScalarFieldLevel::initialData()
         make_compute_pack(InitialScalarData(m_p.initial_params)),
     m_state_new, m_state_new, INCLUDE_GHOST_CELLS,disable_simd());
 
-    cout << "IC set-up ended.\n";
+    pout() << "IC set-up ended.\n";
     
     fillAllGhosts();
     BoxLoops::loop(GammaCalculator(m_dx), m_state_new, m_state_new,
@@ -192,10 +192,13 @@ void ScalarFieldLevel::specificPostTimeStep()
     double a = 1./sqrt(amr_reductions.sum(c_a)/vol);
     double H = -amr_reductions.sum(c_H)/vol/3.;
 
-    double hambar = amr_reductions.sum(c_Ham)/vol;
-    double mombar = amr_reductions.sum(c_Mom)/vol;
-    double habsbar = amr_reductions.sum(c_Ham_abs_terms)/vol;
-    double mabsbar = amr_reductions.sum(c_Mom_abs_terms)/vol;
+    double hambar = amr_reductions.sum(c_Ham);///vol;
+    double mombar = amr_reductions.sum(c_Mom);///vol;
+    double habsbar = amr_reductions.sum(c_Ham_abs_terms);///vol;
+    double mabsbar = amr_reductions.sum(c_Mom_abs_terms);///vol;
+
+    cout << m_time << ", " << vol << ", " << hambar << ", " << mombar << ", " << habsbar << ", " << mabsbar << "\n";
+    MayDay::Error("Check cout for avg terms.");
 
     //Calculates energy components and the slow-roll parameters
     double kinb = 0.5*pibar*pibar;
