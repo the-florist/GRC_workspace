@@ -13,8 +13,8 @@
  inline RandomField::RandomField(InitialScalarData::params_t a_params, std::string a_spec_type)
     : m_params(a_params), m_spec_type(a_spec_type)
 {
-    kstar = 32.*(2.*M_PI/m_params.L);
-    epsilon = 0.05;
+    kstar = 16.*(2.*M_PI/m_params.L);
+    epsilon = 0.5;
     H0 = -3.0*sqrt((8.0 * M_PI/3.0/m_params.m_pl/m_params.m_pl)
             *(0.5*m_params.velocity*m_params.velocity + 0.5*pow(m_params.m * m_params.amplitude, 2.0)));
     norm = pow(m_params.N, 3.);
@@ -82,6 +82,13 @@ void RandomField::compute(Cell<data_t> current_cell) const
 
     else if(m_spec_type == "velocity")
     {
+        /*current_cell.store_vars(0., c_A11);
+        current_cell.store_vars(0., c_A12);
+        current_cell.store_vars(0., c_A13);
+        current_cell.store_vars(0., c_A22);
+        current_cell.store_vars(0., c_A23);
+        current_cell.store_vars(0., c_A33);*/
+
         current_cell.store_vars(-m_params.A * hx[0][r], c_A11);
         current_cell.store_vars(-m_params.A * hx[1][r], c_A12);
         current_cell.store_vars(-m_params.A * hx[2][r], c_A13);

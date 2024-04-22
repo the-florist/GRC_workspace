@@ -75,8 +75,7 @@ void ScalarFieldLevel::initialData()
     pfield.clear_data();
     pout() << "Calculating position ICs ended.\n";
 
-    std::vector<std::vector<double> > h(std::pow(N, 3.), std::vector<double>(6, 0.)); // input array memory allocation
-    std::vector<std::vector<double> > hdot(std::pow(N, 3.), std::vector<double>(6, 0.));
+    RandomField vfield(m_p.initial_params, "velocity");
 
     BoxLoops::loop(
         make_compute_pack(vfield),
@@ -177,6 +176,13 @@ void ScalarFieldLevel::specificPostTimeStep()
 
     bool first_step = (m_time == 0.);
     fillAllGhosts();
+    Potential potential(m_p.potential_params);
+    ScalarFieldWithPotential scalar_field(potential);
+    BoxLoops::loop(
+        MatterConstraints<ScalarFieldWithPotential>(
+            scalar_field, m_dx, m_p.G_Newton, c_Ham, Interval(c_Mom, c_Mom), m_p.min_chi, 
+	    c_Ham_abs_terms, Interval(c_Mom_abs_terms, c_Mom_abs_terms)),
+        m_state_new, m_state_diagnostics, EXCLUDE_GHOST_CELLS);
 
     double mass = m_p.potential_params.scalar_mass;//0.01;
 
