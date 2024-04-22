@@ -297,16 +297,20 @@ double RandomField::find_rayleigh_factor(double km, std::string spec_type, doubl
     // See Mukanov-Sasaki mode function decomposition in: (forthcoming paper)
     if (m_spec_type == "position")
     {
-        if(comp == 0) { windowed_value = (cos(km/H0) - H0 * sin(km/H0)/km)/sqrt(2. * km); }
+        windowed_value = sqrt((1/km/2.0 + (H0*H0/km/km/km)/2.0));
+        /*if(comp == 0) { windowed_value = (cos(km/H0) - H0 * sin(km/H0)/km)/sqrt(2. * km); }
         else if(comp == 1) { windowed_value = -(sin(km/H0) + H0 * cos(km/H0)/km)/sqrt(2. * km); }
-        else { MayDay::Error("RandomField: component other than real or imaginary has been requested."); }
+        else { MayDay::Error("RandomField: component other than real or imaginary has been requested."); }*/
     }
     else if (m_spec_type == "velocity")
     {
-        if(comp == 0) { windowed_value = (sin(km/H0) * (H0*H0/km - km) - H0 * cos(km/H0))/sqrt(2. * km); }
+        windowed_value = sqrt((km/2.0 - (H0*H0)/km/2.0 + H0*H0*H0*H0/km/km/km/2.0)); 
+        /*if(comp == 0) { windowed_value = (sin(km/H0) * (H0*H0/km - km) - H0 * cos(km/H0))/sqrt(2. * km); }
         else if(comp == 1) { windowed_value = (cos(km/H0) * (H0*H0/km - km) + H0 * sin(km/H0))/sqrt(2. * km); }
-        else { MayDay::Error("RandomField: component other than real or imaginary has been requested."); }
+        else { MayDay::Error("RandomField: component other than real or imaginary has been requested."); }*/
     }
+
+    windowed_value *= sqrt(-2. * log(rand_amp));
 
     // Apply the random phase
     if(comp == 0) { windowed_value *= cos(rand_phase); }
@@ -314,7 +318,7 @@ double RandomField::find_rayleigh_factor(double km, std::string spec_type, doubl
     else { MayDay::Error("RandomField: component other than real or imaginary has been requested."); }
 
     // Apply the tanh window function and the random amplitude draw
-    windowed_value *= 0.5 * (1.0 - tanh(epsilon * (km - kstar)));// * sqrt(-2. * log(rand_amp));
+    windowed_value *= 0.5 * (1.0 - tanh(epsilon * (km - kstar)));
     return windowed_value;
 }
 
