@@ -15,6 +15,7 @@
 #include "GRParmParse.hpp"
 #include "SetupFunctions.hpp"
 #include "SimulationParameters.hpp"
+#include "MultiLevelTask.hpp"
 
 // Problem specific includes:
 #include "ScalarFieldLevel.hpp"
@@ -52,6 +53,11 @@ int runGRChombo(int argc, char *argv[])
         if (level->time() == 0.)
             level->specificPostTimeStep();
     };
+
+    int some_interval = 1;
+    bool reverse_levels = true;
+    MultiLevelTaskPtr<> call_task(task, reverse_levels, some_interval);
+    gr_amr.schedule(call_task);
 
     // Engage! Run the evolution
     gr_amr.run(sim_params.stop_time, sim_params.max_steps);

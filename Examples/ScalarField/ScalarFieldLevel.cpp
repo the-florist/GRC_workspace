@@ -215,8 +215,8 @@ void ScalarFieldLevel::specificPostTimeStep()
     double chivar = amr_reductions.sum(c_ch2)/vol - c_a*c_a;
 
     //Calculates gauge quantities
-    double lapse = amr_reductions_evo.sum(c_lapse)/vol;
-    double shift[3] = {amr_reductions_evo.sum(c_shift1)/vol, amr_reductions_evo.sum(c_shift2)/vol, amr_reductions_evo.sum(c_shift3)/vol}
+    double lapse = amr_reductions.sum(c_lapse)/vol;
+    double shift[3] = {amr_reductions.sum(c_shift1)/vol, amr_reductions.sum(c_shift2)/vol, amr_reductions.sum(c_shift3)/vol};
 
     //Prints all that out into the data/ directory
     SmallDataIO means_file(m_p.data_path+"means_file", m_dt, m_time, m_restart_time, SmallDataIO::APPEND, first_step, ".dat");
