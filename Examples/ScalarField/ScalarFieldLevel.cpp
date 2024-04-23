@@ -176,11 +176,17 @@ void ScalarFieldLevel::specificPostTimeStep()
 
     bool first_step = (m_time == 0.);
     fillAllGhosts();
+    Potential potential(m_p.potential_params);
+    ScalarFieldWithPotential scalar_field(potential);
+    BoxLoops::loop(
+        MatterConstraints<ScalarFieldWithPotential>(
+            scalar_field, m_dx, m_p.G_Newton, c_Ham, Interval(c_Mom, c_Mom), m_p.min_chi, 
+	    c_Ham_abs_terms, Interval(c_Mom_abs_terms, c_Mom_abs_terms)),
+        m_state_new, m_state_diagnostics, EXCLUDE_GHOST_CELLS);
 
-    double mass = m_p.potential_params.scalar_mass;//0.01;
+    double mass = m_p.potential_params.scalar_mass;
 
     AMRReductions<VariableType::diagnostic> amr_reductions(m_gr_amr);
-    AMRReductions<VariableType::evolution> amr_reductions_evo(m_gr_amr);
     double vol = amr_reductions.get_domain_volume();
 
     BoxLoops::loop(MeansVars(m_dx, m_p.grid_params, m_p.data_path), m_state_new, m_state_diagnostics, FILL_GHOST_CELLS);
@@ -192,13 +198,10 @@ void ScalarFieldLevel::specificPostTimeStep()
     double a = 1./sqrt(amr_reductions.sum(c_a)/vol);
     double H = -amr_reductions.sum(c_H)/vol/3.;
 
-    double hambar = amr_reductions.sum(c_Ham);///vol;
-    double mombar = amr_reductions.sum(c_Mom);///vol;
-    double habsbar = amr_reductions.sum(c_Ham_abs_terms);///vol;
-    double mabsbar = amr_reductions.sum(c_Mom_abs_terms);///vol;
-
-    cout << m_time << ", " << vol << ", " << hambar << ", " << mombar << ", " << habsbar << ", " << mabsbar << "\n";
-    MayDay::Error("Check cout for avg terms.");
+    double hambar = amr_reductions.sum(c_Ham)/vol;
+    double mombar = amr_reductions.sum(c_Mom)/vol;
+    double habsbar = amr_reductions.sum(c_Ham_abs_terms)/vol;
+    double mabsbar = amr_reductions.sum(c_Mom_abs_terms)/vol;
 
     //Calculates energy components and the slow-roll parameters
     double kinb = 0.5*pibar*pibar;
@@ -213,6 +216,7 @@ void ScalarFieldLevel::specificPostTimeStep()
 
     //Calculates gauge quantities
     double lapse = amr_reductions_evo.sum(c_lapse)/vol;
+    double shift[3] = {amr_reductions_evo.sum(c_shift1)/vol, amr_reductions_evo.sum(c_shift2)/vol, amr_reductions_evo.sum(c_shift3)/vol}
 
     //Prints all that out into the data/ directory
     SmallDataIO means_file(m_p.data_path+"means_file", m_dt, m_time, m_restart_time, SmallDataIO::APPEND, first_step, ".dat");

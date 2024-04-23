@@ -36,9 +36,15 @@ inline
      current_cell.store_vars(vars.Pi, c_sfd);
      current_cell.store_vars(vars.chi, c_a);
      current_cell.store_vars(vars.K, c_H);
+
      current_cell.store_vars(phisq, c_sf2);
      current_cell.store_vars(chisq, c_ch2);
      current_cell.store_vars(kin, c_kin);
+
+     /*current_cell.store_vars(lapse, c_lapse);
+     current_cell.store_vars(shift[0], c_shift1);
+     current_cell.store_vars(shift[1], c_shift2);
+     current_cell.store_vars(shift[2], c_shift3);*/
  }
 
  template <class data_t>
