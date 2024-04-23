@@ -82,6 +82,13 @@ void RandomField::compute(Cell<data_t> current_cell) const
 
     else if(m_spec_type == "velocity")
     {
+        /*current_cell.store_vars(0., c_A11);
+        current_cell.store_vars(0., c_A12);
+        current_cell.store_vars(0., c_A13);
+        current_cell.store_vars(0., c_A22);
+        current_cell.store_vars(0., c_A23);
+        current_cell.store_vars(0., c_A33);*/
+
         current_cell.store_vars(-m_params.A * hx[0][r], c_A11);
         current_cell.store_vars(-m_params.A * hx[1][r], c_A12);
         current_cell.store_vars(-m_params.A * hx[2][r], c_A13);
@@ -310,7 +317,7 @@ double RandomField::find_rayleigh_factor(double km, std::string spec_type, doubl
     }
 
     // Apply the tanh window function and the uniform draw
-    windowed_value *= 0.5 * (1.0 - tanh(epsilon * (km - kstar)));// * sqrt(-2. * log(uniform_draw));
+    windowed_value *= 0.5 * (1.0 - tanh(epsilon * (km - kstar))) * sqrt(-2. * log(uniform_draw));
     return windowed_value;
 }
 

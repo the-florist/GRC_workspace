@@ -30,13 +30,14 @@ inline
      data_t phisq = vars.phi*vars.phi;
      data_t chisq = vars.chi*vars.chi;
      data_t kin = vars.Pi*vars.Pi;
+     data_t hamabspbp = abs(vars.Ham);
 
     //store class (Vars) variables as diagnostic variables on the grid
      current_cell.store_vars(vars.phi, c_sf);
      current_cell.store_vars(vars.Pi, c_sfd);
      current_cell.store_vars(vars.chi, c_a);
      current_cell.store_vars(vars.K, c_H);
-
+     current_cell.store_vars(hamabspbp, c_Ham_abs_pbp);
      current_cell.store_vars(phisq, c_sf2);
      current_cell.store_vars(chisq, c_ch2);
      current_cell.store_vars(kin, c_kin);
@@ -56,7 +57,7 @@ inline
      define_enum_mapping(mapping_function, c_Pi, Pi);
      define_enum_mapping(mapping_function, c_chi, chi);
      define_enum_mapping(mapping_function, c_K, K);
-     define_enum_mapping(mapping_function, c_h11, h11);
+     define_enum_mapping(mapping_function, c_Ham, Ham);
  }
 
  #endif /* MEANSVARS_IMPL_HPP_ */

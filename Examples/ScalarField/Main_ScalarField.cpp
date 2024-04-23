@@ -54,6 +54,14 @@ int runGRChombo(int argc, char *argv[])
             level->specificPostTimeStep();
     };
 
+    // (!!) only un-comment one of the code blocks below
+    // at a time.
+
+    // call specificPostTimeStep at every time step
+    //MultiLevelTaskPtr<> call_task(task);
+    //call_task.execute(gr_amr);
+
+    // call specificPostTimeStep at some_interval
     int some_interval = 1;
     bool reverse_levels = true;
     MultiLevelTaskPtr<> call_task(task, reverse_levels, some_interval);

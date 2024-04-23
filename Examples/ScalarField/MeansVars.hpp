@@ -28,8 +28,7 @@ class MeansVars
             data_t Pi;
             data_t chi;
             data_t K;
-
-            data_t h11;
+            data_t Ham;
             
             template <typename mapping_function_t>
             void enum_mapping(mapping_function_t mapping_function);
