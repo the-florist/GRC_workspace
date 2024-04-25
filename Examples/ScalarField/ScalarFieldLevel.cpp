@@ -187,6 +187,7 @@ void ScalarFieldLevel::specificPostTimeStep()
     double mass = m_p.potential_params.scalar_mass;
 
     AMRReductions<VariableType::diagnostic> amr_reductions(m_gr_amr);
+    AMRReductions<VariableType::evolution> amr_evo_reductions(m_gr_amr);
     double vol = amr_reductions.get_domain_volume();
 
     BoxLoops::loop(MeansVars(m_dx, m_p.grid_params, m_p.data_path), m_state_new, m_state_diagnostics, FILL_GHOST_CELLS);
@@ -198,7 +199,7 @@ void ScalarFieldLevel::specificPostTimeStep()
     double a = 1./sqrt(amr_reductions.sum(c_a)/vol);
     double H = -amr_reductions.sum(c_H)/vol/3.;
 
-    double hambar = amr_reductions.sum(c_Ham)/vol;
+    //double hambar = amr_reductions.sum(c_Ham)/vol;
     double hamabspbpSum = amr_reductions.sum(c_Ham_abs_pbp)/vol;
     double mombar = amr_reductions.sum(c_Mom)/vol;
     double habsbar = amr_reductions.sum(c_Ham_abs_terms)/vol;
@@ -213,11 +214,13 @@ void ScalarFieldLevel::specificPostTimeStep()
 
     //Calculates variances
     double phivar = amr_reductions.sum(c_sf2)/vol - phibar*phibar;
-    double chivar = amr_reductions.sum(c_ch2)/vol - c_a*c_a;
+    double chivar = amr_reductions.sum(c_ch2)/vol - pow(amr_reductions.sum(c_a)/vol, 2.);
 
     //Calculates gauge quantities
-    double lapse = amr_reductions.sum(c_lapse)/vol;
-    double shift[3] = {amr_reductions.sum(c_shift1)/vol, amr_reductions.sum(c_shift2)/vol, amr_reductions.sum(c_shift3)/vol};
+    double lapse = amr_evo_reductions.sum(c_lapse)/vol;
+    double shift[3] = {amr_evo_reductions.sum(c_shift1)/vol, 
+                        amr_evo_reductions.sum(c_shift2)/vol, 
+                        amr_evo_reductions.sum(c_shift3)/vol};
 
     //Prints all that out into the data/ directory
     SmallDataIO means_file(m_p.data_path+"means_file", m_dt, m_time, m_restart_time, SmallDataIO::APPEND, first_step, ".dat");
@@ -225,9 +228,10 @@ void ScalarFieldLevel::specificPostTimeStep()
 
     if(first_step) 
     {
-        means_file.write_header_line({"Scalar field mean","Scalar field variance","Pi mean","Scale factor","Conformal factor variance","Hubble factor",
-            "Kinetic ED","Potential ED","First SRP","Second SRP","Avg Ham constr","Avg |Ham| constr (point by point)","Avg Mom constr",
-            "Avg Ham abs term","Avg Mom abs term","Avg lapse"});
+        means_file.write_header_line({"SF mean ","SF variance ","Pi mean ","a ","chi variance ","H ",
+            "First SRP ","Second SRP ","|H| pbp norm ","M ","MAbs ","lapse ","shift 1 ","shift 2 ","shift 3"}); // "Kinetic ED ","Potential ED ", "Avg |Ham| constr (point by point) ","Avg Mom constr ",
+            //"Avg Ham abs term ","Avg Mom abs term ",
     }
-    means_file.write_time_data_line({phibar, phivar, pibar, a, chivar, H, kinb, potb, epsilon, delta, hambar, hamabspbpSum, mombar, habsbar, mabsbar, lapse});
+    means_file.write_time_data_line({phibar, phivar, pibar, a, chivar, H, epsilon, delta, hamabspbpSum/habsbar, mombar, mabsbar, lapse,
+                                        shift[0], shift[1], shift[2]}); // kinb, potb, 
 }
