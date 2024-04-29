@@ -59,9 +59,22 @@ Constraints::Vars<data_t> Constraints::constraint_equations(
         auto A_UU = TensorAlgebra::raise_all(vars.A, h_UU);
         data_t tr_A2 = TensorAlgebra::compute_trace(vars.A, A_UU);
 
-        out.Ham = ricci.scalar +
-                  (GR_SPACEDIM - 1.) * vars.K * vars.K / GR_SPACEDIM - tr_A2;
+        out.Ham = ricci.scalar;// +
+                  //(GR_SPACEDIM - 1.) * vars.K * vars.K / GR_SPACEDIM - tr_A2;
         out.Ham -= 2 * m_cosmological_constant;
+
+        /*simd<double> tol(1e-8);
+        if(simd_compare_gt(ricci.scalar, tol))
+        { 
+            //IntVect m_coords = current_cell.get_int_vect();
+            /*std::cout << "Coords are: \n";
+            for(int s=0; s<3; s++)
+            {
+                std::cout << m_coords[s] << ",";
+            }
+            std::cout << "\nRicci at this point: " << ricci.scalar << "\n";
+            MayDay::Error("Ham constraint large at the above coords.");
+        }*/
 
         out.Ham_abs_terms =
             abs(ricci.scalar) + abs(tr_A2) +

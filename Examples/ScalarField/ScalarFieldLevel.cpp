@@ -99,14 +99,14 @@ void ScalarFieldLevel::initialData()
 // Things to do before outputting a checkpoint file
 void ScalarFieldLevel::prePlotLevel()
 {
-    fillAllGhosts();
+    /*fillAllGhosts();
     Potential potential(m_p.potential_params);
     ScalarFieldWithPotential scalar_field(potential);
     BoxLoops::loop(
         MatterConstraints<ScalarFieldWithPotential>(
             scalar_field, m_dx, m_p.G_Newton, c_Ham, Interval(c_Mom, c_Mom), m_p.min_chi, 
 	    c_Ham_abs_terms, Interval(c_Mom_abs_terms, c_Mom_abs_terms)),
-        m_state_new, m_state_diagnostics, EXCLUDE_GHOST_CELLS);
+        m_state_new, m_state_diagnostics, EXCLUDE_GHOST_CELLS);*/
 }
 #endif
 
@@ -184,6 +184,7 @@ void ScalarFieldLevel::specificPostTimeStep()
 	    c_Ham_abs_terms, Interval(c_Mom_abs_terms, c_Mom_abs_terms)),
         m_state_new, m_state_diagnostics, EXCLUDE_GHOST_CELLS);
 
+    MayDay::Error("Constraint calc in sPTS is done.");
     double mass = m_p.potential_params.scalar_mass;
 
     AMRReductions<VariableType::diagnostic> amr_reductions(m_gr_amr);

@@ -73,6 +73,7 @@ class CCZ4Geometry
             FOR(k, l) { chris_LLU[i][j][k] += h_UU[k][l] * chris.LLL[i][j][l]; }
         }
 
+        simd<double> ricci_hat_tr(0.);
         FOR(i, j)
         {
             data_t ricci_hat = 0;
@@ -104,6 +105,23 @@ class CCZ4Geometry
 
             out.LL[i][j] =
                 (ricci_chi + vars.chi * ricci_hat + z_terms) / vars.chi;
+
+            simd<double> ricci_hat_tr(0.);
+            if(i==j) { ricci_hat_tr += z_terms; }
+        }
+
+        simd<double> tol(1e-8);
+        simd<double> tr(TensorAlgebra::compute_trace(out.LL, h_UU));
+        if(simd_compare_gt(tr, tol))
+        { 
+            //IntVect m_coords = current_cell.get_int_vect();
+            /*std::cout << "Coords are: \n";
+            for(int s=0; s<3; s++)
+            {
+                std::cout << m_coords[s] << ",";
+            }*/
+            std::cout << "\nRicci LL trace terms at this point: " << tr << "\n";
+            MayDay::Error("RTrace large at the above coords.");
         }
 
         out.scalar = vars.chi * TensorAlgebra::compute_trace(out.LL, h_UU);
@@ -173,6 +191,21 @@ class CCZ4Geometry
             ricci.LL[i][j] += 0.5 * dZ_coeff * z_terms / vars.chi;
         }
         ricci.scalar = vars.chi * TensorAlgebra::compute_trace(ricci.LL, h_UU);
+
+        /*simd<double> tol(1e-8);
+        simd<double> tr(TensorAlgebra::compute_trace(ricci.LL, h_UU));
+        if(simd_compare_gt(tr, tol))
+        { 
+            //IntVect m_coords = current_cell.get_int_vect();
+            /*std::cout << "Coords are: \n";
+            for(int s=0; s<3; s++)
+            {
+                std::cout << m_coords[s] << ",";
+            }
+            std::cout << "\nTrace at this point: " << tr << "\n";
+            MayDay::Error("Trace large at the above coords.");
+        }*/
+
         return ricci;
     }
 

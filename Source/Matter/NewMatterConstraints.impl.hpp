@@ -31,6 +31,7 @@ void MatterConstraints<matter_t>::compute(Cell<data_t> current_cell) const
     const auto d1 = m_deriv.template diff1<BSSNMatterVars>(current_cell);
     const auto d2 = m_deriv.template diff2<BSSNMatterVars>(current_cell);
 
+
     // Inverse metric and Christoffel symbol
     const auto h_UU = TensorAlgebra::compute_inverse_sym(vars.h);
     const auto chris = TensorAlgebra::compute_christoffel(d1.h, h_UU);
@@ -46,6 +47,19 @@ void MatterConstraints<matter_t>::compute(Cell<data_t> current_cell) const
     {
         out.Ham += -16.0 * M_PI * m_G_Newton * emtensor.rho;
         out.Ham_abs_terms += 16.0 * M_PI * m_G_Newton * abs(emtensor.rho);
+
+        /*simd<double> tol(1e-8);
+        if(simd_compare_gt(out.Ham, tol))
+        { 
+            IntVect m_coords = current_cell.get_int_vect();
+            std::cout << "Coords are: \n";
+            for(int s=0; s<3; s++)
+            {
+                std::cout << m_coords[s] << ",";
+            }
+            std::cout << "\nHam at this point: " << out.Ham << "\n";
+            MayDay::Error("Ham constraint large at the above coords.");
+        }*/
     }
 
     // Momentum constraints

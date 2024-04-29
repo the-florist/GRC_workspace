@@ -17,7 +17,7 @@
     debug = false;
     kstar = 16.*(2.*M_PI/m_params.L);
     epsilon = 0.5;
-    H0 = -3.0*sqrt((8.0 * M_PI/3.0/m_params.m_pl/m_params.m_pl)
+    H0 = sqrt((8.0 * M_PI/3.0/m_params.m_pl/m_params.m_pl)
             *(0.5*m_params.velocity*m_params.velocity + 0.5*pow(m_params.m * m_params.amplitude, 2.0)));
     norm = pow(N, 3.);
 
@@ -251,7 +251,7 @@ void RandomField::calc_spectrum()
     }
 
     hkprint.close();
-    MayDay::Error("Printed file for comparison with stand-alone IC generator.");
+    //MayDay::Error("Printed file for comparison with stand-alone IC generator.");
 
     pout() << "Moving to configuration space.\n";
 
