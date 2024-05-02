@@ -9,7 +9,11 @@
 #include "AlwaysInline.hpp"
 #include "DimensionDefinitions.hpp"
 #include "Tensor.hpp"
+#include "Cell.hpp"
 #include <array>
+
+/// Computes the (i,j) component of the Kronecker delta
+constexpr int delta(int i, int j) { return (i == j); }
 
 template <class data_t> struct chris_t
 {
@@ -25,7 +29,7 @@ template <class data_t>
 ALWAYS_INLINE data_t compute_determinant_sym(const Tensor<2, data_t, 3> &matrix)
 {
     data_t det = matrix[0][0] * matrix[1][1] * matrix[2][2] +
-                 2 * matrix[0][1] * matrix[0][2] * matrix[1][2] -
+                 2. * matrix[0][1] * matrix[0][2] * matrix[1][2] -
                  matrix[0][0] * matrix[1][2] * matrix[1][2] -
                  matrix[1][1] * matrix[0][2] * matrix[0][2] -
                  matrix[2][2] * matrix[0][1] * matrix[0][1];
@@ -53,7 +57,15 @@ template <class data_t>
 Tensor<2, data_t> compute_inverse_sym(const Tensor<2, data_t, 3> &matrix)
 {
     data_t deth = compute_determinant_sym(matrix);
-    data_t deth_inverse = 1. / deth;
+
+    /*std::ofstream det_print("./det-GammaC.dat", ios::app);
+
+    det_print << setprecision(12) << deth << ": " << matrix[0][0] << "," << matrix[1][1] << "," << matrix[2][2] << ": ";
+    det_print << matrix[1][2] << "," << matrix[0][2] << "," << matrix[0][1] << "\n";
+
+    det_print.close();*/
+
+    data_t deth_inverse = ((data_t) 1.) / deth;
     Tensor<2, data_t> h_UU;
     h_UU[0][0] = (matrix[1][1] * matrix[2][2] - matrix[1][2] * matrix[1][2]) *
                  deth_inverse;
@@ -70,6 +82,32 @@ Tensor<2, data_t> compute_inverse_sym(const Tensor<2, data_t, 3> &matrix)
     h_UU[1][0] = h_UU[0][1];
     h_UU[2][0] = h_UU[0][2];
     h_UU[2][1] = h_UU[1][2];
+
+    simd<double> tr_UU(0.);
+    simd<double> tr_matrix(0.);
+    simd<double> one(1.);
+    simd<double> three(3.);
+    simd<double> tol(1e-8);
+    simd<double> tol2(1e-12);
+    Tensor<2, data_t> dotprod;
+
+    //std::cout << h_UU[0][0] << "\n";// << "\n" << matrix[1][1] * matrix[2][2] << "\n";
+    //std::cout << matrix[1][1] * matrix[2][2] - one << "\n" << (matrix[0][0] - one) * (matrix[0][0] - one) << "\n";
+    //std::cout << matrix[1][1] * matrix[2][2] + matrix[0][0] * matrix[2][2] + matrix[0][0] * matrix[1][1] - three << "\n";
+    //std::cout << matrix[1][2] << "\n" << matrix[0][2] << "\n" << matrix[0][1] << "\n";
+    //std::cout << matrix[1][2] * matrix[1][2] << "\n" << matrix[0][2] * matrix[0][2] << "\n" << matrix[0][1] * matrix[0][1] << "\n";
+    //std::cout << deth_inverse - one << "\n";
+
+    /*for(int i=0; i<3; i++) for(int j=0; j<3; j++)
+    {
+        dotprod[i][j] = matrix[i][j] - h_UU[i][j];
+        //dotprod[i][j] -= delta(i, j);
+        std::cout << dotprod[i][j] << "\n";
+    }*/
+
+    for(int s=0; s<3; s++) { tr_UU += h_UU[s][s]; tr_matrix += matrix[s][s]; }// - one - (matrix[s][s] - one); }
+    if(simd_compare_gt(tr_UU - three, tol) || simd_compare_gt(tr_matrix - three, tol2)) { std::cout << tr_UU-three << "\n" << tr_matrix-three << "\n"; MayDay::Error("Trace cond. failed here (in UU fn)."); }
+    //MayDay::Error("Check tensor dot product.");
 
     return h_UU;
 }
@@ -230,9 +268,6 @@ ALWAYS_INLINE Tensor<2, data_t> lower_all(const Tensor<2, data_t> &tensor_UU,
 { // The code for lowering is exactly the same as for raising
     return raise_all(tensor_UU, metric);
 }
-
-/// Computes the (i,j) component of the Kronecker delta
-constexpr int delta(int i, int j) { return (i == j); }
 
 /// Computes the levi-civita symbol (3D, NB, symbol, not the Tensor)
 inline Tensor<3, double> epsilon()

@@ -82,15 +82,29 @@ class CCZ4Geometry
                 // We call this ricci_hat rather than ricci_tilde as we have
                 // replaced what should be \tilde{Gamma} with \hat{Gamma} in
                 // order to avoid adding terms that cancel later on
-                ricci_hat += 0.5 * (vars.h[k][i] * d1.Gamma[k][j] +
-                                    vars.h[k][j] * d1.Gamma[k][i]);
+                //ricci_hat += (vars.h[k][i] * d1.Gamma[k][j] +
+                //                    vars.h[k][j] * d1.Gamma[k][i]);
+                //if(i==j) { ricci_hat_tr += vars.h[k][i]; }// * d1.Gamma[k][j]; }
+                /*if(i==0 && j==0) 
+                { 
+                    //std::cout << "The i,j flag works.\n";
+                    simd<double> tol(1e-8);
+                    test = (ricci_hat); 
+                    if(simd_compare_gt(test, tol))
+                    {
+                        std::cout << "R hat term at this point: " << test << "\n";
+                        MayDay::Error("LL part is large at this point.");
+                    }
+                }*/
+
                 ricci_hat += 0.5 * vars.Gamma[k] * d1.h[i][j][k];
+
                 FOR(l)
                 {
-                    ricci_hat += -0.5 * h_UU[k][l] * d2.h[i][j][k][l] +
-                                 (chris.ULL[k][l][i] * chris_LLU[j][k][l] +
-                                  chris.ULL[k][l][j] * chris_LLU[i][k][l] +
-                                  chris.ULL[k][i][l] * chris_LLU[k][j][l]);
+                    ricci_hat += -0.5 * h_UU[k][l] * d2.h[i][j][k][l];// +
+                                 //(chris.ULL[k][l][i] * chris_LLU[j][k][l] +
+                                  //chris.ULL[k][l][j] * chris_LLU[i][k][l] +
+                                  //chris.ULL[k][i][l] * chris_LLU[k][j][l]);
                 }
             }
 
@@ -106,13 +120,14 @@ class CCZ4Geometry
             out.LL[i][j] =
                 (ricci_chi + vars.chi * ricci_hat + z_terms) / vars.chi;
 
-            simd<double> ricci_hat_tr(0.);
-            if(i==j) { ricci_hat_tr += z_terms; }
+            //simd<double> ricci_hat_tr(0.);
+            if(i==j) { ricci_hat_tr += ricci_hat; }
         }
 
         simd<double> tol(1e-8);
-        simd<double> tr(TensorAlgebra::compute_trace(out.LL, h_UU));
-        if(simd_compare_gt(tr, tol))
+        //simd<double> LL(out.LL[0][0]);
+        //simd<double> tr(TensorAlgebra::compute_trace(out.LL, h_UU));
+        if(simd_compare_gt(ricci_hat_tr, tol))
         { 
             //IntVect m_coords = current_cell.get_int_vect();
             /*std::cout << "Coords are: \n";
@@ -120,8 +135,8 @@ class CCZ4Geometry
             {
                 std::cout << m_coords[s] << ",";
             }*/
-            std::cout << "\nRicci LL trace terms at this point: " << tr << "\n";
-            MayDay::Error("RTrace large at the above coords.");
+            std::cout << "\nRhat tr term at this point: " << ricci_hat_tr << "\n";
+            MayDay::Error("R hat tr large at the above coords.");
         }
 
         out.scalar = vars.chi * TensorAlgebra::compute_trace(out.LL, h_UU);

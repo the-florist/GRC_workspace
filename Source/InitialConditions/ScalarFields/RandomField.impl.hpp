@@ -70,6 +70,36 @@ void RandomField::compute(Cell<data_t> current_cell) const
         MayDay::Error("RandomField: Cell index greater than resolution^3 at coarsest level.");
     }
 
+    if(hx[0][r] + hx[4][r] + hx[8][r] > 1e-12) 
+    { 
+        std::cout << "Trace of hij is large here: \n";
+        std::cout << "(" << i << "," << j << "," << k << ")\n";
+        std::cout << hx[0][r] + hx[4][r] + hx[8][r] << "\n";
+        MayDay::Error();
+    }
+
+    double det = (1. + m_params.A * hx[0][r]) * (1. + m_params.A * hx[4][r]) * (1. + m_params.A * hx[8][r]) +
+                 2. * pow(m_params.A, 3.) * hx[1][r] * hx[2][r] * hx[5][r] -
+                 (1. + m_params.A * hx[0][r]) * pow(m_params.A, 2.) * hx[5][r] * hx[5][r] -
+                 (1. + m_params.A * hx[4][r]) * pow(m_params.A, 2.) * hx[2][r] * hx[2][r] -
+                 (1. + m_params.A * hx[8][r]) * pow(m_params.A, 2.) * hx[1][r] * hx[1][r];
+
+    if((det - 1.) > 1e-12)
+    {
+        std::cout << "Determinant of hij is large here: \n";
+        std::cout << "(" << i << "," << j << "," << k << ")\n";
+        std::cout << det - 1. << "\n";
+        MayDay::Error();
+    }
+
+    std::ofstream det_print("./det-RF.dat", ios::app);
+
+    det_print << i << "," << j << "," << k << ",";
+    det_print << setprecision(12) << "," << det << "\n";// ": " << (1. + m_params.A * hx[0][r]) << "," << (1. + m_params.A * hx[0][r]) << "," << (1. + m_params.A * hx[0][r]) << ": ";
+    //det_print << setprecision(12) << m_params.A * hx[5][r] << "," << m_params.A * hx[2][r] << "," << m_params.A * hx[1][r] << "\n";
+
+    det_print.close();
+
     if(m_spec_type == "position")
     {
         //store tensor metric variables, g_ij = delta_ij + 1/2 h_ij
@@ -99,6 +129,21 @@ void RandomField::compute(Cell<data_t> current_cell) const
     }
 
     else { MayDay::Error("RandomField: Spec type entered is not a viable option."); }
+
+    /*double det = c_h11 * c_h22 * c_h33 +
+                 2. * c_h12 * c_h13 * c_h23 -
+                 c_h11 * c_h23 * c_h23 -
+                 c_h22 * c_h13 * c_h13 -
+                 c_h33 * c_h12 * c_h12;
+
+    //if((det) > 1e-12)
+    //{
+        std::cout << "Determinant of hij is large here: \n";
+        std::cout << "(" << i << "," << j << "," << k << ")\n";
+        std::cout << c_h11 << "," << c_h22 << "," << c_h33 << "\n";
+        std::cout << det << "\n";
+        MayDay::Error();
+    //}*/
 }
 
 void RandomField::clear_data()

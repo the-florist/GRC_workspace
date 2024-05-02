@@ -48,7 +48,7 @@ void MatterConstraints<matter_t>::compute(Cell<data_t> current_cell) const
         out.Ham += -16.0 * M_PI * m_G_Newton * emtensor.rho;
         out.Ham_abs_terms += 16.0 * M_PI * m_G_Newton * abs(emtensor.rho);
 
-        /*simd<double> tol(1e-8);
+        simd<double> tol(1e-8);
         if(simd_compare_gt(out.Ham, tol))
         { 
             IntVect m_coords = current_cell.get_int_vect();
@@ -59,7 +59,7 @@ void MatterConstraints<matter_t>::compute(Cell<data_t> current_cell) const
             }
             std::cout << "\nHam at this point: " << out.Ham << "\n";
             MayDay::Error("Ham constraint large at the above coords.");
-        }*/
+        }
     }
 
     // Momentum constraints

@@ -128,7 +128,7 @@ stop_time = 40
 max_steps = 5000
 
 # Spatial derivative order (only affects CCZ4 RHS)
-max_spatial_derivative_order = 4 # can be 4 or 6
+max_spatial_derivative_order = 6 # can be 4 or 6
 
 nan_check = 1
 

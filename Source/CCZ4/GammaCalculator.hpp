@@ -32,7 +32,7 @@ class GammaCalculator
     };
 
   protected:
-    const FourthOrderDerivatives
+    const SixthOrderDerivatives
         m_deriv; //!< An object for calculating derivatives of the variables
 
   public:
@@ -48,6 +48,23 @@ class GammaCalculator
         using namespace TensorAlgebra;
         const auto h_UU = compute_inverse_sym(vars.h);
         const auto chris = compute_christoffel(d1.h, h_UU);
+        MayDay::Error("Chris calc ended.");
+
+        /*simd<double> tol(1e-8);
+        if(simd_compare_gt(chris.contracted[0], tol))
+        {
+            std::cout << "Christoffel comp 0 is large here: " << chris.contracted[0] << "\n";
+            MayDay::Error("Chris failed.");
+        }*/
+
+        /*simd<double> tol(1e-8);
+        simd<double> chrs(0.);
+        for(int s=0; s<3; s++) { chrs += chris.contracted[s]; }
+        if(simd_compare_gt(chrs, tol))
+        {
+            std::cout << "Chris has this magnitude in GammaCalc: " << chrs << "\n";
+            MayDay::Error("Check chris error.");
+        }*/
 
         // assign values of Gamma^k = h_UU^ij * \tilde{Gamma}^k_ij in the output
         // FArrayBox
