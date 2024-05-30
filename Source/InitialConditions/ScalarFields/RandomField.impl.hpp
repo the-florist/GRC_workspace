@@ -69,6 +69,14 @@ void RandomField::compute(Cell<data_t> current_cell) const
         MayDay::Error("RandomField: Cell index greater than resolution^3 at coarsest level.");
     }
 
+    if(hx[0][r] + hx[4][r] + hx[8][r] > 1e-12) 
+    { 
+        std::cout << "Trace of hij is large here: \n";
+        std::cout << "(" << i << "," << j << "," << k << ")\n";
+        std::cout << hx[0][r] + hx[4][r] + hx[8][r] << "\n";
+        MayDay::Error();
+    }
+
     if(m_spec_type == "position")
     {
         for(int s=0; s<9; s++) { hx[s][r] /= pow(L, 3.); }

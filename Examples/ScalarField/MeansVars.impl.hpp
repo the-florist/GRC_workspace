@@ -15,8 +15,8 @@
 #include <cmath>
 
 inline
- MeansVars::MeansVars(double dx, params_t a_params, std::string a_data_path) : 
-    m_dx (dx), m_params (a_params), m_data_path(a_data_path) {}
+ MeansVars::MeansVars(double dx, double habs, params_t a_params, std::string a_data_path) : 
+    m_dx (dx), m_habs(habs), m_params (a_params), m_data_path(a_data_path) {}
 
  template <class data_t>
  void MeansVars::compute(Cell<data_t> current_cell) const
@@ -30,14 +30,16 @@ inline
      data_t phisq = vars.phi*vars.phi;
      data_t chisq = vars.chi*vars.chi;
      data_t kin = vars.Pi*vars.Pi;
-     data_t hamabspbp = abs(vars.Ham);
+     data_t hampbp = abs(vars.Ham);
+     data_t hampbpnorm = hampbp/m_habs;
 
     //store class (Vars) variables as diagnostic variables on the grid
      current_cell.store_vars(vars.phi, c_sf);
      current_cell.store_vars(vars.Pi, c_sfd);
      current_cell.store_vars(vars.chi, c_a);
      current_cell.store_vars(vars.K, c_H);
-     current_cell.store_vars(hamabspbp, c_Ham_abs_pbp);
+     current_cell.store_vars(hampbp, c_Ham_pbp);
+     current_cell.store_vars(hampbpnorm, c_Ham_pbp_norm);
      current_cell.store_vars(phisq, c_sf2);
      current_cell.store_vars(chisq, c_ch2);
      current_cell.store_vars(kin, c_kin);

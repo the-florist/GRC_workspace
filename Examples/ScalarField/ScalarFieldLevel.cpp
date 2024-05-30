@@ -190,10 +190,19 @@ void ScalarFieldLevel::specificPostTimeStep()
     AMRReductions<VariableType::evolution> amr_reductions_evo(m_gr_amr);
     double vol = amr_reductions.get_domain_volume();
 
-    BoxLoops::loop(MeansVars(m_dx, m_p.grid_params, m_p.data_path), m_state_new, m_state_diagnostics, FILL_GHOST_CELLS);
+    double habsbar = amr_reductions.sum(c_Ham_abs_terms)/vol;
 
+    BoxLoops::loop(MeansVars(m_dx, habsbar, m_p.grid_params, m_p.data_path), m_state_new, m_state_diagnostics, FILL_GHOST_CELLS);
+
+    // Convergence testing only
+
+    //double hampbpSum = amr_reductions.sum(c_Ham_pbp)/vol;
+    double hamnormMax = amr_reductions.max(c_Ham_pbp_norm);
+    //double mombar = amr_reductions.sum(c_Mom)/vol;
+
+    // All other runs
     //Calculates means
-    double phibar = amr_reductions.sum(c_sf)/vol;
+    /*double phibar = amr_reductions.sum(c_sf)/vol;
     double pibar = amr_reductions.sum(c_sfd)/vol;
 
     double a = 1./sqrt(amr_reductions.sum(c_a)/vol);
@@ -217,7 +226,7 @@ void ScalarFieldLevel::specificPostTimeStep()
     double chivar = amr_reductions.sum(c_ch2)/vol - c_a*c_a;
 
     //Calculates gauge quantities
-    double lapse = amr_reductions_evo.sum(c_lapse)/vol;
+    double lapse = amr_reductions_evo.sum(c_lapse)/vol;*/
 
     //Prints all that out into the data/ directory
     SmallDataIO means_file(m_p.data_path+"means_file", m_dt, m_time, m_restart_time, SmallDataIO::APPEND, first_step, ".dat");
@@ -225,9 +234,11 @@ void ScalarFieldLevel::specificPostTimeStep()
 
     if(first_step) 
     {
-        means_file.write_header_line({"Scalar field mean","Scalar field variance","Pi mean","Scale factor","Conformal factor variance","Hubble factor",
+        means_file.write_header_line({"Ham Norm max"});
+        /*means_file.write_header_line({"Scalar field mean","Scalar field variance","Pi mean","Scale factor","Conformal factor variance","Hubble factor",
             "Kinetic ED","Potential ED","First SRP","Second SRP","Avg Ham constr","Avg |Ham| constr (point by point)","Avg Mom constr",
-            "Avg Ham abs term","Avg Mom abs term","Avg lapse"});
+            "Avg Ham abs term","Avg Mom abs term","Avg lapse"});*/
     }
-    means_file.write_time_data_line({phibar, phivar, pibar, a, chivar, H, kinb, potb, epsilon, delta, hambar, hamabspbpSum, mombar, habsbar, mabsbar, lapse});
+    means_file.write_time_data_line({hamnormMax});
+    //means_file.write_time_data_line({phibar, phivar, pibar, a, chivar, H, kinb, potb, epsilon, delta, hambar, hamabspbpSum, mombar, habsbar, mabsbar, lapse});
 }

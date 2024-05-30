@@ -13,7 +13,8 @@ enum
     c_sfd,
     c_sf2,
     c_ch2,
-    c_Ham_abs_pbp,
+    c_Ham_pbp,
+    c_Ham_pbp_norm,
 
     c_a,
     c_H,
@@ -36,7 +37,8 @@ static const std::array<std::string, NUM_DIAGNOSTIC_VARS> variable_names = {
     "Pi",
     "PhiSq",
     "ChiSq",
-    "AbsHamPBP",
+    "HamPBP",
+    "HamPBPNorm",
 
     "ScaleFactor",
     "HubbleFactor",

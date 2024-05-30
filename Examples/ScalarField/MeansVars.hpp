@@ -34,13 +34,14 @@ class MeansVars
             void enum_mapping(mapping_function_t mapping_function);
         };
 
-        MeansVars(double dx, params_t a_params, std::string a_data_path);
+        MeansVars(double dx, double habs, params_t a_params, std::string a_data_path);
 
         template <class data_t>
         void compute(Cell<data_t> current_cell) const;
 
     protected:
         double m_dx;
+        double m_habs;
         const params_t m_params;
         double m_volume;
         std::string m_data_path;
