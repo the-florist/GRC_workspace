@@ -71,6 +71,8 @@ void RandomField::compute(Cell<data_t> current_cell) const
 
     if(m_spec_type == "position")
     {
+        for(int s=0; s<9; s++) { hx[s][r] /= pow(L, 3.); }
+        
         //store tensor metric variables, g_ij = delta_ij + 1/2 h_ij
         current_cell.store_vars(1. + m_params.A * hx[0][r], c_h11);
         current_cell.store_vars(m_params.A * hx[1][r], c_h12);
@@ -82,19 +84,19 @@ void RandomField::compute(Cell<data_t> current_cell) const
 
     else if(m_spec_type == "velocity")
     {
-        /*current_cell.store_vars(0., c_A11);
+        current_cell.store_vars(0., c_A11);
         current_cell.store_vars(0., c_A12);
         current_cell.store_vars(0., c_A13);
         current_cell.store_vars(0., c_A22);
         current_cell.store_vars(0., c_A23);
-        current_cell.store_vars(0., c_A33);*/
+        current_cell.store_vars(0., c_A33);
 
-        current_cell.store_vars(-m_params.A * hx[0][r], c_A11);
+        /*current_cell.store_vars(-m_params.A * hx[0][r], c_A11);
         current_cell.store_vars(-m_params.A * hx[1][r], c_A12);
         current_cell.store_vars(-m_params.A * hx[2][r], c_A13);
         current_cell.store_vars(-m_params.A * hx[4][r], c_A22);
         current_cell.store_vars(-m_params.A * hx[5][r], c_A23);
-        current_cell.store_vars(-m_params.A * hx[8][r], c_A33);
+        current_cell.store_vars(-m_params.A * hx[8][r], c_A33);*/
     }
 
     else { MayDay::Error("RandomField: Spec type entered is not a viable option."); }
@@ -200,7 +202,7 @@ void RandomField::calc_spectrum()
         if(i > N/2) { I = invert_index(i, N); }
         if(j > N/2) { J = invert_index(j, N); }
 
-        kmag = pow((pow(I, 2.0) + pow(J, 2.0) + pow(k, 2.0))*4.*M_PI*M_PI/m_params.L/m_params.L, 0.5);
+        kmag = (double)(pow((pow((double)I, 2.0) + pow((double)J, 2.0) + pow((double)k, 2.0))*4.*M_PI*M_PI/m_params.L/m_params.L, 0.5));
 
         // Start of with random numbers filling the entire array
         // Real parts of h+, hx and hij
@@ -238,6 +240,7 @@ void RandomField::calc_spectrum()
     pout() << "All independent values have been assigned.\n Applying symmetry rules.\n";
 
     std::ofstream hkprint("./h-k-printed.dat");
+    hkprint << std::fixed << setprecision(12);
 
     for(int i=0; i<N; i++) for(int j=0; j<N; j++) for(int k=0; k<=N/2; k++)
     {
@@ -305,15 +308,17 @@ double RandomField::find_rayleigh_factor(double km, std::string spec_type, doubl
     // See Mukanov-Sasaki mode function decomposition in: (forthcoming paper)
     if (spec_type == "position")
     {
-        if(comp == 0) { windowed_value = (cos(km/H0) - H0 * sin(km/H0)/km)/sqrt(2. * km); }
+        windowed_value = sqrt((1.0/km/2.0 + (H0*H0/km/km/km)/2.0));
+        /*if(comp == 0) { windowed_value = (cos(km/H0) - H0 * sin(km/H0)/km)/sqrt(2. * km); }
         else if(comp == 1) { windowed_value = -(sin(km/H0) + H0 * cos(km/H0)/km)/sqrt(2. * km); }
-        else { MayDay::Error("RandomField: component other than real or imaginary has been requested."); }
+        else { MayDay::Error("RandomField: component other than real or imaginary has been requested."); }*/
     }
     else if (spec_type == "velocity")
     {
-        if(comp == 0) { windowed_value = (sin(km/H0) * (H0*H0/km - km) - H0 * cos(km/H0))/sqrt(2. * km); }
+        windowed_value = sqrt((km/2.0 - (H0*H0)/km/2.0 + H0*H0*H0*H0/km/km/km/2.0)); 
+        /*if(comp == 0) { windowed_value = (sin(km/H0) * (H0*H0/km - km) - H0 * cos(km/H0))/sqrt(2. * km); }
         else if(comp == 1) { windowed_value = (cos(km/H0) * (H0*H0/km - km) + H0 * sin(km/H0))/sqrt(2. * km); }
-        else { MayDay::Error("RandomField: component other than real or imaginary has been requested."); }
+        else { MayDay::Error("RandomField: component other than real or imaginary has been requested."); }*/
     }
 
     // Apply the tanh window function and the uniform draw
@@ -332,24 +337,25 @@ void RandomField::calc_transferse_vectors(int x, int y, int z, double MHat[3], d
         MayDay::Error("RandomField: Please choose a shift factor between 0 and 2 pi."); 
     }
 
-    int X = x;
-    int Y = y;
+    double X = x;
+    double Y = y;
+    double Z = z;
 
     if(x > m_params.N/2 && y > m_params.N/2) { X = invert_index_with_sign(x, m_params.N); Y = invert_index_with_sign(y, m_params.N); }
     else if(x > m_params.N/2) { X = invert_index_with_sign(x, m_params.N); }
     else if(y > m_params.N/2) { Y = invert_index_with_sign(y, m_params.N); }
     else { ; }
 
-    if (z > 0.) 
+    if (Z > 0.) 
     {
         if (X == 0. && Y == 0.) { mh[0] = 1.; mh[1] = 0.; mh[2] = 0.; 
                                   nh[0] = 0.; nh[1] = 1.; nh[2] = 0.; 
                                 }
 
         else { mh[0] = Y/sqrt(X*X+Y*Y); mh[1] = -X/sqrt(X*X+Y*Y); mh[2] = 0.L;
-               nh[0] = z*X/sqrt(z*z*(X*X + Y*Y) + pow(X*X + Y*Y, 2.));
-               nh[1] = z*Y/sqrt(z*z*(X*X + Y*Y) + pow(X*X + Y*Y, 2.));
-               nh[2] = -(X*X + Y*Y)/sqrt(z*z*(X*X + Y*Y) + pow(X*X + Y*Y, 2.)); 
+               nh[0] = Z*X/sqrt(Z*Z*(X*X + Y*Y) + pow(X*X + Y*Y, 2.));
+               nh[1] = Z*Y/sqrt(Z*Z*(X*X + Y*Y) + pow(X*X + Y*Y, 2.));
+               nh[2] = -(X*X + Y*Y)/sqrt(Z*Z*(X*X + Y*Y) + pow(X*X + Y*Y, 2.)); 
              }
     }
 
@@ -363,7 +369,7 @@ void RandomField::calc_transferse_vectors(int x, int y, int z, double MHat[3], d
                       nh[0] = 0.; nh[1] = 0.; nh[2] = 1.;
                     }
 
-    else if (X==0 && Y==0 && z==0) { ; }
+    else if (X==0 && Y==0 && Z==0) { ; }
 
     else 
     {
@@ -372,7 +378,7 @@ void RandomField::calc_transferse_vectors(int x, int y, int z, double MHat[3], d
 
     for(int l=0; l<3; l++) { MHat[l] = cos(a)*mh[l] + sin(a)*nh[l]; NHat[l] = -sin(a)*mh[l] + cos(a)*nh[l]; }
 
-    if (X != 0 && Y != 0 && z != 0) { Test_norm(MHat); Test_norm(NHat); Test_orth(MHat, NHat); }
+    if (X != 0 && Y != 0 && Z != 0) { Test_norm(MHat); Test_norm(NHat); Test_orth(MHat, NHat); }
 }
 
 void RandomField::Test_norm(double vec[]) 

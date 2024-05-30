@@ -7,7 +7,7 @@
 verbosity = 0
 
 # location / naming of output files
-output_path = "/home/eaf49/rds/hpc-work/hdf5-stronger-tanh" # Main path for all files. Must exist!
+output_path = "/home/eaf49/rds/hpc-work/hdf5-sup-horizon-constr-check" # Main path for all files. Must exist!
 chk_prefix = ScalarField_
 plot_prefix = ScalarFieldp_
 # restart_file = ScalarField_002000.3d.hdf5
@@ -42,9 +42,9 @@ m_pl = 1.0
 
 # Scalar field initial data
 scalar_amplitude = 10.0
-scalar_velocity = -0.00162846
+scalar_velocity = -0.00162845913015181
 scalar_mass = 0.01
-tensor_amplitude = 1.e-6
+tensor_amplitude = 1.e-3
 
 #################################################
 # Grid parameters
@@ -57,7 +57,7 @@ tensor_amplitude = 1.e-6
 # 'N2' or 'N2_full' and 'N3' or 'N3_full' ( then dx_coarsest = L/N(max) )
 # NB - the N values need to be multiples of the block_factor
 N_full = 128
-L_full = 6.5
+L_full = 24.0
 
 # Maximum number of times you can regrid above coarsest level
 max_level = 0 # There are (max_level+1) grids, so min is zero (does changing this turn off AMR?)
@@ -124,7 +124,7 @@ extrapolating_vars = phi Pi
 
 # dt will be dx*dt_multiplier on each grid level
 dt_multiplier = 0.25
-stop_time = 40
+stop_time = 10
 max_steps = 5000
 
 # Spatial derivative order (only affects CCZ4 RHS)
