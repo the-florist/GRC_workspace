@@ -104,7 +104,7 @@ void ScalarFieldLevel::prePlotLevel()
     ScalarFieldWithPotential scalar_field(potential);
     BoxLoops::loop(
         MatterConstraints<ScalarFieldWithPotential>(
-            scalar_field, m_dx, m_p.G_Newton, c_Ham, Interval(c_Mom, c_Mom), m_p.min_chi, 
+            scalar_field, m_dx, m_p.G_Newton, c_Ham, c_Ham_abs, Interval(c_Mom, c_Mom), m_p.min_chi, 
 	    c_Ham_abs_terms, Interval(c_Mom_abs_terms, c_Mom_abs_terms)),
         m_state_new, m_state_diagnostics, EXCLUDE_GHOST_CELLS);
 }
@@ -175,41 +175,59 @@ void ScalarFieldLevel::specificPostTimeStep()
     }
 
     bool first_step = (m_time == 0.);
+
     fillAllGhosts();
     Potential potential(m_p.potential_params);
     ScalarFieldWithPotential scalar_field(potential);
     BoxLoops::loop(
         MatterConstraints<ScalarFieldWithPotential>(
-            scalar_field, m_dx, m_p.G_Newton, c_Ham, Interval(c_Mom, c_Mom), m_p.min_chi, 
+            scalar_field, m_dx, m_p.G_Newton, c_Ham, c_Ham_abs, Interval(c_Mom, c_Mom), m_p.min_chi, 
 	    c_Ham_abs_terms, Interval(c_Mom_abs_terms, c_Mom_abs_terms)),
         m_state_new, m_state_diagnostics, EXCLUDE_GHOST_CELLS);
 
-    double mass = m_p.potential_params.scalar_mass;//0.01;
+    BoxLoops::loop(
+        MeansVars(m_dx, m_p.grid_params), 
+        m_state_new, m_state_diagnostics, EXCLUDE_GHOST_CELLS);
+
+    double mass = m_p.potential_params.scalar_mass;
 
     AMRReductions<VariableType::diagnostic> amr_reductions(m_gr_amr);
     AMRReductions<VariableType::evolution> amr_reductions_evo(m_gr_amr);
     double vol = amr_reductions.get_domain_volume();
 
-    double habsbar = amr_reductions.sum(c_Ham_abs_terms)/vol;
-
-    BoxLoops::loop(MeansVars(m_dx, habsbar, m_p.grid_params, m_p.data_path), m_state_new, m_state_diagnostics, FILL_GHOST_CELLS);
-
     // Convergence testing only
 
+    double hamBar = amr_reductions.sum(c_Ham)/vol;
+    double hamAbsBar = amr_reductions.sum(c_Ham_abs_terms)/vol;
+    double hamNormMax = amr_reductions.max(c_Ham_abs)/hamAbsBar;
+
+    /*double hambar = amr_reductions.max(c_Ham);
+    double habsbar = amr_reductions.max(c_Ham_abs_terms);
+    double hamMax = amr_reductions.max(c_Ham_abs);
+    double hamMin = amr_reductions.min(c_Ham_abs);
+    double hamMean = amr_reductions.sum(c_Ham_abs)/vol;
+
+    cout << "ham max is: " << hambar << "\n";
+    cout << "hab abs terms max is: " << habsbar << "\n";
+    cout << "hamMax is: " << hamMax << "\n";
+    cout << "hamMin is: " << hamMin << "\n";
+    cout << "hamMean is: " << hamMean << "\n";*/
+
     //double hampbpSum = amr_reductions.sum(c_Ham_pbp)/vol;
-    double hamnormMax = amr_reductions.max(c_Ham_pbp_norm);
+    //double hamnormMax = amr_reductions.max(c_Ham_pbp_norm);
+    //MayDay::Error();
     //double mombar = amr_reductions.sum(c_Mom)/vol;
 
     // All other runs
     //Calculates means
-    /*double phibar = amr_reductions.sum(c_sf)/vol;
-    double pibar = amr_reductions.sum(c_sfd)/vol;
+    /*double phibar = amr_evo_reductions.sum(c_phi)/vol;
+    double pibar = amr_evo_reductions.sum(c_Pi)/vol;
 
     double a = 1./sqrt(amr_reductions.sum(c_a)/vol);
     double H = -amr_reductions.sum(c_H)/vol/3.;
 
     double hambar = amr_reductions.sum(c_Ham)/vol;
-    double hamabspbpSum = amr_reductions.sum(c_Ham_abs_pbp)/vol;
+    double hamabspbpSum = amr_reductions.sum(c_Ham_pbp)/vol;
     double mombar = amr_reductions.sum(c_Mom)/vol;
     double habsbar = amr_reductions.sum(c_Ham_abs_terms)/vol;
     double mabsbar = amr_reductions.sum(c_Mom_abs_terms)/vol;
@@ -229,16 +247,16 @@ void ScalarFieldLevel::specificPostTimeStep()
     double lapse = amr_reductions_evo.sum(c_lapse)/vol;*/
 
     //Prints all that out into the data/ directory
-    SmallDataIO means_file(m_p.data_path+"means_file", m_dt, m_time, m_restart_time, SmallDataIO::APPEND, first_step, ".dat");
+    SmallDataIO means_file(m_p.data_path+"convergence_test_file", m_dt, m_time, m_restart_time, SmallDataIO::APPEND, first_step, ".dat");
     means_file.remove_duplicate_time_data(); // removes any duplicate data from previous run (for checkpointing)
 
     if(first_step) 
     {
-        means_file.write_header_line({"Ham Norm max"});
+        means_file.write_header_line({"Ham Mean","Ham Norm","Ham Abs (Normed) Max"});
         /*means_file.write_header_line({"Scalar field mean","Scalar field variance","Pi mean","Scale factor","Conformal factor variance","Hubble factor",
             "Kinetic ED","Potential ED","First SRP","Second SRP","Avg Ham constr","Avg |Ham| constr (point by point)","Avg Mom constr",
             "Avg Ham abs term","Avg Mom abs term","Avg lapse"});*/
     }
-    means_file.write_time_data_line({hamnormMax});
+    means_file.write_time_data_line({hamBar, hamAbsBar, hamNormMax});
     //means_file.write_time_data_line({phibar, phivar, pibar, a, chivar, H, kinb, potb, epsilon, delta, hambar, hamabspbpSum, mombar, habsbar, mabsbar, lapse});
 }
