@@ -7,7 +7,7 @@
 verbosity = 0
 
 # location / naming of output files
-output_path = "/nfs/st01/hpc-gr-epss/eaf49/" # convergence-tests/4th-order-stencils/one-mode/N256" # Main path for all files. Must exist!
+output_path = "/home/eaf49/rds/hpc-work/dump" # Main path for all files. Must exist!
 chk_prefix = ScalarField_
 plot_prefix = ScalarFieldp_
 # restart_file = ScalarField_001000.3d.hdf5
@@ -16,9 +16,9 @@ plot_prefix = ScalarFieldp_
 checkpoint_interval = 500
 # set to 0 to turn off plot files (except at t=0 and t=stop_time)
 # set to -1 to never ever print plotfiles
-plot_interval = -1
-num_plot_vars = 8
-plot_vars = h11 h12 h13 h22 h23 h33 Ham Mom
+plot_interval = 100
+num_plot_vars = 6
+plot_vars = h11 h12 h13 h22 h23 h33
 
 # subpaths - specific directories for hdf5, pout, extraction data
 # (these are created at runtime)
@@ -44,8 +44,8 @@ m_pl = 1.0
 scalar_amplitude = 10.0
 scalar_velocity = -0.00162845913015181
 scalar_mass = 0.01
-tensor_amplitude = 1.e-4
 N_fine = 128
+tensor_amplitude = 1.
 
 #################################################
 # Grid parameters
@@ -125,7 +125,7 @@ extrapolating_vars = phi Pi
 
 # dt will be dx*dt_multiplier on each grid level
 dt_multiplier = 0.25
-stop_time = 40
+stop_time = 10
 max_steps = 2
 
 # Spatial derivative order (only affects CCZ4 RHS)
