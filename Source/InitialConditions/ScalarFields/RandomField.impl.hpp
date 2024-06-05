@@ -69,7 +69,7 @@ void RandomField::compute(Cell<data_t> current_cell) const
         MayDay::Error("RandomField: Cell index greater than resolution^3 at coarsest level.");
     }
 
-    if(hx[0][r] + hx[4][r] + hx[8][r] > 1e-12) 
+    if(hx[0][r] + hx[4][r] + hx[8][r] > 1e-10) 
     { 
         std::cout << "Trace of hij is large here: \n";
         std::cout << "(" << i << "," << j << "," << k << ")\n";
@@ -128,21 +128,21 @@ void RandomField::calc_spectrum()
 
     // Allocate memory for hij, mode functions and plans
     fftw_complex** hk;
-    hk = (fftw_complex**) malloc(sizeof(fftw_complex*) * 9);
+    hk = (fftw_complex**) fftw_malloc(sizeof(fftw_complex*) * 9);
     fftw_plan hij_plan[9];
 
     hx = (double**) malloc(sizeof(double*) * 9);
     for(int l=0; l<9; l++)
     {
-        hk[l] = (fftw_complex*) malloc(sizeof(fftw_complex) * N * N * (N/2+1));
+        hk[l] = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * N * N * (N/2+1));
         hx[l] = (double*) malloc(sizeof(double) * N * N * N);
         hij_plan[l] = fftw_plan_dft_c2r_3d(N, N, N, hk[l], hx[l], FFTW_ESTIMATE);
     }
 
     fftw_complex (*hplus);
     fftw_complex (*hcross);
-    hplus = (fftw_complex*) malloc(sizeof(fftw_complex) * N * N * (N/2+1));
-    hcross = (fftw_complex*) malloc(sizeof(fftw_complex) * N * N * (N/2+1));
+    hplus = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * N * N * (N/2+1));
+    hcross = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * N * N * (N/2+1));
 
     // Extra memory for reality check on h+ (only for debug)
     double (*hplusx);
@@ -165,6 +165,7 @@ void RandomField::calc_spectrum()
             }
         }
         hplusx[k + N*(j + N*i)] = 0.;
+        hcrossx[k + N*(j + N*i)] = 0.;
 
         for (int m=0; m<9; m++)
         {
@@ -214,15 +215,20 @@ void RandomField::calc_spectrum()
 
         // Start of with random numbers filling the entire array
         // Real parts of h+, hx and hij
-        hplus[k + (N/2+1)*(j + N*i)][0] = find_rayleigh_factor(kmag, m_spec_type, sigma_dist(engine), 0) * cos(theta_dist(engine));
-        hcross[k + (N/2+1)*(j + N*i)][0] = find_rayleigh_factor(kmag, m_spec_type, sigma_dist(engine), 0) * cos(theta_dist(engine));
-
-        calc_transferse_vectors(i, j, k, mhat, nhat);
-
-        for (int l=0; l<3; l++) for (int p=0; p<3; p++)
+        if(kmag != 0)
         {
-            hk[lut[l][p]][k + (N/2+1)*(j + N*i)][0] = ((mhat[l]*mhat[p] - nhat[l]*nhat[p]) * hplus[k + (N/2+1)*(j + N*i)][0]
-                                                + (mhat[l]*nhat[p] + nhat[l]*mhat[p]) * hcross[k + (N/2+1)*(j + N*i)][0]) / sqrt(2.0);
+            hplus[k + (N/2+1)*(j + N*i)][0] = sqrt((1.0/kmag/2.0 + (H0*H0/kmag/kmag/kmag)/2.0)) * 0.5 * (1.0 - tanh(epsilon * (kmag - kstar)));
+            //find_rayleigh_factor(kmag, m_spec_type, sigma_dist(engine), 0);// * cos(theta_dist(engine));
+            hcross[k + (N/2+1)*(j + N*i)][0] = sqrt((1.0/kmag/2.0 + (H0*H0/kmag/kmag/kmag)/2.0)) * 0.5 * (1.0 - tanh(epsilon * (kmag - kstar)));
+            //find_rayleigh_factor(kmag, m_spec_type, sigma_dist(engine), 0);// * cos(theta_dist(engine));
+            
+            calc_transferse_vectors(i, j, k, mhat, nhat);
+
+            for (int l=0; l<3; l++) for (int p=0; p<3; p++)
+            {
+                hk[lut[l][p]][k + (N/2+1)*(j + N*i)][0] = ((mhat[l]*mhat[p] - nhat[l]*nhat[p]) * hplus[k + (N/2+1)*(j + N*i)][0]
+                                                    + (mhat[l]*nhat[p] + nhat[l]*mhat[p]) * hcross[k + (N/2+1)*(j + N*i)][0]) / sqrt(2.0);
+            }
         }
 
         // If at a DC or Nyq point, enforce reality condition
@@ -233,10 +239,12 @@ void RandomField::calc_spectrum()
             for (int l=0; l<3; l++) for (int p=0; p<3; p++) { hk[lut[l][p]][k + (N/2+1)*(j + N*i)][1] = 0.; }
         }
         // Else, fill the imaginary part of each field appropriately
-        else
+        else if(kmag != 0)
         {
-            hplus[k + (N/2+1)*(j + N*i)][1] = find_rayleigh_factor(kmag, m_spec_type, sigma_dist(engine), 1) * sin(theta_dist(engine));
-            hcross[k + (N/2+1)*(j + N*i)][1] = find_rayleigh_factor(kmag, m_spec_type, sigma_dist(engine), 1) * sin(theta_dist(engine));
+            hplus[k + (N/2+1)*(j + N*i)][1] = sqrt((1.0/kmag/2.0 + (H0*H0/kmag/kmag/kmag)/2.0)) * 0.5 * (1.0 - tanh(epsilon * (kmag - kstar)));
+            //find_rayleigh_factor(kmag, m_spec_type, sigma_dist(engine), 1);// * sin(theta_dist(engine));
+            hcross[k + (N/2+1)*(j + N*i)][1] = sqrt((1.0/kmag/2.0 + (H0*H0/kmag/kmag/kmag)/2.0)) * 0.5 * (1.0 - tanh(epsilon * (kmag - kstar)));
+            //find_rayleigh_factor(kmag, m_spec_type, sigma_dist(engine), 1);// * sin(theta_dist(engine));
             for (int l=0; l<3; l++) for (int p=0; p<3; p++)
             {
                 hk[lut[l][p]][k + (N/2+1)*(j + N*i)][1] = ((mhat[l]*mhat[p] - nhat[l]*nhat[p]) * hplus[k + (N/2+1)*(j + N*i)][1]
@@ -247,8 +255,8 @@ void RandomField::calc_spectrum()
 
     pout() << "All independent values have been assigned.\n Applying symmetry rules.\n";
 
-    std::ofstream hkprint("./h-k-printed.dat");
-    hkprint << std::fixed << setprecision(12);
+    //std::ofstream hkprint("./h-k-printed.dat");
+    //hkprint << std::fixed << setprecision(12);
 
     for(int i=0; i<N; i++) for(int j=0; j<N; j++) for(int k=0; k<=N/2; k++)
     {
@@ -256,14 +264,14 @@ void RandomField::calc_spectrum()
         apply_symmetry_rules(i, j, k, hcross, N);
         for(int s=0; s<9; s++) { apply_symmetry_rules(i, j, k, hk[s], N); }
 
-        for(int l=0; l<2; l++)
+        /*for(int l=0; l<2; l++)
         {
             hkprint << hplus[k + (N/2+1)*(j + N*i)][l] << "," << hcross[k + (N/2+1)*(j + N*i)][l] << ",";
         }
-        hkprint << "\n";
+        hkprint << "\n";*/
     }
 
-    hkprint.close();
+    //hkprint.close();
     //MayDay::Error("Printed file for comparison with stand-alone IC generator.");
 
     pout() << "Moving to configuration space.\n";
@@ -330,7 +338,7 @@ double RandomField::find_rayleigh_factor(double km, std::string spec_type, doubl
     }
 
     // Apply the tanh window function and the uniform draw
-    windowed_value *= 0.5 * (1.0 - tanh(epsilon * (km - kstar))) * sqrt(-2. * log(uniform_draw));
+    windowed_value *= 0.5 * (1.0 - tanh(epsilon * (km - kstar)));// * sqrt(-2. * log(uniform_draw));
     return windowed_value;
 }
 
