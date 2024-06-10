@@ -65,7 +65,107 @@ void ScalarFieldLevel::initialData()
     CH_TIME("ScalarFieldLevel::initialData");
     pout() << "ScalarFieldLevel::initialData " << m_level << endl;
 
-    RandomField pfield(m_p.initial_params, "position");
+    //Load in data from .dat files, for h and hdot initialisation
+
+    int N = m_p.initial_params.N;
+    std::string ICdir = "/home/eaf49/rds/hpc-work/IC-files/convergence-tests/N"+to_string(N)+"/";
+
+    ifstream gw_pos;
+    std::string pos_dir = ICdir+"gw-re-pos-rand.dat";
+    //ifstream gw_vel;
+    //std::string vel_dir = ICDir+"gw-re-vel.dat";
+
+    gw_pos.open(pos_dir, ios::in); //open the file with the waves in it
+    //gw_vel.open(vel_dir, ios::in);
+
+    if (!gw_pos/* || !gw_vel*/)
+    {
+        MayDay::Error("GW position or velocity file failed to open.");
+    }
+
+    pout() << "IC file opened.\n";
+
+    //int m,n = 0;
+
+    std::string delim = " ";
+    std::string p_datline;
+    //std::string v_datline;
+    std::stringstream p_number;
+    //std::stringstream v_number;
+
+    std::vector<std::vector<double> > h(std::pow(N, 3.), std::vector<double>(6, 0.)); // input array memory allocation
+    std::vector<std::vector<double> > hdot(std::pow(N, 3.), std::vector<double>(6, 0.));
+
+    int n=0; //box position counter
+    for (int i=0; i < std::pow(N, 3.); i++) //
+    {
+        p_datline = "";
+        std::getline(gw_pos, p_datline);
+        int m=0; //tensor index counter
+
+        for(int j=0; j<p_datline.length(); j++)
+        {
+            if(p_datline[j] != delim[0])
+            {
+                p_number << p_datline[j];
+            }
+            else
+            {
+                p_number >> h[n][m];
+                p_number.clear();
+                m++;
+            }
+        }
+
+        /*v_datline = "";
+        std::getline(gw_vel, v_datline);
+        m=0;
+
+        for(int j=0; j<v_datline.length(); j++)
+        {
+            if(v_datline[j] != delim[0])
+            {
+                v_number << p_datline[j];
+            }
+            else
+            {
+                v_number >> hdot[n][m];
+                v_number.clear();
+                m++;
+            }
+        }*/
+
+        n++;
+
+        p_number.clear();
+        //v_number.clear();
+
+        if(n > std::pow(N, 3.))
+        {
+            MayDay::Error("File length has exceeded N^3.");
+        }
+    }
+
+    gw_pos.close();
+    //gw_vel.close();
+
+    pout() << "Data read-in finished.\n";
+
+    BoxLoops::loop(
+    make_compute_pack(SetValue(0.),
+                        InitialScalarData(m_p.initial_params, m_dx, h, hdot)),
+    m_state_new, m_state_new, INCLUDE_GHOST_CELLS,disable_simd());
+
+    h.clear();
+    hdot.clear();
+
+    pout() << "IC set-up ended.\n";
+    
+    fillAllGhosts();
+    BoxLoops::loop(GammaCalculator(m_dx), m_state_new, m_state_new,
+                   EXCLUDE_GHOST_CELLS);
+
+    /*RandomField pfield(m_p.initial_params, "position");
 
     BoxLoops::loop(
         make_compute_pack(SetValue(0.),
@@ -92,7 +192,7 @@ void ScalarFieldLevel::initialData()
     
     fillAllGhosts();
     BoxLoops::loop(GammaCalculator(m_dx), m_state_new, m_state_new,
-                   EXCLUDE_GHOST_CELLS);
+                   EXCLUDE_GHOST_CELLS);*/
 }
 
 #ifdef CH_USE_HDF5
