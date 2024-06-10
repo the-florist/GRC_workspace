@@ -14,7 +14,7 @@
     : m_params(a_params), m_spec_type(a_spec_type)
 {
     kstar = 16.*(2.*M_PI/m_params.L);
-    epsilon = 0.5;
+    epsilon = 0.25 * (sqrt(3.)*2.*M_PI/m_params.L); //0.5;
     H0 = sqrt((8.0 * M_PI/3.0/m_params.m_pl/m_params.m_pl)
             *(0.5*m_params.velocity*m_params.velocity + 0.5*pow(m_params.m * m_params.amplitude, 2.0)));
     norm = pow(m_params.N, 3.);
@@ -77,17 +77,17 @@ void RandomField::compute(Cell<data_t> current_cell) const
         MayDay::Error();
     }
 
+    for(int s=0; s<9; s++) { hx[s][r] *= m_params.A/pow(L, 3.); }
+
     if(m_spec_type == "position")
-    {
-        for(int s=0; s<9; s++) { hx[s][r] /= pow(L, 3.); }
-        
+    {  
         //store tensor metric variables, g_ij = delta_ij + 1/2 h_ij
-        current_cell.store_vars(1. + m_params.A * hx[0][r], c_h11);
-        current_cell.store_vars(m_params.A * hx[1][r], c_h12);
-        current_cell.store_vars(m_params.A * hx[2][r], c_h13);
-        current_cell.store_vars(1. + m_params.A * hx[4][r], c_h22);
-        current_cell.store_vars(m_params.A * hx[5][r], c_h23);
-        current_cell.store_vars(1. + m_params.A * hx[8][r], c_h33);
+        current_cell.store_vars(1. + hx[0][r], c_h11);
+        current_cell.store_vars(hx[1][r], c_h12);
+        current_cell.store_vars(hx[2][r], c_h13);
+        current_cell.store_vars(1. + hx[4][r], c_h22);
+        current_cell.store_vars(hx[5][r], c_h23);
+        current_cell.store_vars(1. + hx[8][r], c_h33);
     }
 
     else if(m_spec_type == "velocity")
@@ -99,12 +99,12 @@ void RandomField::compute(Cell<data_t> current_cell) const
         current_cell.store_vars(0., c_A23);
         current_cell.store_vars(0., c_A33);
 
-        /*current_cell.store_vars(-m_params.A * hx[0][r], c_A11);
-        current_cell.store_vars(-m_params.A * hx[1][r], c_A12);
-        current_cell.store_vars(-m_params.A * hx[2][r], c_A13);
-        current_cell.store_vars(-m_params.A * hx[4][r], c_A22);
-        current_cell.store_vars(-m_params.A * hx[5][r], c_A23);
-        current_cell.store_vars(-m_params.A * hx[8][r], c_A33);*/
+        /*current_cell.store_vars(-hx[0][r], c_A11);
+        current_cell.store_vars(-hx[1][r], c_A12);
+        current_cell.store_vars(-hx[2][r], c_A13);
+        current_cell.store_vars(-hx[4][r], c_A22);
+        current_cell.store_vars(-hx[5][r], c_A23);
+        current_cell.store_vars(-hx[8][r], c_A33);*/
     }
 
     else { MayDay::Error("RandomField: Spec type entered is not a viable option."); }
@@ -112,14 +112,27 @@ void RandomField::compute(Cell<data_t> current_cell) const
 
 void RandomField::clear_data()
 {
-    pout() << "Clearing memory allocated to hx array.\n";
-    for(int s=0; s<9; s++) { free(hx[s]); } // This causes a seg fault as is
+    cout << "Clearing memory allocated to hx array.\n";
+    for(int s=0; s<6; s++) { free(hx[s]); } // This causes a seg fault as is
     free(hx);
 }
 
 void RandomField::calc_spectrum()
 {
     int N = m_params.N;
+    
+    // Setting the lut that maps polarisation vectors to 
+    // polarisation tensors.
+    int lut[3][3];  
+    lut[0][0] = 0;
+    lut[0][1] = 1;
+    lut[0][2] = 2;
+    lut[1][0] = 3;
+    lut[1][1] = 4;
+    lut[1][2] = 5;
+    lut[2][0] = 6;
+    lut[2][1] = 7;
+    lut[2][2] = 8;
 
     // Polarisation basis vectors and k
     double mhat[3] = {0., 0., 0.};
@@ -178,19 +191,6 @@ void RandomField::calc_spectrum()
         }
     }
 
-    // Setting the lut that maps polarisation vectors to 
-    // polarisation tensors.
-    int lut[3][3];  
-    lut[0][0] = 0;
-    lut[0][1] = 1;
-    lut[0][2] = 2;
-    lut[1][0] = 3;
-    lut[1][1] = 4;
-    lut[1][2] = 5;
-    lut[2][0] = 6;
-    lut[2][1] = 7;
-    lut[2][2] = 8;
-
     // Set up random number generators (one independent seed per random draw)
     int seed;
     if(m_spec_type == "position") { seed = 3539263; }
@@ -201,7 +201,7 @@ void RandomField::calc_spectrum()
     uniform_real_distribution<double> theta_dist(0, 2*M_PI);
     uniform_real_distribution<double> sigma_dist(0, 1);
 
-    pout() << "Starting RandomField loop for " << m_spec_type << " field.\n";
+    cout << "Starting RandomField loop for " << m_spec_type << " field.\n";
 
     for(int i=0; i<N; i++) for(int j=0; j<N; j++) for(int k=0; k<=N/2; k++)
     {
@@ -253,7 +253,7 @@ void RandomField::calc_spectrum()
         }
     }
 
-    pout() << "All independent values have been assigned.\n Applying symmetry rules.\n";
+    cout << "All independent values have been assigned.\n Applying symmetry rules.\n";
 
     //std::ofstream hkprint("./h-k-printed.dat");
     //hkprint << std::fixed << setprecision(12);
@@ -274,11 +274,57 @@ void RandomField::calc_spectrum()
     //hkprint.close();
     //MayDay::Error("Printed file for comparison with stand-alone IC generator.");
 
-    pout() << "Moving to configuration space.\n";
+    cout << "Moving to configuration space.\n";
 
     fftw_execute(plan1);
     fftw_execute(plan2);
-    for(int s=0; s<9; s++) { fftw_execute(hij_plan[s]); }
+    for(int l=0; l<9; l++)
+    { 
+        fftw_execute(hij_plan[l]);
+    }
+
+    std::vector<double> means(2, 0.);
+    for(int i=0; i<N; i++) for(int j=0; j<N; j++) for(int k=0; k<=N/2; k++)
+    {
+        hplusx[k + N * (j + N * i)] *= m_params.A/pow(m_params.L, 3.);
+        hcrossx[k + N * (j + N * i)] *= m_params.A/pow(m_params.L, 3.);
+
+        means[0] += hplusx[k + N * (j + N * i)];
+        means[1] += hcrossx[k + N * (j + N * i)];
+    }
+
+    for(int s=0; s<2; s++) { means[s] /= pow(N, 3.); }
+
+    std::vector<double> stdevs(2, 0.);
+    for(int i=0; i<N; i++) for(int j=0; j<N; j++) for(int k=0; k<=N/2; k++)
+    {
+        stdevs[0] += pow(hplusx[k + N * (j + N * i)] - means[0], 2.);
+        stdevs[1] += pow(hcrossx[k + N * (j + N * i)] - means[1], 2.);
+
+        for(int s=0; s<2; s++)
+        {
+            stdevs[s] /= pow(N, 3.);
+            stdevs[s] = sqrt(stdevs[s]);
+        }
+    }
+
+    if (m_spec_type == "position")
+    {
+	std::string data_dir = "/home/eaf49/rds/hpc-work/convergence-tests/4th-order-stencils/N"+to_string(N);
+    	ofstream pert_chars(data_dir+"/IC-pert-level.dat");
+	cout << data_dir << "\n";
+	if(!pert_chars) { MayDay::Error("Pert. IC characteristics file unopened."); }
+
+    	pert_chars << "Planck mass scale: " << m_params.m_pl << "\n";
+    	pert_chars << "Length of box (m_pl): " << m_params.L << "\n";
+    	pert_chars << "Box resolution: " << N << "\n";
+    	pert_chars << "Amplitude: " << m_params.A << "\n";
+    	pert_chars << "Std. deviation of plus pol. field: " << stdevs[0] << "\n";
+    	pert_chars << "Std. deviation of cross pol. field: " << stdevs[1] << "\n";
+    	pert_chars.close();
+    }	
+    stdevs.clear();
+
 
     // Free everything
     // (!!) note for c2r transforms, the original k-space array

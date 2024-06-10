@@ -73,7 +73,7 @@ void ScalarFieldLevel::initialData()
     m_state_new, m_state_new, INCLUDE_GHOST_CELLS, disable_simd());
 
     pfield.clear_data();
-    pout() << "Calculating position ICs ended.\n";
+    cout << "Calculating position ICs ended.\n";
 
     RandomField vfield(m_p.initial_params, "velocity");
 
@@ -82,13 +82,13 @@ void ScalarFieldLevel::initialData()
     m_state_new, m_state_new, INCLUDE_GHOST_CELLS, disable_simd());
 
     vfield.clear_data();
-    pout() << "Calculating velocity ICs ended.\n";
+    cout << "Calculating velocity ICs ended.\n";
 
     BoxLoops::loop(
         make_compute_pack(InitialScalarData(m_p.initial_params)),
     m_state_new, m_state_new, INCLUDE_GHOST_CELLS,disable_simd());
 
-    pout() << "IC set-up ended.\n";
+    cout << "IC set-up ended.\n";
     
     fillAllGhosts();
     BoxLoops::loop(GammaCalculator(m_dx), m_state_new, m_state_new,
@@ -185,38 +185,27 @@ void ScalarFieldLevel::specificPostTimeStep()
 	    c_Ham_abs_terms, Interval(c_Mom_abs_terms, c_Mom_abs_terms)),
         m_state_new, m_state_diagnostics, EXCLUDE_GHOST_CELLS);
 
-    BoxLoops::loop(
-        MeansVars(m_dx, m_p.grid_params), 
-        m_state_new, m_state_diagnostics, EXCLUDE_GHOST_CELLS);
-
     double mass = m_p.potential_params.scalar_mass;
+    //int N = m_p.initial_params.N;
+    //double unitless_vol = pow(N, 3.);
 
     AMRReductions<VariableType::diagnostic> amr_reductions(m_gr_amr);
     AMRReductions<VariableType::evolution> amr_reductions_evo(m_gr_amr);
     double vol = amr_reductions.get_domain_volume();
 
-    // Convergence testing only
-
     double hamBar = amr_reductions.sum(c_Ham)/vol;
-    double hamAbsBar = amr_reductions.sum(c_Ham_abs_terms)/vol;
-    double hamNormMax = amr_reductions.max(c_Ham_abs)/hamAbsBar;
+    double hamAbsBar = amr_reductions.sum(c_Ham_abs)/vol;
+    double momBar = amr_reductions.sum(c_Mom)/vol;
 
-    /*double hambar = amr_reductions.max(c_Ham);
-    double habsbar = amr_reductions.max(c_Ham_abs_terms);
-    double hamMax = amr_reductions.max(c_Ham_abs);
-    double hamMin = amr_reductions.min(c_Ham_abs);
-    double hamMean = amr_reductions.sum(c_Ham_abs)/vol;
+    BoxLoops::loop(
+        MeansVars(m_dx, m_p.grid_params, c_Ham, c_Ham_abs, c_Ham_var, c_Ham_abs_AAD, hamBar, hamAbsBar,
+            c_Mom, c_Mom_AAD, momBar),
+        m_state_diagnostics, m_state_diagnostics, EXCLUDE_GHOST_CELLS);
 
-    cout << "ham max is: " << hambar << "\n";
-    cout << "hab abs terms max is: " << habsbar << "\n";
-    cout << "hamMax is: " << hamMax << "\n";
-    cout << "hamMin is: " << hamMin << "\n";
-    cout << "hamMean is: " << hamMean << "\n";*/
-
-    //double hampbpSum = amr_reductions.sum(c_Ham_pbp)/vol;
-    //double hamnormMax = amr_reductions.max(c_Ham_pbp_norm);
-    //MayDay::Error();
-    //double mombar = amr_reductions.sum(c_Mom)/vol;
+    // Convergence testing only
+    double hamVar = amr_reductions.sum(c_Ham_var)/vol;
+    double hamAbsAAD = amr_reductions.sum(c_Ham_abs_AAD)/vol;
+    double momAAD = amr_reductions.sum(c_Mom_AAD)/vol;
 
     // All other runs
     //Calculates means
@@ -252,11 +241,11 @@ void ScalarFieldLevel::specificPostTimeStep()
 
     if(first_step) 
     {
-        means_file.write_header_line({"Ham Mean","Ham Norm","Ham Abs (Normed) Max"});
+        means_file.write_header_line({"HamMean","HamAbsMean","HamSTD","HamAbsAAD","MomBar","MomAAD"});
         /*means_file.write_header_line({"Scalar field mean","Scalar field variance","Pi mean","Scale factor","Conformal factor variance","Hubble factor",
             "Kinetic ED","Potential ED","First SRP","Second SRP","Avg Ham constr","Avg |Ham| constr (point by point)","Avg Mom constr",
             "Avg Ham abs term","Avg Mom abs term","Avg lapse"});*/
     }
-    means_file.write_time_data_line({hamBar, hamAbsBar, hamNormMax});
+    means_file.write_time_data_line({hamBar, hamAbsBar, sqrt(hamVar), hamAbsAAD, momBar, momAAD});
     //means_file.write_time_data_line({phibar, phivar, pibar, a, chivar, H, kinb, potb, epsilon, delta, hambar, hamabspbpSum, mombar, habsbar, mabsbar, lapse});
 }
