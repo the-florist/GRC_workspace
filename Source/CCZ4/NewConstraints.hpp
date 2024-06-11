@@ -12,6 +12,7 @@
 #include "Cell.hpp"
 #include "FArrayBox.H"
 #include "FourthOrderDerivatives.hpp"
+#include "SixthOrderDerivatives.hpp"
 #include "Tensor.hpp"
 #include "simd.hpp"
 

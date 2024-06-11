@@ -40,8 +40,8 @@ class InitialScalarData
         double A;
     };
 
-    InitialScalarData(params_t a_params, double a_dx, std::vector<std::vector<double> > a_h, std::vector<std::vector<double> > a_hdot)
-        : m_params(a_params), m_dx(a_dx), m_h(a_h), m_hdot(a_hdot)
+    InitialScalarData(params_t a_params, double a_dx, std::vector<std::vector<double> > a_h)
+        : m_params(a_params), m_dx(a_dx), m_h(a_h)
     {
     }
 
@@ -140,12 +140,12 @@ class InitialScalarData
         current_cell.store_vars(0.5 * m_params.A * m_h[r][4], c_h23);
         current_cell.store_vars(1. + 0.5 * m_params.A * m_h[r][5], c_h33);
 
-        current_cell.store_vars(-m_params.A * m_hdot[r][0], c_A11);
-        current_cell.store_vars(-m_params.A * m_hdot[r][1], c_A12);
-        current_cell.store_vars(-m_params.A * m_hdot[r][2], c_A13);
-        current_cell.store_vars(-m_params.A * m_hdot[r][3], c_A22);
-        current_cell.store_vars(-m_params.A * m_hdot[r][4], c_A23);
-        current_cell.store_vars(-m_params.A * m_hdot[r][5], c_A33);
+        current_cell.store_vars(0., c_A11);
+        current_cell.store_vars(0., c_A12);
+        current_cell.store_vars(0., c_A13);
+        current_cell.store_vars(0., c_A22);
+        current_cell.store_vars(0., c_A23);
+        current_cell.store_vars(0., c_A33);
     }
 
   protected:

@@ -9,6 +9,7 @@
 #include "Cell.hpp"
 #include "Coordinates.hpp"
 #include "FourthOrderDerivatives.hpp"
+#include "SixthOrderDerivatives.hpp"
 #include "GRInterval.hpp"
 #include "Tensor.hpp"
 #include "TensorAlgebra.hpp"

@@ -217,18 +217,12 @@ void RandomField::calc_spectrum()
         // Real parts of h+, hx and hij
         if(kmag != 0)
         {
-            hplus[k + (N/2+1)*(j + N*i)][0] = sqrt((1.0/kmag/2.0 + (H0*H0/kmag/kmag/kmag)/2.0)) * 0.5 * (1.0 - tanh(epsilon * (kmag - kstar)));
+            hplus[k + (N/2+1)*(j + N*i)][0] = sqrt((1.0/kmag/2.0 + (H0*H0/kmag/kmag/kmag)/2.0)) 
+                                                * 0.5 * (1.0 - tanh(epsilon * (kmag - kstar)));
             //find_rayleigh_factor(kmag, m_spec_type, sigma_dist(engine), 0);// * cos(theta_dist(engine));
-            hcross[k + (N/2+1)*(j + N*i)][0] = sqrt((1.0/kmag/2.0 + (H0*H0/kmag/kmag/kmag)/2.0)) * 0.5 * (1.0 - tanh(epsilon * (kmag - kstar)));
+            hcross[k + (N/2+1)*(j + N*i)][0] = sqrt((1.0/kmag/2.0 + (H0*H0/kmag/kmag/kmag)/2.0)) 
+                                                * 0.5 * (1.0 - tanh(epsilon * (kmag - kstar)));
             //find_rayleigh_factor(kmag, m_spec_type, sigma_dist(engine), 0);// * cos(theta_dist(engine));
-            
-            calc_transferse_vectors(i, j, k, mhat, nhat);
-
-            for (int l=0; l<3; l++) for (int p=0; p<3; p++)
-            {
-                hk[lut[l][p]][k + (N/2+1)*(j + N*i)][0] = ((mhat[l]*mhat[p] - nhat[l]*nhat[p]) * hplus[k + (N/2+1)*(j + N*i)][0]
-                                                    + (mhat[l]*nhat[p] + nhat[l]*mhat[p]) * hcross[k + (N/2+1)*(j + N*i)][0]) / sqrt(2.0);
-            }
         }
 
         // If at a DC or Nyq point, enforce reality condition
@@ -241,22 +235,37 @@ void RandomField::calc_spectrum()
         // Else, fill the imaginary part of each field appropriately
         else if(kmag != 0)
         {
-            hplus[k + (N/2+1)*(j + N*i)][1] = sqrt((1.0/kmag/2.0 + (H0*H0/kmag/kmag/kmag)/2.0)) * 0.5 * (1.0 - tanh(epsilon * (kmag - kstar)));
+            hplus[k + (N/2+1)*(j + N*i)][1] = sqrt((1.0/kmag/2.0 + (H0*H0/kmag/kmag/kmag)/2.0)) 
+                                                * 0.5 * (1.0 - tanh(epsilon * (kmag - kstar)));
             //find_rayleigh_factor(kmag, m_spec_type, sigma_dist(engine), 1);// * sin(theta_dist(engine));
-            hcross[k + (N/2+1)*(j + N*i)][1] = sqrt((1.0/kmag/2.0 + (H0*H0/kmag/kmag/kmag)/2.0)) * 0.5 * (1.0 - tanh(epsilon * (kmag - kstar)));
+            hcross[k + (N/2+1)*(j + N*i)][1] = sqrt((1.0/kmag/2.0 + (H0*H0/kmag/kmag/kmag)/2.0)) 
+                                                * 0.5 * (1.0 - tanh(epsilon * (kmag - kstar)));
             //find_rayleigh_factor(kmag, m_spec_type, sigma_dist(engine), 1);// * sin(theta_dist(engine));
-            for (int l=0; l<3; l++) for (int p=0; p<3; p++)
-            {
-                hk[lut[l][p]][k + (N/2+1)*(j + N*i)][1] = ((mhat[l]*mhat[p] - nhat[l]*nhat[p]) * hplus[k + (N/2+1)*(j + N*i)][1]
-                                                + (mhat[l]*nhat[p] + nhat[l]*mhat[p]) * hcross[k + (N/2+1)*(j + N*i)][1]) / sqrt(2.0);
-            }
+        }
+
+        /*for(int s=0; s<2; s++)
+        {
+            hplus[k + (N/2+1)*(j + N*i)][s] *= sqrt(-2. * log(sigma_dist(engine)));
+            hcross[k + (N/2+1)*(j + N*i)][s] *= sqrt(-2. * log(sigma_dist(engine)));
+        }
+
+        hplus[k + (N/2+1)*(j + N*i)][0] *= cos(theta_dist(engine));
+        hplus[k + (N/2+1)*(j + N*i)][1] *= sin(theta_dist(engine));
+        hcross[k + (N/2+1)*(j + N*i)][0] *= cos(theta_dist(engine));
+        hcross[k + (N/2+1)*(j + N*i)][1] *= sin(theta_dist(engine));*/
+
+        calc_transferse_vectors(i, j, k, mhat, nhat);
+        for (int l=0; l<3; l++) for (int p=0; p<3; p++)
+        {
+            hk[lut[l][p]][k + (N/2+1)*(j + N*i)][0] = ((mhat[l]*mhat[p] - nhat[l]*nhat[p]) * hplus[k + (N/2+1)*(j + N*i)][0]
+                                                + (mhat[l]*nhat[p] + nhat[l]*mhat[p]) * hcross[k + (N/2+1)*(j + N*i)][0]) / sqrt(2.0);
         }
     }
 
     cout << "All independent values have been assigned.\n Applying symmetry rules.\n";
 
-    //std::ofstream hkprint("./h-k-printed.dat");
-    //hkprint << std::fixed << setprecision(12);
+    std::ofstream hkprint("./h-k-printed.dat");
+    hkprint << std::fixed << setprecision(12);
 
     for(int i=0; i<N; i++) for(int j=0; j<N; j++) for(int k=0; k<=N/2; k++)
     {
@@ -264,15 +273,15 @@ void RandomField::calc_spectrum()
         apply_symmetry_rules(i, j, k, hcross, N);
         for(int s=0; s<9; s++) { apply_symmetry_rules(i, j, k, hk[s], N); }
 
-        /*for(int l=0; l<2; l++)
+        for(int l=0; l<2; l++)
         {
             hkprint << hplus[k + (N/2+1)*(j + N*i)][l] << "," << hcross[k + (N/2+1)*(j + N*i)][l] << ",";
         }
-        hkprint << "\n";*/
+        hkprint << "\n";
     }
 
-    //hkprint.close();
-    //MayDay::Error("Printed file for comparison with stand-alone IC generator.");
+    hkprint.close();
+    MayDay::Error("Printed file for comparison with stand-alone IC generator.");
 
     cout << "Moving to configuration space.\n";
 
