@@ -70,7 +70,7 @@ void ScalarFieldLevel::initialData()
 
     //Load in data from .dat files, for h and hdot initialisation
 
-    int N = m_p.initial_params.N;
+    /*int N = m_p.initial_params.N;
     std::string ICdir = "/home/eaf49/rds/hpc-work/IC-files/convergence-tests/N"+to_string(N)+"/";
 
     ifstream gw_pos;
@@ -136,7 +136,7 @@ void ScalarFieldLevel::initialData()
                 v_number.clear();
                 m++;
             }
-        }*/
+        }
 
         n++;
 
@@ -166,9 +166,9 @@ void ScalarFieldLevel::initialData()
     
     fillAllGhosts();
     BoxLoops::loop(GammaCalculator(m_dx), m_state_new, m_state_new,
-                   EXCLUDE_GHOST_CELLS);
+                   EXCLUDE_GHOST_CELLS);*/
 
-    /*RandomField pfield(m_p.initial_params, "position");
+    RandomField pfield(m_p.initial_params, "position");
 
     BoxLoops::loop(
         make_compute_pack(SetValue(0.),
@@ -192,10 +192,11 @@ void ScalarFieldLevel::initialData()
     m_state_new, m_state_new, INCLUDE_GHOST_CELLS,disable_simd());
 
     cout << "IC set-up ended.\n";
+    MayDay::Error();
     
     fillAllGhosts();
     BoxLoops::loop(GammaCalculator(m_dx), m_state_new, m_state_new,
-                   EXCLUDE_GHOST_CELLS);*/
+                   EXCLUDE_GHOST_CELLS);
 }
 
 #ifdef CH_USE_HDF5
@@ -344,8 +345,8 @@ void ScalarFieldLevel::specificPostTimeStep()
     if(first_step) 
     {
         constrs_file.write_header_line({"HamMean","HamAbsMean","HamSTD","HamAbsAAD","MomBar","MomAAD"});
-        means_file.write_header_line({"Scalar field mean","Scalar field variance","Pi mean","Scale factor","Conformal factor variance","Hubble factor",
-            "Kinetic ED","Potential ED","First SRP","Second SRP","Avg lapse"});
+        means_file.write_header_line({"PhiMean","PhiVar","PiMean","ScaleFact","ChiVar","HubbleFact",
+            "KinED","PotED","SRP1","SRP2","LapseMean"});
     }
     constrs_file.write_time_data_line({hamBar, hamAbsBar, sqrt(hamVar), hamAbsAAD, momBar, momAAD});
     means_file.write_time_data_line({phibar, phivar, pibar, a, chivar, H, kinb, potb, epsilon, delta, lapse});

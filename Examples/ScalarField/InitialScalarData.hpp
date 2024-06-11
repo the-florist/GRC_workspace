@@ -40,7 +40,7 @@ class InitialScalarData
         double A;
     };
 
-    InitialScalarData(params_t a_params, double a_dx, std::vector<std::vector<double> > a_h)
+    /*InitialScalarData(params_t a_params, double a_dx, std::vector<std::vector<double> > a_h)
         : m_params(a_params), m_dx(a_dx), m_h(a_h)
     {
     }
@@ -153,10 +153,10 @@ class InitialScalarData
     const params_t m_params; //!< The matter initial condition params
     std::vector< std::vector<double>> m_h;
     std::vector<std::vector<double> > m_hdot;
-};
+};*/
 
     //! The constructor
-    /*InitialScalarData(params_t a_params)
+    InitialScalarData(params_t a_params)
         : m_params(a_params)
     {
     }
@@ -190,6 +190,6 @@ class InitialScalarData
 
   protected:
     const params_t m_params; //!< The matter initial condition params
-};*/
+};
 
 #endif /* INITIALSCALARDATA_HPP_ */
