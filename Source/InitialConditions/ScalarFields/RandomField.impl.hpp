@@ -88,26 +88,12 @@ void RandomField::compute(Cell<data_t> current_cell) const
     // Assign position and momenum to the vars. objects
     if(m_spec_type == "position")
     { 
-        //cout << i << "," << j << "," << k << "," << r << "\n";
         for(int l=0; l<3; l++) for(int p=l; p<3; p++) 
         { 
             hx[lut[l][p]][r] *= m_params.A/pow(L, 3.); 
             if (l==p) { hx[lut[l][p]][r] += 1.; }
-            //cout << l << ", " << p << ": " << std::fixed << setprecision(10) << hx[lut[l][p]][r] << "\n";
             vars.h[p][l] = hx[lut[l][p]][r];
-            //cout << "-------\n" << vars.h[l][p] << "\n";
         }
-        //cout << "\n";
-        //MayDay::Error();
-
-        /*
-        //store tensor metric variables, g_ij = delta_ij + 1/2 h_ij
-        current_cell.store_vars(1. + hx[0][r], c_h11);
-        current_cell.store_vars(hx[1][r], c_h12);
-        current_cell.store_vars(hx[2][r], c_h13);
-        current_cell.store_vars(1. + hx[4][r], c_h22);
-        current_cell.store_vars(hx[5][r], c_h23);
-        current_cell.store_vars(1. + hx[8][r], c_h33);*/
     }
 
     else if(m_spec_type == "velocity")
@@ -116,25 +102,18 @@ void RandomField::compute(Cell<data_t> current_cell) const
         {
             vars.A[p][l] = -hx[lut[l][p]][r];
         }
-
-        /*current_cell.store_vars(-hx[0][r], c_A11);
-        current_cell.store_vars(-hx[1][r], c_A12);
-        current_cell.store_vars(-hx[2][r], c_A13);
-        current_cell.store_vars(-hx[4][r], c_A22);
-        current_cell.store_vars(-hx[5][r], c_A23);
-        current_cell.store_vars(-hx[8][r], c_A33);*/
     }
     
     else { MayDay::Error("Spectral type provided is an invalid option."); }
 
     // Trace free test
-    /*if(hx[0][r] + hx[4][r] + hx[8][r] - 3. > 1.e-12) 
+    if(abs(hx[0][r] + hx[4][r] + hx[8][r] - 3.) > 1.e-12) 
     { 
         std::cout << "Trace of hij is large here: \n";
         std::cout << "(" << i << "," << j << "," << k << ")\n";
         std::cout << hx[0][r] + hx[4][r] + hx[8][r] - 3. << "\n";
         MayDay::Error();
-    }*/
+    }
 
     // Store values at this point on the grid
     current_cell.store_vars(vars);
@@ -247,30 +226,16 @@ void RandomField::calc_spectrum()
         // Real parts of h+, hx and hij
         if(kmag != 0)
         {
-            //for(int s=0; s<2; s++)
-            //{
-                hplus[k + (N/2+1)*(j + N*i)][0] = sqrt((1.0/kmag/2.0 + (H0*H0/kmag/kmag/kmag)/2.0)) 
-                                                * 0.5 * (1.0 - tanh(epsilon * (kmag - kstar)));
-                //find_rayleigh_factor(kmag, m_spec_type, sigma_dist(engine), 0);// * cos(theta_dist(engine));
-                hcross[k + (N/2+1)*(j + N*i)][0] = sqrt((1.0/kmag/2.0 + (H0*H0/kmag/kmag/kmag)/2.0)) 
-                                                    * 0.5 * (1.0 - tanh(epsilon * (kmag - kstar)));
-                //find_rayleigh_factor(kmag, m_spec_type, sigma_dist(engine), 0);// * cos(theta_dist(engine));
-
-                hplus[k + (N/2+1)*(j + N*i)][1] = sqrt((1.0/kmag/2.0 + (H0*H0/kmag/kmag/kmag)/2.0)) 
-                                                    * 0.5 * (1.0 - tanh(epsilon * (kmag - kstar)));
-                //find_rayleigh_factor(kmag, m_spec_type, sigma_dist(engine), 1);// * sin(theta_dist(engine));
-                hcross[k + (N/2+1)*(j + N*i)][1] = sqrt((1.0/kmag/2.0 + (H0*H0/kmag/kmag/kmag)/2.0)) 
-                                                    * 0.5 * (1.0 - tanh(epsilon * (kmag - kstar)));
-                //find_rayleigh_factor(kmag, m_spec_type, sigma_dist(engine), 1);// * sin(theta_dist(engine));
-            //}
-
-            /*for(int s=0; s<2; s++)
+            for(int s=0; s<2; s++)
             {
-                hplus[k + (N/2+1)*(j + N*i)][s] *= sqrt(-2. * log(sigma_dist(engine)));
-                hcross[k + (N/2+1)*(j + N*i)][s] *= sqrt(-2. * log(sigma_dist(engine)));
+                hplus[k + (N/2+1)*(j + N*i)][s] = find_rayleigh_factor(kmag, m_spec_type, sigma_dist(engine), s);
+                                                    //* sqrt(-2. * log(sigma_dist(engine)));
+
+                hcross[k + (N/2+1)*(j + N*i)][s] = find_rayleigh_factor(kmag, m_spec_type, sigma_dist(engine), s);
+                                                    //* sqrt(-2. * log(sigma_dist(engine)));
             }
 
-            hplus[k + (N/2+1)*(j + N*i)][0] *= cos(theta_dist(engine));
+            /*hplus[k + (N/2+1)*(j + N*i)][0] *= cos(theta_dist(engine));
             hplus[k + (N/2+1)*(j + N*i)][1] *= sin(theta_dist(engine));
             hcross[k + (N/2+1)*(j + N*i)][0] *= cos(theta_dist(engine));
             hcross[k + (N/2+1)*(j + N*i)][1] *= sin(theta_dist(engine));*/
@@ -321,18 +286,17 @@ void RandomField::calc_spectrum()
         fftw_execute(hij_plan[l]);
     }
 
-    std::ofstream hijprint("/home/eaf49/rds/hpc-work/hij-printed.dat");
-    hijprint << std::fixed << setprecision(12);
+    //std::ofstream hijprint("/home/eaf49/rds/hpc-work/hij-printed.dat");
+    //hijprint << std::fixed << setprecision(12);
 
     std::vector<double> means(2, 0.);
     for(int i=0; i<N; i++) for(int j=0; j<N; j++) for(int k=0; k<N; k++)
     {
-        for(int l=0; l<3; l++) for(int p=l; p<3; p++)
+        /*for(int l=0; l<3; l++) for(int p=l; p<3; p++)
         {
-            //hx[lut[l][p]][k + N * (j + N * i)] *= ;
             hijprint << hx[lut[l][p]][k + N * (j + N * i)] * m_params.A/pow(m_params.L, 3.) << ",";
         }
-        hijprint << "\n";
+        hijprint << "\n";*/
 
         hplusx[k + N * (j + N * i)] *= m_params.A/pow(m_params.L, 3.);
         hcrossx[k + N * (j + N * i)] *= m_params.A/pow(m_params.L, 3.);
@@ -340,7 +304,7 @@ void RandomField::calc_spectrum()
         means[0] += hplusx[k + N * (j + N * i)];
         means[1] += hcrossx[k + N * (j + N * i)];
     }
-    hijprint.close();
+    //hijprint.close();
     //MayDay::Error("Check hij print file.");
 
     for(int s=0; s<2; s++) { means[s] /= pow(N, 3.); }
@@ -360,7 +324,7 @@ void RandomField::calc_spectrum()
 
     if (m_spec_type == "position")
     {
-	    std::string data_dir = "/home/eaf49/rds/hpc-work/convergence-tests/4th-order-stencils/RF-conv-dump";
+	    std::string data_dir = "/home/eaf49/GRC_workspace/Examples/ScalarField";
     	ofstream pert_chars(data_dir+"/IC-pert-level.dat");
 	    if(!pert_chars) { MayDay::Error("Pert. IC characteristics file unopened."); }
 
@@ -418,7 +382,6 @@ double RandomField::find_rayleigh_factor(double km, std::string spec_type, doubl
     if(km < 1.e-12) { return 0.; } // P(k=0), for m=0
 
     double windowed_value = 0.;
-    // See Mukanov-Sasaki mode function decomposition in: (forthcoming paper)
     if (spec_type == "position")
     {
         windowed_value = sqrt((1.0/km/2.0 + (H0*H0/km/km/km)/2.0));
@@ -429,7 +392,7 @@ double RandomField::find_rayleigh_factor(double km, std::string spec_type, doubl
     }
 
     // Apply the tanh window function and the uniform draw
-    windowed_value *= 0.5 * (1.0 - tanh(epsilon * (km - kstar)));// * sqrt(-2. * log(uniform_draw));
+    windowed_value *= 0.5 * (1.0 - tanh(epsilon * (km - kstar)));
     return windowed_value;
 }
 
