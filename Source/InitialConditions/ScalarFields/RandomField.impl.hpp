@@ -14,7 +14,7 @@
     : m_params(a_params), m_spec_type(a_spec_type)
 {
     kstar = 16.*(2.*M_PI/m_params.L);
-    epsilon = 0.25 * (sqrt(3.)*2.*M_PI/m_params.L); //0.5;
+    epsilon = 0.5;//0.25 * (sqrt(3.)*2.*M_PI/m_params.L); //0.5;
     H0 = sqrt((8.0 * M_PI/3.0/m_params.m_pl/m_params.m_pl)
             *(0.5*m_params.velocity*m_params.velocity + 0.5*pow(m_params.m * m_params.amplitude, 2.0)));
     norm = pow(m_params.N, 3.);
@@ -26,10 +26,26 @@
 template <class data_t>
 void RandomField::compute(Cell<data_t> current_cell) const
 {
+    Vars<data_t> vars;
+    if(m_spec_type == "position") { VarsTools::assign(vars, 0.); }
+
     // Pull out the grid parameters
     int N = m_params.N;
     double L = m_params.L;
     double dx = L/N;
+
+    // Setting the lut that maps polarisation vectors to 
+    // polarisation tensors.
+    int lut[3][3];  
+    lut[0][0] = 0;
+    lut[0][1] = 1;
+    lut[0][2] = 2;
+    lut[1][0] = 3;
+    lut[1][1] = 4;
+    lut[1][2] = 5;
+    lut[2][0] = 6;
+    lut[2][1] = 7;
+    lut[2][2] = 8;
 
     Coordinates<data_t> coords(current_cell, dx, m_params.center);
 
@@ -54,7 +70,7 @@ void RandomField::compute(Cell<data_t> current_cell) const
     if(k < 0) { k = N + k; }
     else if(k >= N) { k = k - N; }
 
-    // The flattened position (leading with z)
+    // The flattened position (leading with z or k)
     int r = k + N*(j + N*i);
 
     // Error trap, to make sure we stay in the domain of dependence
@@ -69,35 +85,37 @@ void RandomField::compute(Cell<data_t> current_cell) const
         MayDay::Error("RandomField: Cell index greater than resolution^3 at coarsest level.");
     }
 
-    for(int s=0; s<9; s++) { hx[s][r] *= m_params.A/pow(L, 3.); }
-
-    if(hx[0][r] + hx[4][r] + hx[8][r] > 1e-12) 
-    { 
-        std::cout << "Trace of hij is large here: \n";
-        std::cout << "(" << i << "," << j << "," << k << ")\n";
-        std::cout << hx[0][r] + hx[4][r] + hx[8][r] << "\n";
-        MayDay::Error();
-    }
-
+    // Assign position and momenum to the vars. objects
     if(m_spec_type == "position")
-    {  
+    { 
+        //cout << i << "," << j << "," << k << "," << r << "\n";
+        for(int l=0; l<3; l++) for(int p=l; p<3; p++) 
+        { 
+            hx[lut[l][p]][r] *= m_params.A/pow(L, 3.); 
+            if (l==p) { hx[lut[l][p]][r] += 1.; }
+            //cout << l << ", " << p << ": " << std::fixed << setprecision(10) << hx[lut[l][p]][r] << "\n";
+            vars.h[p][l] = hx[lut[l][p]][r];
+            //cout << "-------\n" << vars.h[l][p] << "\n";
+        }
+        //cout << "\n";
+        //MayDay::Error();
+
+        /*
         //store tensor metric variables, g_ij = delta_ij + 1/2 h_ij
         current_cell.store_vars(1. + hx[0][r], c_h11);
         current_cell.store_vars(hx[1][r], c_h12);
         current_cell.store_vars(hx[2][r], c_h13);
         current_cell.store_vars(1. + hx[4][r], c_h22);
         current_cell.store_vars(hx[5][r], c_h23);
-        current_cell.store_vars(1. + hx[8][r], c_h33);
+        current_cell.store_vars(1. + hx[8][r], c_h33);*/
     }
 
     else if(m_spec_type == "velocity")
     {
-        current_cell.store_vars(0., c_A11);
-        current_cell.store_vars(0., c_A12);
-        current_cell.store_vars(0., c_A13);
-        current_cell.store_vars(0., c_A22);
-        current_cell.store_vars(0., c_A23);
-        current_cell.store_vars(0., c_A33);
+        for(int l=0; l<3; l++) for(int p=l; p<3; p++) 
+        {
+            vars.A[p][l] = -hx[lut[l][p]][r];
+        }
 
         /*current_cell.store_vars(-hx[0][r], c_A11);
         current_cell.store_vars(-hx[1][r], c_A12);
@@ -106,13 +124,25 @@ void RandomField::compute(Cell<data_t> current_cell) const
         current_cell.store_vars(-hx[5][r], c_A23);
         current_cell.store_vars(-hx[8][r], c_A33);*/
     }
+    
+    else { MayDay::Error("Spectral type provided is an invalid option."); }
 
-    else { MayDay::Error("RandomField: Spec type entered is not a viable option."); }
+    // Trace free test
+    /*if(hx[0][r] + hx[4][r] + hx[8][r] - 3. > 1.e-12) 
+    { 
+        std::cout << "Trace of hij is large here: \n";
+        std::cout << "(" << i << "," << j << "," << k << ")\n";
+        std::cout << hx[0][r] + hx[4][r] + hx[8][r] - 3. << "\n";
+        MayDay::Error();
+    }*/
+
+    // Store values at this point on the grid
+    current_cell.store_vars(vars);
 }
 
 void RandomField::clear_data()
 {
-    cout << "Clearing memory allocated to hx array.\n";
+    pout() << "Clearing memory allocated to hx array.\n";
     for(int s=0; s<6; s++) { free(hx[s]); } // This causes a seg fault as is
     free(hx);
 }
@@ -201,7 +231,7 @@ void RandomField::calc_spectrum()
     uniform_real_distribution<double> theta_dist(0, 2*M_PI);
     uniform_real_distribution<double> sigma_dist(0, 1);
 
-    cout << "Starting RandomField loop for " << m_spec_type << " field.\n";
+    pout() << "Starting RandomField loop for " << m_spec_type << " field.\n";
 
     for(int i=0; i<N; i++) for(int j=0; j<N; j++) for(int k=0; k<=N/2; k++)
     {
@@ -262,8 +292,6 @@ void RandomField::calc_spectrum()
         }
     }
 
-    cout << "All independent values have been assigned.\n Applying symmetry rules.\n";
-
     //std::ofstream hkprint("/home/eaf49/rds/hpc-work/h-k-printed.dat");
     //hkprint << std::fixed << setprecision(12);
 
@@ -284,7 +312,7 @@ void RandomField::calc_spectrum()
     //hkprint.close();
     //MayDay::Error("Printed file for comparison with stand-alone IC generator.");
 
-    cout << "Moving to configuration space.\n";
+    pout() << "Moving to configuration space.\n";
 
     fftw_execute(plan1);
     fftw_execute(plan2);
@@ -293,18 +321,18 @@ void RandomField::calc_spectrum()
         fftw_execute(hij_plan[l]);
     }
 
-    //std::ofstream hijprint("/home/eaf49/rds/hpc-work/hij-printed.dat");
-    //hijprint << std::fixed << setprecision(12);
+    std::ofstream hijprint("/home/eaf49/rds/hpc-work/hij-printed.dat");
+    hijprint << std::fixed << setprecision(12);
 
     std::vector<double> means(2, 0.);
     for(int i=0; i<N; i++) for(int j=0; j<N; j++) for(int k=0; k<N; k++)
     {
-        /*for(int l=0; l<3; l++) for(int p=l; p<3; p++)
+        for(int l=0; l<3; l++) for(int p=l; p<3; p++)
         {
-            hx[lut[l][p]][k + N * (j + N * i)] *= m_params.A/pow(m_params.L, 3.);
-            hijprint << hx[lut[l][p]][k + N * (j + N * i)] << ",";
+            //hx[lut[l][p]][k + N * (j + N * i)] *= ;
+            hijprint << hx[lut[l][p]][k + N * (j + N * i)] * m_params.A/pow(m_params.L, 3.) << ",";
         }
-        hijprint << "\n";*/
+        hijprint << "\n";
 
         hplusx[k + N * (j + N * i)] *= m_params.A/pow(m_params.L, 3.);
         hcrossx[k + N * (j + N * i)] *= m_params.A/pow(m_params.L, 3.);
@@ -312,7 +340,7 @@ void RandomField::calc_spectrum()
         means[0] += hplusx[k + N * (j + N * i)];
         means[1] += hcrossx[k + N * (j + N * i)];
     }
-    //hijprint.close();
+    hijprint.close();
     //MayDay::Error("Check hij print file.");
 
     for(int s=0; s<2; s++) { means[s] /= pow(N, 3.); }
@@ -332,9 +360,8 @@ void RandomField::calc_spectrum()
 
     if (m_spec_type == "position")
     {
-	    std::string data_dir = "/home/eaf49/rds/hpc-work/convergence-tests/4th-order-stencils/N"+to_string(N);
+	    std::string data_dir = "/home/eaf49/rds/hpc-work/convergence-tests/4th-order-stencils/RF-conv-dump";
     	ofstream pert_chars(data_dir+"/IC-pert-level.dat");
-	    cout << data_dir << "\n";
 	    if(!pert_chars) { MayDay::Error("Pert. IC characteristics file unopened."); }
 
     	pert_chars << "Planck mass scale: " << m_params.m_pl << "\n";
@@ -357,6 +384,8 @@ void RandomField::calc_spectrum()
     fftw_destroy_plan(plan1);
     fftw_destroy_plan(plan2);
     for(int s=0; s<9; s++) { fftw_destroy_plan(hij_plan[s]); }
+
+    pout() << "All memory but hx freed, starting BoxLoop\n";
 }
 
 int RandomField::flip_index(int I, int N) { return (int)abs(N - I); }
@@ -393,16 +422,10 @@ double RandomField::find_rayleigh_factor(double km, std::string spec_type, doubl
     if (spec_type == "position")
     {
         windowed_value = sqrt((1.0/km/2.0 + (H0*H0/km/km/km)/2.0));
-        /*if(comp == 0) { windowed_value = (cos(km/H0) - H0 * sin(km/H0)/km)/sqrt(2. * km); }
-        else if(comp == 1) { windowed_value = -(sin(km/H0) + H0 * cos(km/H0)/km)/sqrt(2. * km); }
-        else { MayDay::Error("RandomField: component other than real or imaginary has been requested."); }*/
     }
     else if (spec_type == "velocity")
     {
         windowed_value = sqrt((km/2.0 - (H0*H0)/km/2.0 + H0*H0*H0*H0/km/km/km/2.0)); 
-        /*if(comp == 0) { windowed_value = (sin(km/H0) * (H0*H0/km - km) - H0 * cos(km/H0))/sqrt(2. * km); }
-        else if(comp == 1) { windowed_value = (cos(km/H0) * (H0*H0/km - km) + H0 * sin(km/H0))/sqrt(2. * km); }
-        else { MayDay::Error("RandomField: component other than real or imaginary has been requested."); }*/
     }
 
     // Apply the tanh window function and the uniform draw
@@ -473,7 +496,7 @@ void RandomField::Test_norm(double vec[])
     if (abs(1. - norm) > 1.e-12) 
     {
         cout << "A basis vector is not normalised! Norm: " << norm << "\n";
-        exit(EXIT_FAILURE);
+        MayDay::Error();
     }
 }
 
@@ -485,7 +508,7 @@ void RandomField::Test_orth(double vec1[], double vec2[])
     if (abs(orth) > 1.e-12) 
     {
         cout << "Two basis vectors are not orthogonal! Orth factor: " << orth << "\n";
-        exit(EXIT_FAILURE);
+        MayDay::Error();
     }
 }
 

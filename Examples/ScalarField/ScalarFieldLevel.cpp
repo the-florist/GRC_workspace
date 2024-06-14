@@ -74,7 +74,7 @@ void ScalarFieldLevel::initialData()
     std::string ICdir = "/home/eaf49/rds/hpc-work/IC-files/convergence-tests/N"+to_string(N)+"/";
 
     ifstream gw_pos;
-    std::string pos_dir = ICdir+"gw-re-pos-rand.dat";
+    std::string pos_dir = ICdir+"gw-re-pos.dat";
     //ifstream gw_vel;
     //std::string vel_dir = ICDir+"gw-re-vel.dat";
 
@@ -171,28 +171,26 @@ void ScalarFieldLevel::initialData()
     RandomField pfield(m_p.initial_params, "position");
 
     BoxLoops::loop(
-        make_compute_pack(SetValue(0.),
-                            pfield),
-    m_state_new, m_state_new, INCLUDE_GHOST_CELLS, disable_simd());
+        make_compute_pack(SetValue(0.), pfield, InitialScalarData(m_p.initial_params)),
+    m_state_new, m_state_new, EXCLUDE_GHOST_CELLS, disable_simd());
 
     pfield.clear_data();
     cout << "Calculating position ICs ended.\n";
 
-    RandomField vfield(m_p.initial_params, "velocity");
+    /*RandomField vfield(m_p.initial_params, "velocity");
 
     BoxLoops::loop(
         make_compute_pack(vfield),
     m_state_new, m_state_new, INCLUDE_GHOST_CELLS, disable_simd());
 
     vfield.clear_data();
-    cout << "Calculating velocity ICs ended.\n";
+    cout << "Calculating velocity ICs ended.\n";*/
 
-    BoxLoops::loop(
-        make_compute_pack(InitialScalarData(m_p.initial_params)),
-    m_state_new, m_state_new, INCLUDE_GHOST_CELLS,disable_simd());
+    /*BoxLoops::loop(
+        make_compute_pack(InitialScalarData(m_p.initial_params, c_h11)),
+    m_state_new, m_state_new, INCLUDE_GHOST_CELLS, disable_simd());*/
 
     cout << "IC set-up ended.\n";
-    MayDay::Error();
     
     fillAllGhosts();
     BoxLoops::loop(GammaCalculator(m_dx), m_state_new, m_state_new,
