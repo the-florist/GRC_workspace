@@ -228,17 +228,17 @@ void RandomField::calc_spectrum()
         {
             for(int s=0; s<2; s++)
             {
-                hplus[k + (N/2+1)*(j + N*i)][s] = find_rayleigh_factor(kmag, m_spec_type, sigma_dist(engine), s);
-                                                    //* sqrt(-2. * log(sigma_dist(engine)));
+                hplus[k + (N/2+1)*(j + N*i)][s] = find_rayleigh_factor(kmag, m_spec_type, sigma_dist(engine), s)
+                                                    * sqrt(-2. * log(sigma_dist(engine)));
 
-                hcross[k + (N/2+1)*(j + N*i)][s] = find_rayleigh_factor(kmag, m_spec_type, sigma_dist(engine), s);
-                                                    //* sqrt(-2. * log(sigma_dist(engine)));
+                hcross[k + (N/2+1)*(j + N*i)][s] = find_rayleigh_factor(kmag, m_spec_type, sigma_dist(engine), s)
+                                                    * sqrt(-2. * log(sigma_dist(engine)));
             }
 
-            /*hplus[k + (N/2+1)*(j + N*i)][0] *= cos(theta_dist(engine));
+            hplus[k + (N/2+1)*(j + N*i)][0] *= cos(theta_dist(engine));
             hplus[k + (N/2+1)*(j + N*i)][1] *= sin(theta_dist(engine));
             hcross[k + (N/2+1)*(j + N*i)][0] *= cos(theta_dist(engine));
-            hcross[k + (N/2+1)*(j + N*i)][1] *= sin(theta_dist(engine));*/
+            hcross[k + (N/2+1)*(j + N*i)][1] *= sin(theta_dist(engine));
 
             calc_transferse_vectors(i, j, k, mhat, nhat);
             for (int l=0; l<3; l++) for (int p=l; p<3; p++) for(int s=0; s<2; s++)

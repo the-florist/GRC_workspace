@@ -90,7 +90,7 @@ void ScalarFieldLevel::initialData()
         make_compute_pack(InitialScalarData(m_p.initial_params)),
     m_state_new, m_state_new, INCLUDE_GHOST_CELLS, disable_simd());
 
-    cout << "IC set-up ended.\n";
+    pout() << "IC set-up ended.\n";
     
     fillAllGhosts();
     BoxLoops::loop(GammaCalculator(m_dx), m_state_new, m_state_new,
