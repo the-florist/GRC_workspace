@@ -30,9 +30,12 @@ void RandomField::compute(Cell<data_t> current_cell) const
     if(m_spec_type == "position") { VarsTools::assign(vars, 0.); }
 
     // Pull out the grid parameters
-    int N = m_params.N;
+    int Nc = m_params.N;
+    int N = 256;
+    int skip = (int)(N/Nc);
+
     double L = m_params.L;
-    double dx = L/N;
+    double dx = L/Nc;
 
     // Setting the lut that maps polarisation vectors to 
     // polarisation tensors.
@@ -61,28 +64,41 @@ void RandomField::compute(Cell<data_t> current_cell) const
 
     // This is to guard against ghost cells that can take you outside 
     // the domain of dependence of the box. Uses periodic BCs.
-    if(i < 0) { i = N + i; }
-    else if(i >= N) { i = i - N; }
+    if(i < 0) { i = Nc + i; }
+    else if(i >= Nc) { i = i - Nc; }
 
-    if(j < 0) { j = N + j; }
-    else if(j >= N) { j = j - N; }
+    if(j < 0) { j = Nc + j; }
+    else if(j >= Nc) { j = j - Nc; }
 
-    if(k < 0) { k = N + k; }
-    else if(k >= N) { k = k - N; }
+    if(k < 0) { k = Nc + k; }
+    else if(k >= Nc) { k = k - Nc; }
+
+    int rc = k + Nc*(j + Nc*i);
+
+    // Error trap, to make sure we stay in the domain of dependence
+    if (rc < 0)
+    {
+        cout << rc << endl;
+        MayDay::Error("RandomField: Cell index value below zero.");
+    }
+    else if(rc > pow(Nc, 3.))
+    {
+        cout << rc << endl;
+        MayDay::Error("RandomField: Cell index greater than Nc^3 at coarsest level.");
+    }
+
+    i *= skip;
+    j *= skip;
+    k *= skip;
 
     // The flattened position (leading with z or k)
     int r = k + N*(j + N*i);
 
-    // Error trap, to make sure we stay in the domain of dependence
-    if (r < 0)
+    // Error trap, to make sure we stay in the domain of dependence of the larger grid
+    if (r > pow(N, 3.))
     {
         cout << r << endl;
-        MayDay::Error("RandomField: Cell index value below zero.");
-    }
-    else if(r > pow(m_params.N, 3.))
-    {
-        cout << r << endl;
-        MayDay::Error("RandomField: Cell index greater than resolution^3 at coarsest level.");
+        MayDay::Error("RandomField: Cell index greater than N^3 at coarsest level.");
     }
 
     // Assign position and momenum to the vars. objects
@@ -128,7 +144,7 @@ void RandomField::clear_data()
 
 void RandomField::calc_spectrum()
 {
-    int N = m_params.N;
+    int N = 256;
     
     // Setting the lut that maps polarisation vectors to 
     // polarisation tensors.
@@ -289,20 +305,22 @@ void RandomField::calc_spectrum()
     //std::ofstream hijprint("/home/eaf49/rds/hpc-work/hij-printed.dat");
     //hijprint << std::fixed << setprecision(12);
 
+    int Nc = m_params.N;
+    int skip = (int)(N/Nc);
     std::vector<double> means(2, 0.);
-    for(int i=0; i<N; i++) for(int j=0; j<N; j++) for(int k=0; k<N; k++)
+    for(int i=0; i<Nc; i++) for(int j=0; j<Nc; j++) for(int k=0; k<Nc; k++)
     {
         /*for(int l=0; l<3; l++) for(int p=l; p<3; p++)
         {
-            hijprint << hx[lut[l][p]][k + N * (j + N * i)] * m_params.A/pow(m_params.L, 3.) << ",";
+            hijprint << hx[lut[l][p]][k*skip + N * (j*skip + N * i*skip)] * m_params.A/pow(m_params.L, 3.) << ",";
         }
         hijprint << "\n";*/
 
-        hplusx[k + N * (j + N * i)] *= m_params.A/pow(m_params.L, 3.);
-        hcrossx[k + N * (j + N * i)] *= m_params.A/pow(m_params.L, 3.);
+        hplusx[(k + N * (j + N * i))*skip] *= m_params.A/pow(m_params.L, 3.);
+        hcrossx[(k + N * (j + N * i))*skip] *= m_params.A/pow(m_params.L, 3.);
 
-        means[0] += hplusx[k + N * (j + N * i)];
-        means[1] += hcrossx[k + N * (j + N * i)];
+        means[0] += hplusx[(k + N * (j + N * i))*skip];
+        means[1] += hcrossx[(k + N * (j + N * i))*skip];
     }
     //hijprint.close();
     //MayDay::Error("Check hij print file.");
@@ -312,8 +330,8 @@ void RandomField::calc_spectrum()
     std::vector<double> stdevs(2, 0.);
     for(int i=0; i<N; i++) for(int j=0; j<N; j++) for(int k=0; k<N; k++)
     {
-        stdevs[0] += pow(hplusx[k + N * (j + N * i)] - means[0], 2.);
-        stdevs[1] += pow(hcrossx[k + N * (j + N * i)] - means[1], 2.);
+        stdevs[0] += pow(hplusx[(k + N * (j + N * i))*skip] - means[0], 2.);
+        stdevs[1] += pow(hcrossx[(k + N * (j + N * i))*skip] - means[1], 2.);
 
         for(int s=0; s<2; s++)
         {
@@ -330,7 +348,8 @@ void RandomField::calc_spectrum()
 
     	pert_chars << "Planck mass scale: " << m_params.m_pl << "\n";
     	pert_chars << "Length of box (m_pl): " << m_params.L << "\n";
-    	pert_chars << "Box resolution: " << N << "\n";
+        pert_chars << "Full box resolution: " << N << "\n";
+    	pert_chars << "Coarse box resolution: " << Nc << "\n";
     	pert_chars << "Amplitude: " << m_params.A << "\n";
     	pert_chars << "Std. deviation of plus pol. field: " << stdevs[0] << "\n";
     	pert_chars << "Std. deviation of cross pol. field: " << stdevs[1] << "\n";
