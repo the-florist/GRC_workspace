@@ -30,7 +30,7 @@ template <class matter_t> class EMTensor
 
   protected:
     const matter_t &m_matter;
-    FourthOrderDerivatives m_deriv;
+    SixthOrderDerivatives m_deriv;
     const int m_c_rho;      // var enum for the energy density
     const Interval m_c_Si;  // Interval of var enums for the momentum density
     const Interval m_c_Sij; // Interval of var enums for the spatial

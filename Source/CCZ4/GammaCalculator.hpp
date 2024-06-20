@@ -33,7 +33,7 @@ class GammaCalculator
     };
 
   protected:
-    const FourthOrderDerivatives
+    const SixthOrderDerivatives
         m_deriv; //!< An object for calculating derivatives of the variables
 
   public:

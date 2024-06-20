@@ -87,12 +87,8 @@ void RandomField::compute(Cell<data_t> current_cell) const
         MayDay::Error("RandomField: Cell index greater than Nc^3 at coarsest level.");
     }
 
-    i *= skip;
-    j *= skip;
-    k *= skip;
-
     // The flattened position (leading with z or k)
-    int r = k + N*(j + N*i);
+    int r = (k + N*(j + N*i))*skip;
 
     // Error trap, to make sure we stay in the domain of dependence of the larger grid
     if (r > pow(N, 3.))
@@ -104,6 +100,20 @@ void RandomField::compute(Cell<data_t> current_cell) const
     // Assign position and momenum to the vars. objects
     if(m_spec_type == "position")
     { 
+        /*if(i==4 && j==1 && k==2)
+        {
+            cout << i << "," << j << "," << k << "," << r << "\n";
+            for(int l=0; l<3; l++) for(int p=l; p<3; p++) 
+            { 
+                hx[lut[l][p]][r] *= m_params.A/pow(L, 3.); 
+                if (l==p) { hx[lut[l][p]][r] += 1.; }
+                cout << std::fixed << setprecision(12);
+                cout << hx[lut[l][p]][r] << ", ";
+            }
+            cout << "\n";
+            MayDay::Error();
+        }*/
+
         for(int l=0; l<3; l++) for(int p=l; p<3; p++) 
         { 
             hx[lut[l][p]][r] *= m_params.A/pow(L, 3.); 
@@ -145,6 +155,7 @@ void RandomField::clear_data()
 void RandomField::calc_spectrum()
 {
     int N = 256;
+    std::string printdir = "/nfs/st01/hpc-gr-epss/eaf49/";
     
     // Setting the lut that maps polarisation vectors to 
     // polarisation tensors.
@@ -184,15 +195,12 @@ void RandomField::calc_spectrum()
 
     // Extra memory for reality check on h+ (only for debug)
     double (*hplusx);
+    hplusx = (double*) malloc(sizeof(double) * N * N * N);
     double (*hcrossx);
-    fftw_plan plan1, plan2;
-    if(debug)
-    {
-        hplusx = (double*) malloc(sizeof(double) * N * N * N);
-        hcrossx = (double*) malloc(sizeof(double) * N * N * N);
-        plan1 = fftw_plan_dft_c2r_3d(N, N, N, hplus, hplusx, FFTW_ESTIMATE);
-        plan2 = fftw_plan_dft_c2r_3d(N, N, N, hcross, hcrossx, FFTW_ESTIMATE);
-    }
+    hcrossx = (double*) malloc(sizeof(double) * N * N * N);
+
+    fftw_plan plan1 = fftw_plan_dft_c2r_3d(N, N, N, hplus, hplusx, FFTW_ESTIMATE);
+    fftw_plan plan2 = fftw_plan_dft_c2r_3d(N, N, N, hcross, hcrossx, FFTW_ESTIMATE);
     
     // Set all arrays to 0
     for(int i=0; i<N; i++) for(int j=0; j<N; j++) for(int k=0; k<N; k++)
@@ -232,8 +240,8 @@ void RandomField::calc_spectrum()
         // Putting the 0 mode in the right spot in memory
         int I = i;
         int J = j;
-        if(i > N/2) { I = invert_index(i); }
-        if(j > N/2) { J = invert_index(j); }
+        if(i > N/2) { I = invert_index(i, N); }
+        if(j > N/2) { J = invert_index(j, N); }
 
         kmag = (double)(pow((pow((double)I, 2.0) + pow((double)J, 2.0) + pow((double)k, 2.0))*4.*M_PI*M_PI/m_params.L/m_params.L, 0.5));
 
@@ -243,11 +251,8 @@ void RandomField::calc_spectrum()
         {
             for(int s=0; s<2; s++)
             {
-                hplus[k + (N/2+1)*(j + N*i)][s] = find_rayleigh_factor(kmag, m_spec_type, sigma_dist(engine), s)
-                                                    * sqrt(-2. * log(sigma_dist(engine)));
-
-                hcross[k + (N/2+1)*(j + N*i)][s] = find_rayleigh_factor(kmag, m_spec_type, sigma_dist(engine), s)
-                                                    * sqrt(-2. * log(sigma_dist(engine)));
+                hplus[k + (N/2+1)*(j + N*i)][s] = find_rayleigh_factor(kmag, m_spec_type, s) * sqrt(-2. * log(sigma_dist(engine)));
+                hcross[k + (N/2+1)*(j + N*i)][s] = find_rayleigh_factor(kmag, m_spec_type, s) * sqrt(-2. * log(sigma_dist(engine)));
             }
 
             hplus[k + (N/2+1)*(j + N*i)][0] *= cos(theta_dist(engine));
@@ -255,7 +260,7 @@ void RandomField::calc_spectrum()
             hcross[k + (N/2+1)*(j + N*i)][0] *= cos(theta_dist(engine));
             hcross[k + (N/2+1)*(j + N*i)][1] *= sin(theta_dist(engine));
 
-            calc_transferse_vectors(i, j, k, mhat, nhat);
+            calc_transferse_vectors(i, j, k, N, mhat, nhat);
             for (int l=0; l<3; l++) for (int p=l; p<3; p++) for(int s=0; s<2; s++)
             {
                 hk[lut[l][p]][k + (N/2+1)*(j + N*i)][s] = ((mhat[l]*mhat[p] - nhat[l]*nhat[p]) * hplus[k + (N/2+1)*(j + N*i)][s]
@@ -272,7 +277,7 @@ void RandomField::calc_spectrum()
         }
     }
 
-    //std::ofstream hkprint("/home/eaf49/rds/hpc-work/h-k-printed.dat");
+    //std::ofstream hkprint(printdir+"h-k-printed.dat");
     //hkprint << std::fixed << setprecision(12);
 
     for(int i=0; i<N; i++) for(int j=0; j<N; j++) for(int k=0; k<=N/2; k++)
@@ -301,7 +306,7 @@ void RandomField::calc_spectrum()
         fftw_execute(hij_plan[l]);
     }
 
-    //std::ofstream hijprint("/home/eaf49/rds/hpc-work/hij-printed.dat");
+    //std::ofstream hijprint(printdir+"hij-printed.dat");
     //hijprint << std::fixed << setprecision(12);
 
     int Nc = m_params.N;
@@ -327,7 +332,7 @@ void RandomField::calc_spectrum()
     for(int s=0; s<2; s++) { means[s] /= pow(N, 3.); }
 
     std::vector<double> stdevs(2, 0.);
-    for(int i=0; i<N; i++) for(int j=0; j<N; j++) for(int k=0; k<N; k++)
+    for(int i=0; i<Nc; i++) for(int j=0; j<Nc; j++) for(int k=0; k<Nc; k++)
     {
         stdevs[0] += pow(hplusx[(k + N * (j + N * i))*skip] - means[0], 2.);
         stdevs[1] += pow(hcrossx[(k + N * (j + N * i))*skip] - means[1], 2.);
@@ -341,8 +346,7 @@ void RandomField::calc_spectrum()
 
     if (m_spec_type == "position")
     {
-	    std::string data_dir = "/home/eaf49/GRC_workspace/Examples/ScalarField";
-    	ofstream pert_chars(data_dir+"/IC-pert-level.dat");
+    	ofstream pert_chars(printdir+"IC-pert-level.dat");
 	    if(!pert_chars) { MayDay::Error("Pert. IC characteristics file unopened."); }
 
     	pert_chars << "Planck mass scale: " << m_params.m_pl << "\n";
@@ -370,32 +374,32 @@ void RandomField::calc_spectrum()
     pout() << "All memory but hx freed, starting BoxLoop\n";
 }
 
-int RandomField::flip_index(int I) { return (int)abs(N - I); }
-int RandomField::invert_index(int I) { return (int)(N/2 - abs(N/2 - I)); }
-int RandomField::invert_index_with_sign(int I)
+int RandomField::flip_index(int I, int N) { return (int)abs(N - I); }
+int RandomField::invert_index(int I, int N) { return (int)(N/2 - abs(N/2 - I)); }
+int RandomField::invert_index_with_sign(int I, int N)
 {
     if(I <= N/2) { return I; }
     else { return abs(N/2 - I) - N/2; }
 }
 
-void RandomField::apply_symmetry_rules(int i, int j, int k, double field[][2])
+void RandomField::apply_symmetry_rules(int i, int j, int k, double field[][2], int N)
 {
     if (k==0 || k==N/2) 
     {
         if((i>N/2 && j==N/2) || (i==0 && j>N/2) || (i>N/2 && j==0) || (i==N/2 && j>N/2)) // Special lines
         {
-            field[k + (N/2+1)*(j + N*i)][0] = field[k + (N/2+1)*(invert_index(j) + N*invert_index(i))][0];
-            field[k + (N/2+1)*(j + N*i)][1] = -field[k + (N/2+1)*(invert_index(j) + N*invert_index(i))][1];
+            field[k + (N/2+1)*(j + N*i)][0] = field[k + (N/2+1)*(invert_index(j, N) + N*invert_index(i, N))][0];
+            field[k + (N/2+1)*(j + N*i)][1] = -field[k + (N/2+1)*(invert_index(j, N) + N*invert_index(i, N))][1];
         }
         else if(j > N/2) // Special plane bulk
         {
-            field[k + (N/2+1)*(j + N*i)][0] = field[k + (N/2+1)*(invert_index(j) + N*flip_index(i))][0];
-            field[k + (N/2+1)*(j + N*i)][1] = -field[k + (N/2+1)*(invert_index(j) + N*flip_index(i))][1];
+            field[k + (N/2+1)*(j + N*i)][0] = field[k + (N/2+1)*(invert_index(j, N) + N*flip_index(i, N))][0];
+            field[k + (N/2+1)*(j + N*i)][1] = -field[k + (N/2+1)*(invert_index(j, N) + N*flip_index(i, N))][1];
         }
     }
 }
 
-double RandomField::find_rayleigh_factor(double km, std::string spec_type, double rand_amp, double rand_phase, int comp)
+double RandomField::find_rayleigh_factor(double km, std::string spec_type, int comp)
 {
     if(km < 1.e-12) { return 0.; } // P(k=0), for m=0
 
@@ -414,7 +418,7 @@ double RandomField::find_rayleigh_factor(double km, std::string spec_type, doubl
     return windowed_value;
 }
 
-void RandomField::calc_transferse_vectors(int x, int y, int z, double MHat[3], double NHat[3], double a)
+void RandomField::calc_transferse_vectors(int x, int y, int z, int N, double MHat[3], double NHat[3], double a)
 {
     double mh[3];
     double nh[3];
@@ -429,8 +433,8 @@ void RandomField::calc_transferse_vectors(int x, int y, int z, double MHat[3], d
     double Y = y;
     double Z = z;
 
-    if(x > N/2) { X = invert_index_with_sign(x); }
-    if(y > N/2) { Y = invert_index_with_sign(y); }
+    if(x > N/2) { X = invert_index_with_sign(x, N); }
+    if(y > N/2) { Y = invert_index_with_sign(y, N); }
 
     if (Z > 0.) 
     {
