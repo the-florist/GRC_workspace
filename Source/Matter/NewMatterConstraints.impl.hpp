@@ -13,10 +13,10 @@
 
 template <class matter_t>
 MatterConstraints<matter_t>::MatterConstraints(
-    const matter_t a_matter, double dx, double G_Newton, int a_c_Ham,
+    const matter_t a_matter, double dx, double G_Newton, int a_c_Ham, int a_c_Ham_abs,
     const Interval &a_c_Moms, const double a_c_chi_min, int a_c_Ham_abs_terms /* defaulted*/,
     const Interval &a_c_Moms_abs_terms /*defaulted*/)
-    : Constraints(dx, a_c_Ham, a_c_Moms, a_c_chi_min, a_c_Ham_abs_terms, a_c_Moms_abs_terms,
+    : Constraints(dx, a_c_Ham, a_c_Ham_abs, a_c_Moms, a_c_chi_min, a_c_Ham_abs_terms, a_c_Moms_abs_terms,
                   0.0 /*No cosmological constant*/),
       my_matter(a_matter), m_G_Newton(G_Newton)
 {
@@ -46,7 +46,8 @@ void MatterConstraints<matter_t>::compute(Cell<data_t> current_cell) const
     {
         out.Ham += -16.0 * M_PI * m_G_Newton * emtensor.rho;
         out.Ham_abs_terms += 16.0 * M_PI * m_G_Newton * abs(emtensor.rho);
-    }
+        out.Ham_abs = abs(out.Ham); 
+     }
 
     // Momentum constraints
     if (m_c_Moms.size() > 0 || m_c_Moms_abs_terms.size() > 0)

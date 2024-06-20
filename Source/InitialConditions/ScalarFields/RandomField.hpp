@@ -11,12 +11,17 @@
 #include "UserVariables.hpp"
 #include "InitialScalarData.hpp"
 #include "Coordinates.hpp"
+#include "VarsTools.hpp"
 #include "fftw3.h"
 #include <random> // needed for random number generator
 #include <fstream>
 
 class RandomField
 {
+    // Use the variable definition in CCZ4
+    template <class data_t>
+    using Vars = ADMConformalVars::VarsWithGauge<data_t>;
+    
     public:
         RandomField(InitialScalarData::params_t a_params, std::string a_spec_type);
 

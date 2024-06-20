@@ -30,7 +30,6 @@ class SimulationParameters : public SimulationParametersBase
         // Initial scalar field data
         initial_params.center =
             center; // already read in SimulationParametersBase
-        grid_params.center = center;
         pp.load("G_Newton", G_Newton,
                 0.0); // for now the example neglects backreaction
         //pp.load("max_level", grid_params.max_level, 0);
@@ -58,7 +57,6 @@ class SimulationParameters : public SimulationParametersBase
     double m_pl;
     InitialScalarData::params_t initial_params;
     Potential::params_t potential_params;
-    MeansVars::params_t grid_params;
 };
 
 #endif /* SIMULATIONPARAMETERS_HPP_ */

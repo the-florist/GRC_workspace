@@ -11,41 +11,34 @@
 
 #include "Cell.hpp"
 #include <array>
+#include "Coordinates.hpp"
+#include "VarsTools.hpp"
+#include <cmath>
 
 class MeansVars 
 {
     public:
-        struct params_t
+        MeansVars(int a_c_phi, int a_c_chi) : m_c_phi(a_c_phi), m_c_chi(a_c_chi) {}
+
+    
+        template <class data_t> void compute(Cell<data_t> current_cell) const
         {
-            std::array<double, CH_SPACEDIM>
-                center; 
-        };
+            CH_TIME("MeansVars::compute");
 
-        template <class data_t>
-        struct Vars 
-        {
-            data_t phi;
-            data_t Pi;
-            data_t chi;
-            data_t K;
+            data_t phi = current_cell.load_vars(m_c_phi);
+            data_t chi = current_cell.load_vars(m_c_chi);
+            data_t phisq = phi*phi;
+            data_t chisq = chi*chi;
 
-            data_t h11;
-            
-            template <typename mapping_function_t>
-            void enum_mapping(mapping_function_t mapping_function);
-        };
-
-        MeansVars(double dx, params_t a_params, std::string a_data_path);
-
-        template <class data_t>
-        void compute(Cell<data_t> current_cell) const;
+            //store class (Vars) variables as diagnostic variables on the grid
+            current_cell.store_vars(phisq, c_sf2);
+            current_cell.store_vars(chisq, c_ch2);
+        }
 
     protected:
-        double m_dx;
-        const params_t m_params;
-        double m_volume;
-        std::string m_data_path;
+        const int m_c_phi;
+        const int m_c_chi;
 };
 
- #include "MeansVars.impl.hpp"
+ //#include "MeansVars.impl.hpp"
  #endif /* MEANSVARS_HPP_ */

@@ -31,6 +31,7 @@
 //For printing out mean diagnostics
 #include "AMRReductions.hpp"
 #include "MeansVars.hpp"
+#include "ConstraintStatistics.hpp"
 #include <cmath>
 #include <string>
 #include <sstream>
@@ -41,6 +42,8 @@
 // Start time
 #include <ctime>
 #include <typeinfo>
+
+// Initial conditions
 #include "RandomField.hpp"
 
 // Things to do at each advance step, after the RK4 is calculated 
@@ -68,28 +71,26 @@ void ScalarFieldLevel::initialData()
     RandomField pfield(m_p.initial_params, "position");
 
     BoxLoops::loop(
-        make_compute_pack(SetValue(0.),
-                            pfield),
-    m_state_new, m_state_new, INCLUDE_GHOST_CELLS, disable_simd());
+        make_compute_pack(SetValue(0.), pfield),
+    m_state_new, m_state_new, EXCLUDE_GHOST_CELLS, disable_simd());
 
     pfield.clear_data();
     pout() << "Calculating position ICs ended.\n";
 
-    RandomField vfield(m_p.initial_params, "velocity");
+    /*RandomField vfield(m_p.initial_params, "velocity");
 
     BoxLoops::loop(
         make_compute_pack(vfield),
-    m_state_new, m_state_new, INCLUDE_GHOST_CELLS, disable_simd());
+    m_state_new, m_state_new, EXCLUDE_GHOST_CELLS, disable_simd());
 
     vfield.clear_data();
-    pout() << "Calculating velocity ICs ended.\n";
+    pout() << "Calculating velocity ICs ended.\n";*/
 
     BoxLoops::loop(
         make_compute_pack(InitialScalarData(m_p.initial_params)),
-    m_state_new, m_state_new, INCLUDE_GHOST_CELLS,disable_simd());
+    m_state_new, m_state_new, INCLUDE_GHOST_CELLS, disable_simd());
 
-    //cout << "IC set-up ended.\n";
-    MayDay::Error("IC set up ended.\n");
+    pout() << "IC set-up ended.\n";
     
     fillAllGhosts();
     BoxLoops::loop(GammaCalculator(m_dx), m_state_new, m_state_new,
@@ -105,7 +106,7 @@ void ScalarFieldLevel::prePlotLevel()
     ScalarFieldWithPotential scalar_field(potential);
     BoxLoops::loop(
         MatterConstraints<ScalarFieldWithPotential>(
-            scalar_field, m_dx, m_p.G_Newton, c_Ham, Interval(c_Mom, c_Mom), m_p.min_chi, 
+            scalar_field, m_dx, m_p.G_Newton, c_Ham, c_Ham_abs, Interval(c_Mom, c_Mom), m_p.min_chi, 
 	    c_Ham_abs_terms, Interval(c_Mom_abs_terms, c_Mom_abs_terms)),
         m_state_new, m_state_diagnostics, EXCLUDE_GHOST_CELLS);
 }
@@ -176,27 +177,47 @@ void ScalarFieldLevel::specificPostTimeStep()
     }
 
     bool first_step = (m_time == 0.);
-    fillAllGhosts();
 
-    double mass = m_p.potential_params.scalar_mass;//0.01;
+    fillAllGhosts();
+    Potential potential(m_p.potential_params);
+    ScalarFieldWithPotential scalar_field(potential);
+    BoxLoops::loop(
+        MatterConstraints<ScalarFieldWithPotential>(
+            scalar_field, m_dx, m_p.G_Newton, c_Ham, c_Ham_abs, Interval(c_Mom, c_Mom), m_p.min_chi, 
+	    c_Ham_abs_terms, Interval(c_Mom_abs_terms, c_Mom_abs_terms)),
+        m_state_new, m_state_diagnostics, EXCLUDE_GHOST_CELLS);
+
+    double mass = m_p.potential_params.scalar_mass;
 
     AMRReductions<VariableType::diagnostic> amr_reductions(m_gr_amr);
     AMRReductions<VariableType::evolution> amr_reductions_evo(m_gr_amr);
     double vol = amr_reductions.get_domain_volume();
 
-    BoxLoops::loop(MeansVars(m_dx, m_p.grid_params, m_p.data_path), m_state_new, m_state_diagnostics, FILL_GHOST_CELLS);
+    double hamBar = amr_reductions.sum(c_Ham)/vol;
+    double hamAbsBar = amr_reductions.sum(c_Ham_abs)/vol;
+    double momBar = amr_reductions.sum(c_Mom)/vol;
 
-    //Calculates means
-    double phibar = amr_reductions.sum(c_sf)/vol;
-    double pibar = amr_reductions.sum(c_sfd)/vol;
+    BoxLoops::loop(
+        ConstraintStatistics(c_Ham, c_Ham_abs, c_Ham_var, c_Ham_abs_AAD, 
+            hamBar, hamAbsBar, c_Mom, c_Mom_AAD, momBar),
+        m_state_diagnostics, m_state_diagnostics, EXCLUDE_GHOST_CELLS);
 
-    double a = 1./sqrt(amr_reductions.sum(c_a)/vol);
-    double H = -amr_reductions.sum(c_H)/vol/3.;
+    // Convergence testing only
+    double hamVar = amr_reductions.sum(c_Ham_var)/vol;
+    double hamAbsAAD = amr_reductions.sum(c_Ham_abs_AAD)/vol;
+    double momAAD = amr_reductions.sum(c_Mom_AAD)/vol;
 
-    double hambar = amr_reductions.sum(c_Ham)/vol;
-    double mombar = amr_reductions.sum(c_Mom)/vol;
-    double habsbar = amr_reductions.sum(c_Ham_abs_terms)/vol;
-    double mabsbar = amr_reductions.sum(c_Mom_abs_terms)/vol;
+    BoxLoops::loop(MeansVars(c_phi, c_chi),
+        m_state_new, m_state_diagnostics, EXCLUDE_GHOST_CELLS);
+
+    // All other runs
+    //Calculates scalar field and FLRW metric means
+    double phibar = amr_reductions_evo.sum(c_phi)/vol;
+    double pibar = amr_reductions_evo.sum(c_Pi)/vol;
+
+    double chibar = amr_reductions_evo.sum(c_chi)/vol;
+    double a = 1./sqrt(chibar);
+    double H = -amr_reductions_evo.sum(c_K)/vol/3.;
 
     //Calculates energy components and the slow-roll parameters
     double kinb = 0.5*pibar*pibar;
@@ -207,7 +228,7 @@ void ScalarFieldLevel::specificPostTimeStep()
 
     //Calculates variances
     double phivar = amr_reductions.sum(c_sf2)/vol - phibar*phibar;
-    double chivar = amr_reductions.sum(c_ch2)/vol - c_a*c_a;
+    double chivar = amr_reductions.sum(c_ch2)/vol - chibar*chibar;
 
     //Calculates gauge quantities
     double lapse = amr_reductions_evo.sum(c_lapse)/vol;
@@ -216,10 +237,15 @@ void ScalarFieldLevel::specificPostTimeStep()
     SmallDataIO means_file(m_p.data_path+"means_file", m_dt, m_time, m_restart_time, SmallDataIO::APPEND, first_step, ".dat");
     means_file.remove_duplicate_time_data(); // removes any duplicate data from previous run (for checkpointing)
 
+    SmallDataIO constrs_file(m_p.data_path+"constraints_file", m_dt, m_time, m_restart_time, SmallDataIO::APPEND, first_step, ".dat");
+    constrs_file.remove_duplicate_time_data(); // removes any duplicate data from previous run (for checkpointing)
+
     if(first_step) 
     {
-        means_file.write_header_line({"Scalar field mean","Scalar field variance","Pi mean","Scale factor","Conformal factor variance","Hubble factor",
-            "Kinetic ED","Potential ED","First SRP","Second SRP","Avg Ham constr","Avg Mom constr","Avg Ham abs term","Avg Mom abs term","Avg lapse"});
+        constrs_file.write_header_line({"HamMean","HamAbsMean","HamSTD","HamAbsAAD","MomBar","MomAAD"});
+        means_file.write_header_line({"PhiMean","PhiVar","PiMean","ScaleFact","ChiVar","HubbleFact",
+            "KinED","PotED","SRP1","SRP2","LapseMean"});
     }
-    means_file.write_time_data_line({phibar, phivar, pibar, a, chivar, H, kinb, potb, epsilon, delta, hambar, mombar, habsbar, mabsbar, lapse});
+    constrs_file.write_time_data_line({hamBar, hamAbsBar, sqrt(hamVar), hamAbsAAD, momBar, momAAD});
+    means_file.write_time_data_line({phibar, phivar, pibar, a, chivar, H, kinb, potb, epsilon, delta, lapse});
 }
