@@ -31,7 +31,7 @@ void RandomField::compute(Cell<data_t> current_cell) const
 
     // Pull out the grid parameters
     int Nc = m_params.N;
-    int N = 256;
+    int N = 128;
     int skip = (int)(N/Nc);
 
     double L = m_params.L;
@@ -100,20 +100,6 @@ void RandomField::compute(Cell<data_t> current_cell) const
     // Assign position and momenum to the vars. objects
     if(m_spec_type == "position")
     { 
-        /*if(i==4 && j==1 && k==2)
-        {
-            cout << i << "," << j << "," << k << "," << r << "\n";
-            for(int l=0; l<3; l++) for(int p=l; p<3; p++) 
-            { 
-                hx[lut[l][p]][r] *= m_params.A/pow(L, 3.); 
-                if (l==p) { hx[lut[l][p]][r] += 1.; }
-                cout << std::fixed << setprecision(12);
-                cout << hx[lut[l][p]][r] << ", ";
-            }
-            cout << "\n";
-            MayDay::Error();
-        }*/
-
         for(int l=0; l<3; l++) for(int p=l; p<3; p++) 
         { 
             hx[lut[l][p]][r] *= m_params.A/pow(L, 3.); 
@@ -154,7 +140,7 @@ void RandomField::clear_data()
 
 void RandomField::calc_spectrum()
 {
-    int N = 256;
+    int N = 128;
     std::string printdir = "/nfs/st01/hpc-gr-epss/eaf49/";
     
     // Setting the lut that maps polarisation vectors to 
@@ -286,7 +272,7 @@ void RandomField::calc_spectrum()
         apply_symmetry_rules(i, j, k, hcross, N);
         for(int s=0; s<6; s++) { apply_symmetry_rules(i, j, k, hk[s], N); }
 
-        /*for(int l=0; l<3; l++) for(int p=l; p<3; p++) for(int s=0; s<2; s++)
+       /* for(int l=0; l<3; l++) for(int p=l; p<3; p++) for(int s=0; s<2; s++)
         {
             hkprint << hk[lut[l][p]][k + (N/2+1)*(j + N*i)][s] << ",";
             //hkprint << hplus[k + (N/2+1)*(j + N*i)][l] << "," << hcross[k + (N/2+1)*(j + N*i)][l] << ",";
@@ -306,19 +292,19 @@ void RandomField::calc_spectrum()
         fftw_execute(hij_plan[l]);
     }
 
-    //std::ofstream hijprint(printdir+"hij-printed.dat");
-    //hijprint << std::fixed << setprecision(12);
+    std::ofstream hijprint(printdir+"hij-printed.dat");
+    hijprint << std::fixed << setprecision(15);
 
     int Nc = m_params.N;
     int skip = (int)(N/Nc);
     std::vector<double> means(2, 0.);
     for(int i=0; i<Nc; i++) for(int j=0; j<Nc; j++) for(int k=0; k<Nc; k++)
     {
-        /*for(int l=0; l<3; l++) for(int p=l; p<3; p++)
+        for(int l=0; l<3; l++) for(int p=l; p<3; p++)
         {
             hijprint << hx[lut[l][p]][k*skip + N * (j*skip + N * i*skip)] * m_params.A/pow(m_params.L, 3.) << ",";
         }
-        hijprint << "\n";*/
+        hijprint << "\n";
 
         hplusx[(k + N * (j + N * i))*skip] *= m_params.A/pow(m_params.L, 3.);
         hcrossx[(k + N * (j + N * i))*skip] *= m_params.A/pow(m_params.L, 3.);
@@ -326,8 +312,8 @@ void RandomField::calc_spectrum()
         means[0] += hplusx[(k + N * (j + N * i))*skip];
         means[1] += hcrossx[(k + N * (j + N * i))*skip];
     }
-    //hijprint.close();
-    //MayDay::Error("Check hij print file.");
+    hijprint.close();
+    MayDay::Error("Check hij print file.");
 
     for(int s=0; s<2; s++) { means[s] /= pow(N, 3.); }
 

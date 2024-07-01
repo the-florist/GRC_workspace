@@ -56,7 +56,7 @@ class Constraints
     template <class data_t> void compute(Cell<data_t> current_cell) const;
 
   protected:
-    const SixthOrderDerivatives m_deriv;
+    const FourthOrderDerivatives m_deriv;
     const int m_c_Ham;
     const int m_c_Ham_abs;
     const Interval m_c_Moms;
