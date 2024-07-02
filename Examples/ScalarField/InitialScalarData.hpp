@@ -34,6 +34,7 @@ class InitialScalarData
             center;   //!< Centre of the grid
         
         int N;
+        int Nf;
         double L;
         double m;
         double m_pl = 1.;
