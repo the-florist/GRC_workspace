@@ -198,8 +198,7 @@ void ScalarFieldLevel::specificPostTimeStep()
     double momBar = amr_reductions.sum(c_Mom)/vol;
 
     BoxLoops::loop(
-        ConstraintStatistics(c_Ham, c_Ham_abs, c_Ham_var, c_Ham_abs_AAD, 
-            hamBar, hamAbsBar, c_Mom, c_Mom_AAD, momBar),
+        ConstraintStatistics(hamBar, hamAbsBar, momBar),
         m_state_diagnostics, m_state_diagnostics, EXCLUDE_GHOST_CELLS);
 
     // Convergence testing only
@@ -207,7 +206,7 @@ void ScalarFieldLevel::specificPostTimeStep()
     double hamAbsAAD = amr_reductions.sum(c_Ham_abs_AAD)/vol;
     double momAAD = amr_reductions.sum(c_Mom_AAD)/vol;
 
-    BoxLoops::loop(MeansVars(c_phi, c_chi),
+    BoxLoops::loop(MeansVars(),
         m_state_new, m_state_diagnostics, EXCLUDE_GHOST_CELLS);
 
     // All other runs
