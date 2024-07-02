@@ -29,16 +29,9 @@ class InitialScalarData
     struct params_t
     {
         double amplitude; //!< Amplitude of k=0 mode of initial SF
-        double velocity;
-        std::array<double, CH_SPACEDIM>
-            center;   //!< Centre of the grid
-        
-        int N;
-        int Nf;
-        double L;
-        double m;
-        double m_pl = 1.;
-        double A;
+        double velocity;  //!< Amplitude of initial SF velocity
+        double m;         //!< SF mass
+        double m_pl = 1.; //!< Planck mass (units)
     };
 
     //! The constructor

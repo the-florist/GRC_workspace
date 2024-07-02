@@ -23,18 +23,30 @@ class RandomField
     using Vars = ADMConformalVars::VarsWithGauge<data_t>;
     
     public:
-        RandomField(InitialScalarData::params_t a_params, std::string a_spec_type);
+        struct params_t
+        {
+            std::array<double, CH_SPACEDIM>
+                center;   //!< Centre of the grid
+            int N;        //!< Box resolution (first level)
+            int Nf;       //!< Finest resolution to generate ICs for
+                                //! (used for convergence testing)
+            double L;     //!< Box length in physical units
+            double A;     //!< Amplitude applied to tensor field
+        };
+
+        RandomField(params_t a_params, InitialScalarData::params_t a_bkgd_params, std::string a_spec_type);
 
         template <class data_t> void compute(Cell<data_t> current_cell) const; 
 
-	    void clear_data();
         void calc_spectrum();
+        void clear_data();
 
     private:
         double** hx;
 
     protected:
-        const InitialScalarData::params_t m_params;
+        const params_t m_params;
+        const InitialScalarData::params_t m_bkgd_params;
         std::string m_spec_type;
 
         bool debug;

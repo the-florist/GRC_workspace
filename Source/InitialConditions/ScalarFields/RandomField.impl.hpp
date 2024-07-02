@@ -10,13 +10,13 @@
  #ifndef RANDOMFIELD_IMPL_HPP_
  #define RANDOMFIELD_IMPL_HPP_
 
- inline RandomField::RandomField(InitialScalarData::params_t a_params, std::string a_spec_type)
-    : m_params(a_params), m_spec_type(a_spec_type)
+ inline RandomField::RandomField(params_t a_params, InitialScalarData::params_t a_bkgd_params, std::string a_spec_type)
+    : m_params(a_params), m_bkgd_params(a_bkgd_params), m_spec_type(a_spec_type)
 {
     kstar = 16.*(2.*M_PI/m_params.L);
     epsilon = 0.5;//0.25 * (sqrt(3.)*2.*M_PI/m_params.L); //0.5;
-    H0 = sqrt((8.0 * M_PI/3.0/m_params.m_pl/m_params.m_pl)
-            *(0.5*m_params.velocity*m_params.velocity + 0.5*pow(m_params.m * m_params.amplitude, 2.0)));
+    H0 = sqrt((8.0 * M_PI/3.0/m_bkgd_params.m_pl/m_bkgd_params.m_pl)
+            *(0.5*m_bkgd_params.velocity*m_bkgd_params.velocity + 0.5*pow(m_bkgd_params.m * m_bkgd_params.amplitude, 2.0)));
     norm = pow(m_params.N, 3.);
 
     calc_spectrum();
@@ -131,14 +131,14 @@ void RandomField::compute(Cell<data_t> current_cell) const
     current_cell.store_vars(vars);
 }
 
-void RandomField::clear_data()
+inline void RandomField::clear_data()
 {
     pout() << "Clearing memory allocated to hx array.\n";
     for(int s=0; s<6; s++) { free(hx[s]); } // This causes a seg fault as is
     free(hx);
 }
 
-void RandomField::calc_spectrum()
+inline void RandomField::calc_spectrum()
 {
     int N = m_params.Nf;
     std::string printdir = "/nfs/st01/hpc-gr-epss/eaf49/";
@@ -335,7 +335,7 @@ void RandomField::calc_spectrum()
     	ofstream pert_chars(printdir+"IC-pert-level.dat");
 	    if(!pert_chars) { MayDay::Error("Pert. IC characteristics file unopened."); }
 
-    	pert_chars << "Planck mass scale: " << m_params.m_pl << "\n";
+    	pert_chars << "Planck mass scale: " << m_bkgd_params.m_pl << "\n";
     	pert_chars << "Length of box (m_pl): " << m_params.L << "\n";
         pert_chars << "Full box resolution: " << N << "\n";
     	pert_chars << "Coarse box resolution: " << Nc << "\n";
@@ -360,15 +360,15 @@ void RandomField::calc_spectrum()
     pout() << "All memory but hx freed, starting BoxLoop\n";
 }
 
-int RandomField::flip_index(int I, int N) { return (int)abs(N - I); }
-int RandomField::invert_index(int I, int N) { return (int)(N/2 - abs(N/2 - I)); }
-int RandomField::invert_index_with_sign(int I, int N)
+inline int RandomField::flip_index(int I, int N) { return (int)abs(N - I); }
+inline int RandomField::invert_index(int I, int N) { return (int)(N/2 - abs(N/2 - I)); }
+inline int RandomField::invert_index_with_sign(int I, int N)
 {
     if(I <= N/2) { return I; }
     else { return abs(N/2 - I) - N/2; }
 }
 
-void RandomField::apply_symmetry_rules(int i, int j, int k, double field[][2], int N)
+inline void RandomField::apply_symmetry_rules(int i, int j, int k, double field[][2], int N)
 {
     if (k==0 || k==N/2) 
     {
@@ -385,7 +385,7 @@ void RandomField::apply_symmetry_rules(int i, int j, int k, double field[][2], i
     }
 }
 
-double RandomField::find_rayleigh_factor(double km, std::string spec_type, int comp)
+inline double RandomField::find_rayleigh_factor(double km, std::string spec_type, int comp)
 {
     if(km < 1.e-12) { return 0.; } // P(k=0), for m=0
 
@@ -404,7 +404,7 @@ double RandomField::find_rayleigh_factor(double km, std::string spec_type, int c
     return windowed_value;
 }
 
-void RandomField::calc_transferse_vectors(int x, int y, int z, int N, double MHat[3], double NHat[3], double a)
+inline void RandomField::calc_transferse_vectors(int x, int y, int z, int N, double MHat[3], double NHat[3], double a)
 {
     double mh[3];
     double nh[3];
@@ -457,7 +457,7 @@ void RandomField::calc_transferse_vectors(int x, int y, int z, int N, double MHa
     if (X != 0 && Y != 0 && Z != 0) { Test_norm(MHat); Test_norm(NHat); Test_orth(MHat, NHat); }
 }
 
-void RandomField::Test_norm(double vec[]) 
+inline void RandomField::Test_norm(double vec[]) 
 {
     double norm = 0;
     for (int i=0; i<3; i++) { norm += vec[i]*vec[i]; }
@@ -469,7 +469,7 @@ void RandomField::Test_norm(double vec[])
     }
 }
 
-void RandomField::Test_orth(double vec1[], double vec2[]) 
+inline void RandomField::Test_orth(double vec1[], double vec2[]) 
 {
     double orth = 0.;
     for(int i=0; i<3; i++) { orth += vec1[i]*vec2[i]; }

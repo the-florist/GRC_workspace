@@ -68,7 +68,7 @@ void ScalarFieldLevel::initialData()
     CH_TIME("ScalarFieldLevel::initialData");
     pout() << "ScalarFieldLevel::initialData " << m_level << endl;
 
-    RandomField pfield(m_p.initial_params, "position");
+    RandomField pfield(m_p.random_field_params, m_p.initial_params, "position");
 
     BoxLoops::loop(
         make_compute_pack(SetValue(0.), pfield),
@@ -77,7 +77,7 @@ void ScalarFieldLevel::initialData()
     pfield.clear_data();
     pout() << "Calculating position ICs ended.\n";
 
-    /*RandomField vfield(m_p.initial_params, "velocity");
+    /*RandomField vfield(m_p.random_field_params, m_p.initial_params, "velocity");
 
     BoxLoops::loop(
         make_compute_pack(vfield),
