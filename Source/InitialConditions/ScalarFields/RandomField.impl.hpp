@@ -141,8 +141,9 @@ inline void RandomField::clear_data()
 inline void RandomField::calc_spectrum()
 {
     int N = m_params.Nf;
-    std::string printdir = "/nfs/st01/hpc-gr-epss/eaf49/";
-    
+    std::string printdir = "/home/eaf49/rds/hpc-work/";
+    int pair = 2;
+
     // Setting the lut that maps polarisation vectors to 
     // polarisation tensors.
     int lut[3][3];  
@@ -210,9 +211,21 @@ inline void RandomField::calc_spectrum()
     }
 
     // Set up random number generators (one independent seed per random draw)
+    std::vector<int> seeds(10, 0);
+    seeds[0] = 3539263;
+    seeds[1] = 7586572;
+    seeds[2] = 5060982;
+    seeds[3] = 6793957;
+    seeds[4] = 4764135;
+    seeds[5] = 6961336;
+    seeds[6] = 2918557;
+    seeds[7] = 3024453;
+    seeds[8] = 5470767;
+    seeds[9] = 2125263;
+
     int seed;
-    if(m_spec_type == "position") { seed = 3539263; }
-    else if(m_spec_type == "velocity") { seed = 7586572; }
+    if(m_spec_type == "position") { seed = seeds[2*pair]; }
+    else if(m_spec_type == "velocity") { seed = seeds[2*pair+1]; }
     else { MayDay::Error("RandomField: Please choose either 'position' or 'velocity' field type."); }
 
     default_random_engine engine(seed);
