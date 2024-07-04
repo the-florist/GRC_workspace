@@ -142,7 +142,7 @@ inline void RandomField::calc_spectrum()
 {
     int N = m_params.Nf;
     std::string printdir = "/home/eaf49/rds/hpc-work/";
-    int pair = 2;
+    int pair = 1;
 
     // Setting the lut that maps polarisation vectors to 
     // polarisation tensors.
@@ -250,8 +250,8 @@ inline void RandomField::calc_spectrum()
         {
             for(int s=0; s<2; s++)
             {
-                hplus[k + (N/2+1)*(j + N*i)][s] = find_rayleigh_factor(kmag, m_spec_type, s) * sqrt(-2. * log(sigma_dist(engine)));
-                hcross[k + (N/2+1)*(j + N*i)][s] = find_rayleigh_factor(kmag, m_spec_type, s) * sqrt(-2. * log(sigma_dist(engine)));
+                hplus[k + (N/2+1)*(j + N*i)][s] = find_rayleigh_factor(kmag, m_spec_type) * sqrt(-2. * log(sigma_dist(engine)));
+                hcross[k + (N/2+1)*(j + N*i)][s] = find_rayleigh_factor(kmag, m_spec_type) * sqrt(-2. * log(sigma_dist(engine)));
             }
 
             hplus[k + (N/2+1)*(j + N*i)][0] *= cos(theta_dist(engine));
@@ -398,7 +398,7 @@ inline void RandomField::apply_symmetry_rules(int i, int j, int k, double field[
     }
 }
 
-inline double RandomField::find_rayleigh_factor(double km, std::string spec_type, double uniform_draw)
+inline double RandomField::find_rayleigh_factor(double km, std::string spec_type)
 {
     if(km < 1.e-12) { return 0.; } // P(k=0), for m=0
 

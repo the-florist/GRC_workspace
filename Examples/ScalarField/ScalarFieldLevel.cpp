@@ -76,7 +76,6 @@ void ScalarFieldLevel::initialData()
 
     pfield.clear_data();
     pout() << "Calculating position ICs ended.\n";
-    cout << "Trace-free condition passed for position.\n";
 
     /*RandomField vfield(m_p.random_field_params, m_p.initial_params, "velocity");
 
