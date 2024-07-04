@@ -398,7 +398,7 @@ inline void RandomField::apply_symmetry_rules(int i, int j, int k, double field[
     }
 }
 
-inline double RandomField::find_rayleigh_factor(double km, std::string spec_type, double uniform_draw)
+inline double RandomField::find_rayleigh_factor(double km, std::string spec_type)
 {
     if(km < 1.e-12) { return 0.; } // P(k=0), for m=0
 
