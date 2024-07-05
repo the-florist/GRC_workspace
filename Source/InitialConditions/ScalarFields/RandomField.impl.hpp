@@ -141,7 +141,7 @@ inline void RandomField::clear_data()
 inline void RandomField::calc_spectrum()
 {
     int N = m_params.Nf;
-    std::string printdir = "/home/eaf49/rds/hpc-work/";
+    std::string printdir = "/nfs/st01/hpc-gr-epss/eaf49/";
     int pair = 1;
 
     // Setting the lut that maps polarisation vectors to 
