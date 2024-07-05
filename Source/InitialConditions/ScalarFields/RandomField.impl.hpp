@@ -13,8 +13,8 @@
  inline RandomField::RandomField(params_t a_params, InitialScalarData::params_t a_bkgd_params, std::string a_spec_type)
     : m_params(a_params), m_bkgd_params(a_bkgd_params), m_spec_type(a_spec_type)
 {
-    kstar = 16.*(2.*M_PI/m_params.L);
-    epsilon = 0.5;//0.25 * (sqrt(3.)*2.*M_PI/m_params.L); //0.5;
+    kstar = 32.*(2.*M_PI/m_params.L);
+    epsilon = 10.;//0.25 * (sqrt(3.)*2.*M_PI/m_params.L); //0.5;
     H0 = sqrt((8.0 * M_PI/3.0/m_bkgd_params.m_pl/m_bkgd_params.m_pl)
             *(0.5*m_bkgd_params.velocity*m_bkgd_params.velocity + 0.5*pow(m_bkgd_params.m * m_bkgd_params.amplitude, 2.0)));
     norm = pow(m_params.N, 3.);
