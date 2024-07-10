@@ -27,7 +27,6 @@ template <class data_t>
 void RandomField::compute(Cell<data_t> current_cell) const
 {
     Vars<data_t> vars;
-    if(m_spec_type == "position") { VarsTools::assign(vars, 0.); }
 
     // Pull out the grid parameters
     int Nc = m_params.N;
@@ -98,33 +97,35 @@ void RandomField::compute(Cell<data_t> current_cell) const
     }
 
     // Assign position and momenum to the vars. objects
-    if(m_spec_type == "position")
-    { 
-        for(int l=0; l<3; l++) for(int p=l; p<3; p++) 
-        { 
-            hx[lut[l][p]][r] *= m_params.A/pow(L, 3.); 
+    double trace = 0;
+    for(int l=0; l<3; l++) for(int p=l; p<3; p++) 
+    {
+        hx[lut[l][p]][r] *= m_params.A/pow(L, 3.); 
+
+        if(m_spec_type == "position")
+        {
             if (l==p) { hx[lut[l][p]][r] += 1.; }
             vars.h[p][l] = hx[lut[l][p]][r];
+            trace = abs(hx[0][r] + hx[3][r] + hx[5][r] - 3.);
         }
-    }
-
-    else if(m_spec_type == "velocity")
-    {
-        for(int l=0; l<3; l++) for(int p=l; p<3; p++) 
+        else if(m_spec_type == "velocity")
         {
             vars.A[p][l] = -hx[lut[l][p]][r];
+            trace = abs(hx[0][r] + hx[3][r] + hx[5][r]);
         }
-    }
-    
-    else { MayDay::Error("Spectral type provided is an invalid option."); }
+        else { MayDay::Error("Spectral type provided is an invalid option."); }
+    } 
 
     // Trace free test
-    if(abs(hx[0][r] + hx[3][r] + hx[5][r] - 3.) > 1.e-12) 
+    if(trace > 1.e-12) 
     { 
-        std::cout << "Trace of hij is large here: \n";
+        std::cout << fixed << setprecision(12);
+        std::cout << "Field: " << m_spec_type << "\n";
+        std::cout << "Trace of field is large here: \n";
         std::cout << "(" << i << "," << j << "," << k << ")\n";
-        std::cout << hx[0][r] + hx[3][r] + hx[5][r] - 3. << "\n";
-        MayDay::Error();
+        std::cout << rc << "," << r << "\n";
+        std::cout << hx[0][r] << "," << hx[3][r] << "," << hx[5][r] << "\n";
+        std::cout << trace << "\n";
     }
 
     // Store values at this point on the grid
@@ -210,10 +211,7 @@ inline void RandomField::calc_spectrum()
     }
 
     // Set up random number generators (one independent seed per random draw)
-    int seed;
-    if(m_spec_type == "position") { seed = 3539263; }
-    else if(m_spec_type == "velocity") { seed = 7586572; }
-    else { MayDay::Error("RandomField: Please choose either 'position' or 'velocity' field type."); }
+    int seed = 3539263;
 
     default_random_engine engine(seed);
     uniform_real_distribution<double> theta_dist(0, 2*M_PI);
