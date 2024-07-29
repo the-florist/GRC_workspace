@@ -202,6 +202,8 @@ void ScalarFieldLevel::specificPostTimeStep()
         m_state_diagnostics, m_state_diagnostics, EXCLUDE_GHOST_CELLS);
 
     // Convergence testing only
+    double hamNormBar = amr_reductions.sum(c_Ham_norm)/vol;
+    double hamNormVar = amr_reductions.sum(c_Ham_norm_sq)/vol - hamNormBar*hamNormBar;
     double hamVar = amr_reductions.sum(c_Ham_var)/vol;
     double hamAbsAAD = amr_reductions.sum(c_Ham_abs_AAD)/vol;
     double momAAD = amr_reductions.sum(c_Mom_AAD)/vol;
@@ -241,10 +243,10 @@ void ScalarFieldLevel::specificPostTimeStep()
 
     if(first_step) 
     {
-        constrs_file.write_header_line({"HamMean","HamAbsMean","HamSTD","HamAbsAAD","MomBar","MomAAD"});
+        constrs_file.write_header_line({"HamMean","HamSTD","HamAbsMean","HamNormMean","HamNormSTD","HamAbsAAD","MomBar","MomAAD"});
         means_file.write_header_line({"PhiMean","PhiVar","PiMean","ScaleFact","ChiVar","HubbleFact",
             "KinED","PotED","SRP1","SRP2","LapseMean"});
     }
-    constrs_file.write_time_data_line({hamBar, hamAbsBar, sqrt(hamVar), hamAbsAAD, momBar, momAAD});
+    constrs_file.write_time_data_line({hamBar, sqrt(hamVar), hamAbsBar, hamNormBar, sqrt(hamNormVar), momBar, momAAD});
     means_file.write_time_data_line({phibar, phivar, pibar, a, chivar, H, kinb, potb, epsilon, delta, lapse});
 }

@@ -16,9 +16,9 @@ plot_prefix = ScalarFieldp_
 checkpoint_interval = 300
 # set to 0 to turn off plot files (except at t=0 and t=stop_time)
 # set to -1 to never ever print plotfiles
-plot_interval = 40
-num_plot_vars = 8
-plot_vars = h11 h12 h13 h22 h23 h33 Ham Mom
+plot_interval = 80
+num_plot_vars = 1
+plot_vars = Ham
 
 # subpaths - specific directories for hdf5, pout, extraction data
 # (these are created at runtime)
@@ -57,7 +57,7 @@ tensor_amplitude = 1.e-4
 # NB - if you have a non-cubic grid, you can specify 'N1' or 'N1_full',
 # 'N2' or 'N2_full' and 'N3' or 'N3_full' ( then dx_coarsest = L/N(max) )
 # NB - the N values need to be multiples of the block_factor
-N_full = 64
+N_full = 128
 L_full = 6.5
 
 # Maximum number of times you can regrid above coarsest level
