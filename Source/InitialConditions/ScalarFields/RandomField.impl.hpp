@@ -10,8 +10,8 @@
  #ifndef RANDOMFIELD_IMPL_HPP_
  #define RANDOMFIELD_IMPL_HPP_
 
- inline RandomField::RandomField(params_t a_params, InitialScalarData::params_t a_bkgd_params, std::string a_spec_type)
-    : m_params(a_params), m_bkgd_params(a_bkgd_params), m_spec_type(a_spec_type)
+ inline RandomField::RandomField(params_t a_params, InitialScalarData::params_t a_bkgd_params, std::string a_data_path, std::string a_spec_type)
+    : m_params(a_params), m_bkgd_params(a_bkgd_params), m_data_path(a_data_path), m_spec_type(a_spec_type)
 {
     kstar = 16.*(2.*M_PI/m_params.L);
     epsilon = 0.5;//0.25 * (sqrt(3.)*2.*M_PI/m_params.L); //0.5;
@@ -102,7 +102,7 @@ void RandomField::compute(Cell<data_t> current_cell) const
     { 
         for(int l=0; l<3; l++) for(int p=l; p<3; p++) 
         { 
-            hx[lut[l][p]][r] *= m_params.A/pow(L, 3.); 
+            hx[lut[l][p]][r] *= m_params.A * pow(2.*M_PI/L, 3.); 
             if (l==p) { hx[lut[l][p]][r] += 1.; }
             vars.h[p][l] = hx[lut[l][p]][r];
         }
@@ -141,7 +141,6 @@ inline void RandomField::clear_data()
 inline void RandomField::calc_spectrum()
 {
     int N = m_params.Nf;
-    std::string printdir = "/home/eaf49/rds/hpc-work/";
     int pair = 1;
 
     // Setting the lut that maps polarisation vectors to 
@@ -231,6 +230,7 @@ inline void RandomField::calc_spectrum()
     default_random_engine engine(seed);
     uniform_real_distribution<double> theta_dist(0, 2*M_PI);
     uniform_real_distribution<double> sigma_dist(0, 1);
+    double plus_mod, cross_mod, plus_arg, cross_arg;
 
     pout() << "Starting RandomField loop for " << m_spec_type << " field.\n";
 
@@ -244,20 +244,25 @@ inline void RandomField::calc_spectrum()
 
         kmag = (double)(pow((pow((double)I, 2.0) + pow((double)J, 2.0) + pow((double)k, 2.0))*4.*M_PI*M_PI/m_params.L/m_params.L, 0.5));
 
+        plus_mod = sigma_dist(engine);
+        cross_mod = sigma_dist(engine);
+        plus_arg = theta_dist(engine);
+        cross_arg = theta_dist(engine);
+
         // Start of with random numbers filling the entire array
         // Real parts of h+, hx and hij
         if(kmag != 0)
         {
             for(int s=0; s<2; s++)
             {
-                hplus[k + (N/2+1)*(j + N*i)][s] = find_rayleigh_factor(kmag, m_spec_type) * sqrt(-2. * log(sigma_dist(engine)));
-                hcross[k + (N/2+1)*(j + N*i)][s] = find_rayleigh_factor(kmag, m_spec_type) * sqrt(-2. * log(sigma_dist(engine)));
+                hplus[k + (N/2+1)*(j + N*i)][s] = sqrt(-2. * log(plus_mod) * find_rayleigh_factor(kmag, m_spec_type));
+                hcross[k + (N/2+1)*(j + N*i)][s] = sqrt(-2. * log(cross_mod) * find_rayleigh_factor(kmag, m_spec_type));
             }
 
-            hplus[k + (N/2+1)*(j + N*i)][0] *= cos(theta_dist(engine));
-            hplus[k + (N/2+1)*(j + N*i)][1] *= sin(theta_dist(engine));
-            hcross[k + (N/2+1)*(j + N*i)][0] *= cos(theta_dist(engine));
-            hcross[k + (N/2+1)*(j + N*i)][1] *= sin(theta_dist(engine));
+            hplus[k + (N/2+1)*(j + N*i)][0] *= cos(plus_arg);
+            hplus[k + (N/2+1)*(j + N*i)][1] *= sin(plus_arg);
+            hcross[k + (N/2+1)*(j + N*i)][0] *= cos(cross_arg);
+            hcross[k + (N/2+1)*(j + N*i)][1] *= sin(cross_arg);
 
             calc_transferse_vectors(i, j, k, N, mhat, nhat);
             for (int l=0; l<3; l++) for (int p=l; p<3; p++) for(int s=0; s<2; s++)
@@ -276,7 +281,7 @@ inline void RandomField::calc_spectrum()
         }
     }
 
-    //std::ofstream hkprint(printdir+"h-k-printed.dat");
+    //std::ofstream hkprint(m_data_path+"h-k-printed.dat");
     //hkprint << std::fixed << setprecision(12);
 
     for(int i=0; i<N; i++) for(int j=0; j<N; j++) for(int k=0; k<=N/2; k++)
@@ -305,27 +310,27 @@ inline void RandomField::calc_spectrum()
         fftw_execute(hij_plan[l]);
     }
 
-    //std::ofstream hijprint(printdir+"hij-printed.dat");
-    //hijprint << std::fixed << setprecision(15);
+    std::ofstream hijprint(m_data_path+"hij-printed.dat");
+    hijprint << std::fixed << setprecision(15);
 
     int Nc = m_params.N;
     int skip = (int)(N/Nc);
     std::vector<double> means(2, 0.);
     for(int i=0; i<Nc; i++) for(int j=0; j<Nc; j++) for(int k=0; k<Nc; k++)
     {
-        /*for(int l=0; l<3; l++) for(int p=l; p<3; p++)
+        for(int l=0; l<3; l++) for(int p=l; p<3; p++)
         {
             hijprint << hx[lut[l][p]][k*skip + N * (j*skip + N * i*skip)] * m_params.A/pow(m_params.L, 3.) << ",";
         }
-        hijprint << "\n";*/
+        hijprint << "\n";
 
-        hplusx[(k + N * (j + N * i))*skip] *= m_params.A/pow(m_params.L, 3.);
-        hcrossx[(k + N * (j + N * i))*skip] *= m_params.A/pow(m_params.L, 3.);
+        hplusx[(k + N * (j + N * i))*skip] *= m_params.A * pow(2.*M_PI/m_params.L, 3.);
+        hcrossx[(k + N * (j + N * i))*skip] *= m_params.A * pow(2.*M_PI/m_params.L, 3.);
 
         means[0] += hplusx[(k + N * (j + N * i))*skip];
         means[1] += hcrossx[(k + N * (j + N * i))*skip];
     }
-    //hijprint.close();
+    hijprint.close();
     //MayDay::Error("Check hij print file.");
 
     for(int s=0; s<2; s++) { means[s] /= pow(N, 3.); }
@@ -345,7 +350,7 @@ inline void RandomField::calc_spectrum()
 
     if (m_spec_type == "position")
     {
-    	ofstream pert_chars(printdir+"IC-pert-level.dat");
+    	ofstream pert_chars(m_data_path+"IC-pert-level.dat");
 	    if(!pert_chars) { MayDay::Error("Pert. IC characteristics file unopened."); }
 
     	pert_chars << "Planck mass scale: " << m_bkgd_params.m_pl << "\n";
@@ -405,11 +410,11 @@ inline double RandomField::find_rayleigh_factor(double km, std::string spec_type
     double windowed_value = 0.;
     if (spec_type == "position")
     {
-        windowed_value = sqrt((1.0/km/2.0 + (H0*H0/km/km/km)/2.0));
+        windowed_value = (1.0/km/2.0 + (H0*H0/km/km/km)/2.0);
     }
     else if (m_spec_type == "velocity")
     {
-        windowed_value = sqrt((km/2.0 - (H0*H0)/km/2.0 + H0*H0*H0*H0/km/km/km/2.0)); 
+        windowed_value = (km/2.0 - (H0*H0)/km/2.0 + H0*H0*H0*H0/km/km/km/2.0); 
     }
 
     // Apply the tanh window function and the uniform draw

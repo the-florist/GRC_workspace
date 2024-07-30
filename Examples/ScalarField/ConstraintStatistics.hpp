@@ -27,8 +27,8 @@ class ConstraintStatistics
             CH_TIME("ConstraintStatistics::compute");
 
             data_t Ham = current_cell.load_vars(c_Ham);
-            data_t HamAbs = current_cell.load_vars(c_Ham_abs);
-            data_t HamResc = Ham/m_Ham_abs_mean;
+            data_t HamAbs = current_cell.load_vars(c_Ham_abs_terms);
+            
 	        data_t HamAbsAAD = abs(HamAbs - m_Ham_abs_mean);
             data_t HamVar = pow(Ham - m_Ham_mean, 2.);
 	        data_t HamNorm = Ham/m_Ham_abs_mean;
@@ -38,7 +38,8 @@ class ConstraintStatistics
             data_t MomAAD = abs(Mom - m_Mom_mean);
 
             //store class (Vars) variables as diagnostic variables on the grid
-            current_cell.store_vars(HamResc, c_Ham_rescaled);
+            current_cell.store_vars(HamNorm, c_Ham_norm);
+            current_cell.store_vars(HamNormSq, c_Ham_norm_sq);
 	        current_cell.store_vars(HamVar, c_Ham_var);
             current_cell.store_vars(HamAbsAAD, c_Ham_abs_AAD);
             current_cell.store_vars(MomAAD, c_Mom_AAD);

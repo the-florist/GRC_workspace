@@ -7,18 +7,18 @@
 verbosity = 0
 
 # location / naming of output files
-output_path = "/home/eaf49/rds/hpc-work/printing-Aij" # Main path for all files. Must exist!
+output_path = "/home/eaf49/rds/hpc-work/N128-Hnorm-and-new-PS" # Main path for all files. Must exist!
 chk_prefix = ScalarField_
 plot_prefix = ScalarFieldp_
-restart_file = ScalarField_002100.3d.hdf5
+# restart_file = ScalarField_002100.3d.hdf5
 
 # HDF5files are written every dt = L/N*dt_multiplier*checkpoint_interval
 checkpoint_interval = 300
 # set to 0 to turn off plot files (except at t=0 and t=stop_time)
 # set to -1 to never ever print plotfiles
 plot_interval = 80
-num_plot_vars = 12
-plot_vars = h11 h12 h13 h22 h23 h33 A11 A12 A13 A22 A23 A33
+num_plot_vars = 14
+plot_vars = h11 h12 h13 h22 h23 h33 A11 A12 A13 A22 A23 A33 Ham chi
 
 # subpaths - specific directories for hdf5, pout, extraction data
 # (these are created at runtime)
@@ -45,7 +45,7 @@ scalar_amplitude = 10.0
 scalar_velocity = -0.00162845913015181
 scalar_mass = 0.01
 N_fine = 128
-tensor_amplitude = 1.e-4
+tensor_amplitude = 1.e-6
 
 #################################################
 # Grid parameters

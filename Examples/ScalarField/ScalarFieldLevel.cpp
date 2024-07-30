@@ -68,7 +68,7 @@ void ScalarFieldLevel::initialData()
     CH_TIME("ScalarFieldLevel::initialData");
     pout() << "ScalarFieldLevel::initialData " << m_level << endl;
 
-    RandomField pfield(m_p.random_field_params, m_p.initial_params, "position");
+    RandomField pfield(m_p.random_field_params, m_p.initial_params, m_p.data_path, "position");
 
     BoxLoops::loop(
         make_compute_pack(SetValue(0.), pfield),
@@ -77,7 +77,7 @@ void ScalarFieldLevel::initialData()
     pfield.clear_data();
     pout() << "Calculating position ICs ended.\n";
 
-    /*RandomField vfield(m_p.random_field_params, m_p.initial_params, "velocity");
+    /*RandomField vfield(m_p.random_field_params, m_p.initial_params, m_p.data_path, "velocity");
 
     BoxLoops::loop(
         make_compute_pack(vfield),
@@ -196,6 +196,8 @@ void ScalarFieldLevel::specificPostTimeStep()
     double hamBar = amr_reductions.sum(c_Ham)/vol;
     double hamAbsBar = amr_reductions.sum(c_Ham_abs_terms)/vol;
     double momBar = amr_reductions.sum(c_Mom)/vol;
+
+    if (first_step) { pout() << "Domain volume: " << vol << "\n"; }
 
     BoxLoops::loop(
         ConstraintStatistics(hamBar, hamAbsBar, momBar),
