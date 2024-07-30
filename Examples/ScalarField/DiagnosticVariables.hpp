@@ -13,7 +13,6 @@ enum
     c_ch2,
 
     c_Ham,
-    c_Ham_abs,
     c_Mom,
     c_Ham_abs_terms,
     c_Mom_abs_terms,
@@ -34,7 +33,6 @@ static const std::array<std::string, NUM_DIAGNOSTIC_VARS> variable_names = {
     "ChiSq",
     
     "Ham",
-    "HamAbs",
     "Mom",
     "Ham_abs_terms",
     "Mom_abs_terms",

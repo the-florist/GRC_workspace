@@ -13,10 +13,10 @@
 
 template <class matter_t>
 MatterConstraints<matter_t>::MatterConstraints(
-    const matter_t a_matter, double dx, double G_Newton, int a_c_Ham, int a_c_Ham_abs,
+    const matter_t a_matter, double dx, double G_Newton, int a_c_Ham,
     const Interval &a_c_Moms, const double a_c_chi_min, int a_c_Ham_abs_terms /* defaulted*/,
     const Interval &a_c_Moms_abs_terms /*defaulted*/)
-    : Constraints(dx, a_c_Ham, a_c_Ham_abs, a_c_Moms, a_c_chi_min, a_c_Ham_abs_terms, a_c_Moms_abs_terms,
+    : Constraints(dx, a_c_Ham, a_c_Moms, a_c_chi_min, a_c_Ham_abs_terms, a_c_Moms_abs_terms,
                   0.0 /*No cosmological constant*/),
       my_matter(a_matter), m_G_Newton(G_Newton)
 {
@@ -41,13 +41,21 @@ void MatterConstraints<matter_t>::compute(Cell<data_t> current_cell) const
     // Energy Momentum Tensor
     const auto emtensor = my_matter.compute_emtensor(vars, d1, h_UU, chris.ULL);
 
+    /*cout << std::fixed << setprecision(12) << "Ham: " << out.Ham << "\n";
+    cout << std::fixed << setprecision(12) << "HamAbs: " << out.Ham_abs_terms << "\n";
+    cout << std::fixed << setprecision(12) << "Rho term: " << 16.0 * M_PI * m_G_Newton * emtensor.rho << "\n";*/
+    //MayDay::Error();
+
     // Hamiltonian constraint
     if (m_c_Ham >= 0 || m_c_Ham_abs_terms >= 0)
     {
         out.Ham += -16.0 * M_PI * m_G_Newton * emtensor.rho;
         out.Ham_abs_terms += 16.0 * M_PI * m_G_Newton * abs(emtensor.rho);
-        out.Ham_abs = abs(out.Ham); 
-     }
+    }
+
+    /*cout << std::fixed << setprecision(12) << "Ham with rho: " <<  out.Ham << "\n";
+    cout << std::fixed << setprecision(12) << "HamAbs with rho: " <<  out.Ham_abs_terms << "\n";
+    MayDay::Error();*/
 
     // Momentum constraints
     if (m_c_Moms.size() > 0 || m_c_Moms_abs_terms.size() > 0)

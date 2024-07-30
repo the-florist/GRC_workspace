@@ -106,7 +106,7 @@ void ScalarFieldLevel::prePlotLevel()
     ScalarFieldWithPotential scalar_field(potential);
     BoxLoops::loop(
         MatterConstraints<ScalarFieldWithPotential>(
-            scalar_field, m_dx, m_p.G_Newton, c_Ham, c_Ham_abs, Interval(c_Mom, c_Mom), m_p.min_chi, 
+            scalar_field, m_dx, m_p.G_Newton, c_Ham, Interval(c_Mom, c_Mom), m_p.min_chi, 
 	    c_Ham_abs_terms, Interval(c_Mom_abs_terms, c_Mom_abs_terms)),
         m_state_new, m_state_diagnostics, EXCLUDE_GHOST_CELLS);
 }
@@ -183,7 +183,7 @@ void ScalarFieldLevel::specificPostTimeStep()
     ScalarFieldWithPotential scalar_field(potential);
     BoxLoops::loop(
         MatterConstraints<ScalarFieldWithPotential>(
-            scalar_field, m_dx, m_p.G_Newton, c_Ham, c_Ham_abs, Interval(c_Mom, c_Mom), m_p.min_chi, 
+            scalar_field, m_dx, m_p.G_Newton, c_Ham, Interval(c_Mom, c_Mom), m_p.min_chi, 
 	    c_Ham_abs_terms, Interval(c_Mom_abs_terms, c_Mom_abs_terms)),
         m_state_new, m_state_diagnostics, EXCLUDE_GHOST_CELLS);
 
@@ -194,7 +194,7 @@ void ScalarFieldLevel::specificPostTimeStep()
     double vol = amr_reductions.get_domain_volume();
 
     double hamBar = amr_reductions.sum(c_Ham)/vol;
-    double hamAbsBar = amr_reductions.sum(c_Ham_abs)/vol;
+    double hamAbsBar = amr_reductions.sum(c_Ham_abs_terms)/vol;
     double momBar = amr_reductions.sum(c_Mom)/vol;
 
     BoxLoops::loop(

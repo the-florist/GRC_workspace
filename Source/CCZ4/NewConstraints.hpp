@@ -34,7 +34,6 @@ class Constraints
     template <class data_t> struct Vars
     {
         data_t Ham;
-	      data_t Ham_abs;
         data_t Ham_abs_terms;
         Tensor<1, data_t> Mom;
         Tensor<1, data_t> Mom_abs_terms;
@@ -47,7 +46,7 @@ class Constraints
     // conformally decomposed expressions which can be used in to normalize
     // the constraint violations
     // Any zero-length Interval or negative var is not calculated
-    Constraints(double dx, int a_c_Ham, int a_c_Ham_abs, const Interval &a_c_Moms,
+    Constraints(double dx, int a_c_Ham, const Interval &a_c_Moms,
                 const double a_c_chi_min,
                 int a_c_Ham_abs_terms = -1,
                 const Interval &a_c_Moms_abs_terms = Interval(),
@@ -58,7 +57,6 @@ class Constraints
   protected:
     const FourthOrderDerivatives m_deriv;
     const int m_c_Ham;
-    const int m_c_Ham_abs;
     const Interval m_c_Moms;
     const double m_min_chi;
     const int m_c_Ham_abs_terms = -1;

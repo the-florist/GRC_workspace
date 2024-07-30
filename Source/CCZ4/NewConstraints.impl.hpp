@@ -15,12 +15,12 @@
 #include "VarsTools.hpp"
 
 inline Constraints::Constraints(
-    double dx, int a_c_Ham, int a_c_Ham_abs, const Interval &a_c_Moms,
+    double dx, int a_c_Ham, const Interval &a_c_Moms,
     const double a_c_chi_min,
     int a_c_Ham_abs_terms /*defaulted*/,
     const Interval &a_c_Moms_abs_terms /*defaulted*/,
     double cosmological_constant /*defaulted*/)
-    : m_deriv(dx), m_c_Ham(a_c_Ham), m_c_Ham_abs(a_c_Ham_abs), m_c_Moms(a_c_Moms),
+    : m_deriv(dx), m_c_Ham(a_c_Ham), m_c_Moms(a_c_Moms),
       m_min_chi(a_c_chi_min),
       m_c_Ham_abs_terms(a_c_Ham_abs_terms),
       m_c_Moms_abs_terms(a_c_Moms_abs_terms),
@@ -52,7 +52,7 @@ Constraints::Vars<data_t> Constraints::constraint_equations(
 {
     Vars<data_t> out;
 
-    if (m_c_Ham >= 0 || m_c_Ham_abs_terms >= 0 || m_c_Ham_abs >= 0)
+    if (m_c_Ham >= 0 || m_c_Ham_abs_terms >= 0)
     {
         auto ricci = CCZ4Geometry::compute_ricci(vars, d1, d2, h_UU, chris);
 
@@ -67,8 +67,6 @@ Constraints::Vars<data_t> Constraints::constraint_equations(
             abs(ricci.scalar) + abs(tr_A2) +
             abs((GR_SPACEDIM - 1.) * vars.K * vars.K / GR_SPACEDIM);
         out.Ham_abs_terms += 2.0 * abs(m_cosmological_constant);
-    
-    	out.Ham_abs = abs(out.Ham);
     }
 
     if (m_c_Moms.size() > 0 || m_c_Moms_abs_terms.size() > 0)
@@ -112,8 +110,6 @@ void Constraints::store_vars(Vars<data_t> &out,
 {
     if (m_c_Ham >= 0)
         current_cell.store_vars(out.Ham, m_c_Ham);
-    if (m_c_Ham_abs >= 0)
-        current_cell.store_vars(out.Ham_abs, m_c_Ham_abs);
     if (m_c_Ham_abs_terms >= 0)
         current_cell.store_vars(out.Ham_abs_terms, m_c_Ham_abs_terms);
     if (m_c_Moms.size() == GR_SPACEDIM)
