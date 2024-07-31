@@ -44,6 +44,7 @@ class SimulationParameters : public SimulationParametersBase
         pp.load("N_fine", random_field_params.Nf, 128);
         pp.load("L_full", random_field_params.L, 4.);
         pp.load("tensor_amplitude", random_field_params.A, 1.e-6);
+        pp.load("output_path", random_field_params.print_path);
     }
 
     void check_params()

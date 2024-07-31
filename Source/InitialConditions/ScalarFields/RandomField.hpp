@@ -32,9 +32,10 @@ class RandomField
                                 //! (used for convergence testing)
             double L;     //!< Box length in physical units
             double A;     //!< Amplitude applied to tensor field
+            std::string print_path;
         };
 
-        RandomField(params_t a_params, InitialScalarData::params_t a_bkgd_params, std::string a_data_path, std::string a_spec_type);
+        RandomField(params_t a_params, InitialScalarData::params_t a_bkgd_params, std::string a_spec_type);
 
         template <class data_t> void compute(Cell<data_t> current_cell) const; 
 
@@ -47,7 +48,6 @@ class RandomField
     protected:
         const params_t m_params;
         const InitialScalarData::params_t m_bkgd_params;
-        const std::string m_data_path;
         const std::string m_spec_type;
 
         bool debug;

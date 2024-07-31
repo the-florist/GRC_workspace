@@ -10,8 +10,8 @@
  #ifndef RANDOMFIELD_IMPL_HPP_
  #define RANDOMFIELD_IMPL_HPP_
 
- inline RandomField::RandomField(params_t a_params, InitialScalarData::params_t a_bkgd_params, std::string a_data_path, std::string a_spec_type)
-    : m_params(a_params), m_bkgd_params(a_bkgd_params), m_data_path(a_data_path), m_spec_type(a_spec_type)
+ inline RandomField::RandomField(params_t a_params, InitialScalarData::params_t a_bkgd_params, std::string a_spec_type)
+    : m_params(a_params), m_bkgd_params(a_bkgd_params), m_spec_type(a_spec_type)
 {
     kstar = 16.*(2.*M_PI/m_params.L);
     epsilon = 0.5;//0.25 * (sqrt(3.)*2.*M_PI/m_params.L); //0.5;
@@ -281,7 +281,7 @@ inline void RandomField::calc_spectrum()
         }
     }
 
-    //std::ofstream hkprint(m_data_path+"h-k-printed.dat");
+    //std::ofstream hkprint(m_params.print_path+"/h-k-printed.dat");
     //hkprint << std::fixed << setprecision(12);
 
     for(int i=0; i<N; i++) for(int j=0; j<N; j++) for(int k=0; k<=N/2; k++)
@@ -310,7 +310,7 @@ inline void RandomField::calc_spectrum()
         fftw_execute(hij_plan[l]);
     }
 
-    std::ofstream hijprint(m_data_path+"hij-printed.dat");
+    std::ofstream hijprint(m_params.print_path+"/hij-printed.dat");
     hijprint << std::fixed << setprecision(15);
 
     int Nc = m_params.N;
@@ -350,7 +350,7 @@ inline void RandomField::calc_spectrum()
 
     if (m_spec_type == "position")
     {
-    	ofstream pert_chars(m_data_path+"IC-pert-level.dat");
+    	ofstream pert_chars(m_params.print_path+"/IC-pert-level.dat");
 	    if(!pert_chars) { MayDay::Error("Pert. IC characteristics file unopened."); }
 
     	pert_chars << "Planck mass scale: " << m_bkgd_params.m_pl << "\n";
