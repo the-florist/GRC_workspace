@@ -141,7 +141,7 @@ inline void RandomField::clear_data()
 inline void RandomField::calc_spectrum()
 {
     int N = m_params.Nf;
-    int pair = 1;
+    int pair = 0;
 
     // Setting the lut that maps polarisation vectors to 
     // polarisation tensors.
@@ -310,19 +310,19 @@ inline void RandomField::calc_spectrum()
         fftw_execute(hij_plan[l]);
     }
 
-    std::ofstream hijprint(m_params.print_path+"/hij-printed.dat");
-    hijprint << std::fixed << setprecision(15);
+    //std::ofstream hijprint(m_params.print_path+"/hij-printed.dat");
+    //hijprint << std::fixed << setprecision(15);
 
     int Nc = m_params.N;
     int skip = (int)(N/Nc);
     std::vector<double> means(2, 0.);
     for(int i=0; i<Nc; i++) for(int j=0; j<Nc; j++) for(int k=0; k<Nc; k++)
     {
-        for(int l=0; l<3; l++) for(int p=l; p<3; p++)
+        /*for(int l=0; l<3; l++) for(int p=l; p<3; p++)
         {
-            hijprint << hx[lut[l][p]][k*skip + N * (j*skip + N * i*skip)] * m_params.A/pow(m_params.L, 3.) << ",";
+            hijprint << hx[lut[l][p]][k*skip + N * (j*skip + N * i*skip)] * m_params.A * pow(2.*M_PI/m_params.L, 3.) << ",";
         }
-        hijprint << "\n";
+        hijprint << "\n";*/
 
         hplusx[(k + N * (j + N * i))*skip] *= m_params.A * pow(2.*M_PI/m_params.L, 3.);
         hcrossx[(k + N * (j + N * i))*skip] *= m_params.A * pow(2.*M_PI/m_params.L, 3.);
@@ -330,7 +330,7 @@ inline void RandomField::calc_spectrum()
         means[0] += hplusx[(k + N * (j + N * i))*skip];
         means[1] += hcrossx[(k + N * (j + N * i))*skip];
     }
-    hijprint.close();
+    //hijprint.close();
     //MayDay::Error("Check hij print file.");
 
     for(int s=0; s<2; s++) { means[s] /= pow(N, 3.); }
