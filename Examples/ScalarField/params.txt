@@ -7,7 +7,7 @@
 verbosity = 0
 
 # location / naming of output files
-output_path = "/nfs/st01/hpc-gr-epss/eaf49/convergence-tests/4th-order-stencils/Hnorm/N128" # N128-Hnorm_newPS # Main path for all files. Must exist!
+output_path = "/nfs/st01/hpc-gr-epss/eaf49/dump" # Main path for all files. Must exist!
 chk_prefix = ScalarField_
 plot_prefix = ScalarFieldp_
 # restart_file = ScalarField_002100.3d.hdf5
@@ -44,7 +44,7 @@ m_pl = 1.0
 scalar_amplitude = 10.0
 scalar_velocity = -0.00162845913015181
 scalar_mass = 0.01
-N_fine = 128
+N_fine = 256
 tensor_amplitude = 1.e-6
 
 #################################################
@@ -57,7 +57,7 @@ tensor_amplitude = 1.e-6
 # NB - if you have a non-cubic grid, you can specify 'N1' or 'N1_full',
 # 'N2' or 'N2_full' and 'N3' or 'N3_full' ( then dx_coarsest = L/N(max) )
 # NB - the N values need to be multiples of the block_factor
-N_full = 256
+N_full = 32
 L_full = 6.5
 
 # Maximum number of times you can regrid above coarsest level

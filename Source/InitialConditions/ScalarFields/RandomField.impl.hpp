@@ -141,7 +141,7 @@ inline void RandomField::clear_data()
 inline void RandomField::calc_spectrum()
 {
     int N = m_params.Nf;
-    int pair = 0;
+    int which_seed = 0;
 
     // Setting the lut that maps polarisation vectors to 
     // polarisation tensors.
@@ -210,23 +210,14 @@ inline void RandomField::calc_spectrum()
     }
 
     // Set up random number generators (one independent seed per random draw)
-    std::vector<int> seeds(10, 0);
+    std::vector<int> seeds(5, 0);
     seeds[0] = 3539263;
     seeds[1] = 7586572;
     seeds[2] = 5060982;
     seeds[3] = 6793957;
     seeds[4] = 4764135;
-    seeds[5] = 6961336;
-    seeds[6] = 2918557;
-    seeds[7] = 3024453;
-    seeds[8] = 5470767;
-    seeds[9] = 2125263;
 
-    int seed;
-    if(m_spec_type == "position") { seed = seeds[2*pair]; }
-    else if(m_spec_type == "velocity") { seed = seeds[2*pair+1]; }
-    else { MayDay::Error("RandomField: Please choose either 'position' or 'velocity' field type."); }
-
+    int seed = seeds[which_seed];
     default_random_engine engine(seed);
     uniform_real_distribution<double> theta_dist(0, 2*M_PI);
     uniform_real_distribution<double> sigma_dist(0, 1);
@@ -257,12 +248,10 @@ inline void RandomField::calc_spectrum()
             {
                 hplus[k + (N/2+1)*(j + N*i)][s] = sqrt(-2. * log(plus_mod) * find_rayleigh_factor(kmag, m_spec_type));
                 hcross[k + (N/2+1)*(j + N*i)][s] = sqrt(-2. * log(cross_mod) * find_rayleigh_factor(kmag, m_spec_type));
-            }
 
-            hplus[k + (N/2+1)*(j + N*i)][0] *= cos(plus_arg);
-            hplus[k + (N/2+1)*(j + N*i)][1] *= sin(plus_arg);
-            hcross[k + (N/2+1)*(j + N*i)][0] *= cos(cross_arg);
-            hcross[k + (N/2+1)*(j + N*i)][1] *= sin(cross_arg);
+                if(s==0) { hplus[k + (N/2+1)*(j + N*i)][s] *= cos(plus_arg); hcross[k + (N/2+1)*(j + N*i)][s] *= cos(cross_arg); }
+                else if(s==1) { hplus[k + (N/2+1)*(j + N*i)][s] *= sin(plus_arg); hcross[k + (N/2+1)*(j + N*i)][s] *= sin(cross_arg); }
+            }
 
             calc_transferse_vectors(i, j, k, N, mhat, nhat);
             for (int l=0; l<3; l++) for (int p=l; p<3; p++) for(int s=0; s<2; s++)
@@ -315,6 +304,8 @@ inline void RandomField::calc_spectrum()
 
     int Nc = m_params.N;
     int skip = (int)(N/Nc);
+    double dx = m_params.L/Nc;
+
     std::vector<double> means(2, 0.);
     for(int i=0; i<Nc; i++) for(int j=0; j<Nc; j++) for(int k=0; k<Nc; k++)
     {
@@ -333,7 +324,7 @@ inline void RandomField::calc_spectrum()
     //hijprint.close();
     //MayDay::Error("Check hij print file.");
 
-    for(int s=0; s<2; s++) { means[s] /= pow(N, 3.); }
+    for(int s=0; s<2; s++) { means[s] /= pow(Nc, 3.); }
 
     std::vector<double> stdevs(2, 0.);
     for(int i=0; i<Nc; i++) for(int j=0; j<Nc; j++) for(int k=0; k<Nc; k++)
@@ -343,7 +334,7 @@ inline void RandomField::calc_spectrum()
 
         for(int s=0; s<2; s++)
         {
-            stdevs[s] /= pow(N, 3.);
+            stdevs[s] /= pow(Nc, 3.);
             stdevs[s] = sqrt(stdevs[s]);
         }
     }

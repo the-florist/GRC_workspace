@@ -205,7 +205,7 @@ void ScalarFieldLevel::specificPostTimeStep()
 
     // Convergence testing only
     double hamNormBar = amr_reductions.sum(c_Ham_norm)/vol;
-    double hamNormVar = amr_reductions.sum(c_Ham_norm_sq)/vol - hamNormBar*hamNormBar;
+    double hamNormVar = amr_reductions.sum(c_Ham_norm_var)/vol;
     double hamVar = amr_reductions.sum(c_Ham_var)/vol;
     double hamAbsAAD = amr_reductions.sum(c_Ham_abs_AAD)/vol;
     double momAAD = amr_reductions.sum(c_Mom_AAD)/vol;
@@ -245,7 +245,7 @@ void ScalarFieldLevel::specificPostTimeStep()
 
     if(first_step) 
     {
-        constrs_file.write_header_line({"HamMean","HamSTD","HamAbsMean","HamNormMean","HamNormSTD","HamAbsAAD","MomBar","MomAAD"});
+        constrs_file.write_header_line({"HamMean","HamSTD","HamAbsMean","HamNormMean","HamNormSTD","MomBar","MomAAD"});
         means_file.write_header_line({"PhiMean","PhiVar","PiMean","ScaleFact","ChiVar","HubbleFact",
             "KinED","PotED","SRP1","SRP2","LapseMean"});
     }
