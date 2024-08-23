@@ -331,12 +331,12 @@ inline void RandomField::calc_spectrum()
     {
         stdevs[0] += pow(hplusx[(k + N * (j + N * i))*skip] - means[0], 2.);
         stdevs[1] += pow(hcrossx[(k + N * (j + N * i))*skip] - means[1], 2.);
+    }
 
-        for(int s=0; s<2; s++)
-        {
-            stdevs[s] /= pow(Nc, 3.);
-            stdevs[s] = sqrt(stdevs[s]);
-        }
+    for(int s=0; s<2; s++)
+    {
+        stdevs[s] /= pow(Nc, 3.);
+        stdevs[s] = sqrt(stdevs[s]);
     }
 
     if (m_spec_type == "position")
