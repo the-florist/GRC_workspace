@@ -7,7 +7,7 @@
 verbosity = 0
 
 # location / naming of output files
-output_path = "/nfs/st01/hpc-gr-epss/eaf49/KO-rerun/off" # Main path for all files. Must exist!
+output_path = "/nfs/st01/hpc-gr-epss/eaf49/" # Main path for all files. Must exist!
 chk_prefix = ScalarField_
 plot_prefix = ScalarFieldp_
 # restart_file = ScalarField_002100.3d.hdf5
@@ -37,15 +37,15 @@ write_plot_ghosts = 0
 # Initial Data parameters
 # Change the gravitational constant of the Universe!
 # Default is 1.0, for standard geometric units
-G_Newton = 1.0
-m_pl = 1.0
+m_pl = 100.
+# G_Newton = 1.0
 
 # Scalar field initial data
 scalar_amplitude = 10.0
 scalar_velocity = -0.00162845913015181
 scalar_mass = 0.01
 N_fine = 128
-tensor_amplitude = 1.e-6
+tensor_amplitude = 1.
 
 #################################################
 # Grid parameters
@@ -58,7 +58,7 @@ tensor_amplitude = 1.e-6
 # 'N2' or 'N2_full' and 'N3' or 'N3_full' ( then dx_coarsest = L/N(max) )
 # NB - the N values need to be multiples of the block_factor
 N_full = 128
-L_full = 6.5
+L_full = 650
 
 # Maximum number of times you can regrid above coarsest level
 max_level = 0 # There are (max_level+1) grids, so min is zero (does changing this turn off AMR?)

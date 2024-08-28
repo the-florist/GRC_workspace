@@ -28,8 +28,8 @@ class SimulationParameters : public SimulationParametersBase
 
     void read_params(GRParmParse &pp) 
     {
-        pp.load("G_Newton", G_Newton,
-                0.0); // for now the example neglects backreaction
+        pp.load("m_pl", initial_params.m_pl, 1.0);
+        pp.load("G_Newton", G_Newton, pow(initial_params.m_pl, -2.0)); // natural units with m_pl mass units
         pp.load("scalar_mass", potential_params.scalar_mass, 0.01);
 
         // Initial scalar field data

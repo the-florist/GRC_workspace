@@ -15,7 +15,7 @@
 {
     kstar = 16.*(2.*M_PI/m_params.L);
     epsilon = 0.5;//0.25 * (sqrt(3.)*2.*M_PI/m_params.L); //0.5;
-    H0 = sqrt((8.0 * M_PI/3.0/m_bkgd_params.m_pl/m_bkgd_params.m_pl)
+    H0 = m_bkgd_params.m_pl * sqrt((8.0 * M_PI/3.0)
             *(0.5*m_bkgd_params.velocity*m_bkgd_params.velocity + 0.5*pow(m_bkgd_params.m * m_bkgd_params.amplitude, 2.0)));
     norm = pow(m_params.N, 3.);
 
@@ -407,6 +407,9 @@ inline double RandomField::find_rayleigh_factor(double km, std::string spec_type
     {
         windowed_value = (km/2.0 - (H0*H0)/km/2.0 + H0*H0*H0*H0/km/km/km/2.0); 
     }
+
+    // Apply the normalisation required to translate the scalar PS into tensor PS
+    windowed_value *= 2. * 4./pow(m_bkgd_params.m_pl, 2.);
 
     // Apply the tanh window function and the uniform draw
     windowed_value *= 0.5 * (1.0 - tanh(epsilon * (km - kstar)));
