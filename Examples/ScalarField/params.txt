@@ -7,16 +7,16 @@
 verbosity = 0
 
 # location / naming of output files
-output_path = "/nfs/st01/hpc-gr-epss/eaf49/" # Main path for all files. Must exist!
+output_path = "/nfs/st01/hpc-gr-epss/eaf49/new-bkgd-params" # Main path for all files. Must exist!
 chk_prefix = ScalarField_
 plot_prefix = ScalarFieldp_
 # restart_file = ScalarField_002100.3d.hdf5
 
 # HDF5files are written every dt = L/N*dt_multiplier*checkpoint_interval
-checkpoint_interval = 300
+checkpoint_interval = 500
 # set to 0 to turn off plot files (except at t=0 and t=stop_time)
 # set to -1 to never ever print plotfiles
-plot_interval = 80
+plot_interval = 250
 num_plot_vars = 8
 plot_vars = h11 h12 h13 h22 h23 h33 Ham chi
 
@@ -37,13 +37,13 @@ write_plot_ghosts = 0
 # Initial Data parameters
 # Change the gravitational constant of the Universe!
 # Default is 1.0, for standard geometric units
-m_pl = 100.
+m_pl = 1.
 # G_Newton = 1.0
 
 # Scalar field initial data
-scalar_amplitude = 10.0
-scalar_velocity = -0.00162845913015181
-scalar_mass = 0.01
+scalar_amplitude = 4.0
+scalar_velocity = -0.0000162732888046842
+scalar_mass = 1.e-4
 N_fine = 128
 tensor_amplitude = 1.
 
@@ -58,7 +58,7 @@ tensor_amplitude = 1.
 # 'N2' or 'N2_full' and 'N3' or 'N3_full' ( then dx_coarsest = L/N(max) )
 # NB - the N values need to be multiples of the block_factor
 N_full = 128
-L_full = 650
+L_full = 3000.
 
 # Maximum number of times you can regrid above coarsest level
 max_level = 0 # There are (max_level+1) grids, so min is zero (does changing this turn off AMR?)
@@ -125,7 +125,7 @@ extrapolating_vars = phi Pi
 
 # dt will be dx*dt_multiplier on each grid level
 dt_multiplier = 0.25
-stop_time = 40
+stop_time = 10000
 max_steps = 3500
 
 # Spatial derivative order (only affects CCZ4 RHS)
@@ -141,7 +141,7 @@ lapse_power = 0.0 # any for cosmic time, 1 for conformal time
 # Shift evolution
 shift_advec_coeff = 0.0 # Usually no advection for beta
 shift_Gamma_coeff = 0.0
-eta = 1.0 # eta of gamma driver, should be of order ~1/M_ADM of spacetime
+eta = 0.0 # eta of gamma driver, should be of order ~1/M_ADM of spacetime
 
 # CCZ4 parameters
 formulation = 1 # 1 for BSSN, 0 for CCZ4
