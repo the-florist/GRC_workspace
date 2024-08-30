@@ -14,7 +14,7 @@
     : m_params(a_params), m_bkgd_params(a_bkgd_params), m_spec_type(a_spec_type)
 {
     kstar = 16.*(2.*M_PI/m_params.L);
-    epsilon = 0.5;//0.25 * (sqrt(3.)*2.*M_PI/m_params.L); //0.5;
+    epsilon = 100.;//0.5;//0.25 * (sqrt(3.)*2.*M_PI/m_params.L); //0.5;
     H0 = sqrt((8.0 * M_PI/3.0/pow(m_bkgd_params.m_pl, 2.))
             * (0.5*m_bkgd_params.velocity*m_bkgd_params.velocity 
                 + 0.5*pow(m_bkgd_params.m * m_bkgd_params.amplitude, 2.0)));
