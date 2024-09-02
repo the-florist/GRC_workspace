@@ -13,9 +13,10 @@
  inline RandomField::RandomField(params_t a_params, InitialScalarData::params_t a_bkgd_params, std::string a_spec_type)
     : m_params(a_params), m_bkgd_params(a_bkgd_params), m_spec_type(a_spec_type)
 {
+    const double Mp = 1./m_bkgd_params.E;
     kstar = 16.*(2.*M_PI/m_params.L);
     epsilon = 100.;//0.5;//0.25 * (sqrt(3.)*2.*M_PI/m_params.L); //0.5;
-    H0 = sqrt((8.0 * M_PI/3.0/pow(m_bkgd_params.m_pl, 2.))
+    H0 = sqrt((8.0 * M_PI/3.0/pow(Mp, 2.))
             * (0.5*m_bkgd_params.velocity*m_bkgd_params.velocity 
                 + 0.5*pow(m_bkgd_params.m * m_bkgd_params.amplitude, 2.0)));
     norm = pow(m_params.N, 3.);
@@ -345,8 +346,8 @@ inline void RandomField::calc_spectrum()
     	ofstream pert_chars(m_params.print_path+"/IC-pert-level.dat");
 	    if(!pert_chars) { MayDay::Error("Pert. IC characteristics file unopened."); }
 
-    	pert_chars << "Planck mass scale: " << m_bkgd_params.m_pl << "\n";
-    	pert_chars << "Length of box (m_pl): " << m_params.L << "\n";
+    	pert_chars << "Mass scale [Mp]: " << m_bkgd_params.E << "\n";
+    	pert_chars << "Length of box [Mp]: " << m_params.L * m_bkgd_params.E << "\n";
         pert_chars << "Full box resolution: " << N << "\n";
     	pert_chars << "Coarse box resolution: " << Nc << "\n";
     	pert_chars << "Amplitude: " << m_params.A << "\n";
@@ -410,7 +411,7 @@ inline double RandomField::find_rayleigh_factor(double km, std::string spec_type
     }
 
     // Apply the normalisation required to translate the scalar PS into tensor PS
-    windowed_value *= 2. * 4./pow(m_bkgd_params.m_pl, 2.);
+    windowed_value *= 2. * 4. * pow(m_bkgd_params.E, 2.); // 8/Mp where Mp is in units of the energy scale
 
     // Apply the tanh window function and the uniform draw
     windowed_value *= 0.5 * (1.0 - tanh(epsilon * (km - kstar)));

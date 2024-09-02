@@ -28,14 +28,20 @@ class SimulationParameters : public SimulationParametersBase
 
     void read_params(GRParmParse &pp) 
     {
-        pp.load("m_pl", initial_params.m_pl, 1.0);
-        pp.load("G_Newton", G_Newton, pow(initial_params.m_pl, -2.0)); // natural units with m_pl mass units
+        pp.load("E", initial_params.E, 1.0);
+        pp.load("G_Newton", G_Newton, pow(initial_params.E, 2.0)); // natural units with E mass units
         pp.load("scalar_mass", potential_params.scalar_mass, 0.01);
+
+        potential_params.scalar_mass /= initial_params.E;
 
         // Initial scalar field data
         pp.load("scalar_amplitude", initial_params.amplitude, 10.0);
         pp.load("scalar_velocity", initial_params.velocity, -0.001);
         pp.load("scalar_mass", initial_params.m, 0.01);
+
+        initial_params.amplitude /= initial_params.E;
+        initial_params.velocity /= pow(initial_params.E, 2.);
+        initial_params.m /= initial_params.E;
 
         // Random fields initial data class
         random_field_params.center =
@@ -43,7 +49,7 @@ class SimulationParameters : public SimulationParametersBase
         pp.load("N_full", random_field_params.N, 128);
         pp.load("N_fine", random_field_params.Nf, 128);
         pp.load("L_full", random_field_params.L, 4.);
-        pp.load("tensor_amplitude", random_field_params.A, 1.e-6);
+        pp.load("tensor_amplitude", random_field_params.A, 1.);
         pp.load("output_path", random_field_params.print_path);
     }
 
