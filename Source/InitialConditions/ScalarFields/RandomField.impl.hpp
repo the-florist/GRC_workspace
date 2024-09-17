@@ -28,7 +28,6 @@ template <class data_t>
 void RandomField::compute(Cell<data_t> current_cell) const
 {
     Vars<data_t> vars;
-    if(m_spec_type == "position") { VarsTools::assign(vars, 0.); }
 
     // Pull out the grid parameters
     int Nc = m_params.N;
@@ -99,37 +98,58 @@ void RandomField::compute(Cell<data_t> current_cell) const
     }
 
     // Assign position and momenum to the vars. objects
-    if(m_spec_type == "position")
-    { 
-        for(int l=0; l<3; l++) for(int p=l; p<3; p++) 
-        { 
-            hx[lut[l][p]][r] *= m_params.A * pow(2.*M_PI/L, 3.); 
-            if (l==p) { hx[lut[l][p]][r] += 1.; }
-            vars.h[p][l] = hx[lut[l][p]][r];
-        }
-    }
-
-    else if(m_spec_type == "velocity")
+    double trace = 0;
+    for(int l=0; l<3; l++) for(int p=l; p<3; p++) 
     {
-        for(int l=0; l<3; l++) for(int p=l; p<3; p++) 
+        hx[lut[l][p]][r] *= m_params.A/pow(L, 3.); 
+
+        if(m_spec_type == "position")
         {
-            vars.A[p][l] = -hx[lut[l][p]][r];
+            if (l==p) { hx[lut[l][p]][r] += 1.; }
+            trace = abs(hx[0][r] + hx[3][r] + hx[5][r] - 3.);
         }
-    }
-    
-    else { MayDay::Error("Spectral type provided is an invalid option."); }
+        else if(m_spec_type == "velocity")
+        {
+            hx[lut[l][p]][r] *= -1.;
+            trace = abs(hx[0][r] + hx[3][r] + hx[5][r]);
+        }
+        else { MayDay::Error("Spectral type provided is an invalid option."); }
+    } 
 
     // Trace free test
-    if(abs(hx[0][r] + hx[3][r] + hx[5][r] - 3.) > 1.e-12) 
+    if(trace > 1.e-12) 
     { 
-        std::cout << "Trace of hij is large here: \n";
+        std::cout << fixed << setprecision(12);
+        std::cout << "Field: " << m_spec_type << "\n";
+        std::cout << "Trace of field is large here: \n";
         std::cout << "(" << i << "," << j << "," << k << ")\n";
-        std::cout << hx[0][r] + hx[3][r] + hx[5][r] - 3. << "\n";
-        MayDay::Error();
+        std::cout << rc << "," << r << "\n";
+        std::cout << hx[0][r] << "," << hx[3][r] << "," << hx[5][r] << "\n";
+        std::cout << trace << "\n";
     }
 
     // Store values at this point on the grid
-    current_cell.store_vars(vars);
+    //current_cell.store_vars(vars);
+
+    if(m_spec_type == "position")
+    {
+        current_cell.store_vars(hx[lut[0][0]][r], c_h11);
+        current_cell.store_vars(hx[lut[0][1]][r], c_h12);
+        current_cell.store_vars(hx[lut[0][2]][r], c_h13);
+        current_cell.store_vars(hx[lut[1][1]][r], c_h22);
+        current_cell.store_vars(hx[lut[2][1]][r], c_h23);
+        current_cell.store_vars(hx[lut[2][2]][r], c_h33);
+    }
+    else if(m_spec_type == "velocity")
+    {
+        current_cell.store_vars(hx[lut[0][0]][r], c_A11);
+        current_cell.store_vars(hx[lut[0][1]][r], c_A12);
+        current_cell.store_vars(hx[lut[0][2]][r], c_A13);
+        current_cell.store_vars(hx[lut[1][1]][r], c_A22);
+        current_cell.store_vars(hx[lut[2][1]][r], c_A23);
+        current_cell.store_vars(hx[lut[2][2]][r], c_A33);
+    }
+    else { MayDay::Error("Spec type provided is invalid."); }
 }
 
 inline void RandomField::clear_data()
@@ -211,14 +231,8 @@ inline void RandomField::calc_spectrum()
     }
 
     // Set up random number generators (one independent seed per random draw)
-    std::vector<int> seeds(5, 0);
-    seeds[0] = 3539263;
-    seeds[1] = 7586572;
-    seeds[2] = 5060982;
-    seeds[3] = 6793957;
-    seeds[4] = 4764135;
+    int seed = 3539263;
 
-    int seed = seeds[which_seed];
     default_random_engine engine(seed);
     uniform_real_distribution<double> theta_dist(0, 2*M_PI);
     uniform_real_distribution<double> sigma_dist(0, 1);

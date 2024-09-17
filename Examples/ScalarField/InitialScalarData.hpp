@@ -65,6 +65,9 @@ class InitialScalarData
 
         current_cell.store_vars(chi, c_chi);
         current_cell.store_vars(K, c_K);
+
+        const data_t h11 = current_cell.load_vars(c_h11);
+        const data_t A11 = current_cell.load_vars(c_A11);
     }
 
   protected:
