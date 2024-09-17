@@ -46,9 +46,9 @@ class ConstraintStatistics
         }
 
     protected:
-        double m_Ham_mean;
-        double m_Ham_abs_mean;
-        double m_Mom_mean;
+        const double m_Ham_mean;
+        const double m_Ham_abs_mean;
+        const double m_Mom_mean;
 };
 
  #endif /* CONSTRAINTSTATISTICS_HPP_ */

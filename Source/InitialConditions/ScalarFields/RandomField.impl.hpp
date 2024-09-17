@@ -14,7 +14,7 @@
     : m_params(a_params), m_bkgd_params(a_bkgd_params), m_spec_type(a_spec_type)
 {
     const double Mp = 1./m_bkgd_params.E;
-    kstar = 16.*(2.*M_PI/m_params.L);
+    kstar = 50.*(2.*M_PI/m_params.L);
     epsilon = 100.;//0.5;//0.25 * (sqrt(3.)*2.*M_PI/m_params.L); //0.5;
     H0 = sqrt((8.0 * M_PI/3.0/pow(Mp, 2.))
             * (0.5*m_bkgd_params.velocity*m_bkgd_params.velocity 
@@ -121,7 +121,7 @@ void RandomField::compute(Cell<data_t> current_cell) const
     else { MayDay::Error("Spectral type provided is an invalid option."); }
 
     // Trace free test
-    if(abs(hx[0][r] + hx[3][r] + hx[5][r] - 3.) > 1.e-12) 
+    if(abs(hx[0][r] + hx[3][r] + hx[5][r] - 3.) > 1.e-15) 
     { 
         std::cout << "Trace of hij is large here: \n";
         std::cout << "(" << i << "," << j << "," << k << ")\n";
@@ -212,12 +212,17 @@ inline void RandomField::calc_spectrum()
     }
 
     // Set up random number generators (one independent seed per random draw)
-    std::vector<int> seeds(5, 0);
+    std::vector<int> seeds(10, 0);
     seeds[0] = 3539263;
     seeds[1] = 7586572;
     seeds[2] = 5060982;
     seeds[3] = 6793957;
     seeds[4] = 4764135;
+    seeds[5] = 2034988;
+    seeds[6] = 9635753;
+    seeds[7] = 9350886;
+    seeds[8] = 6855322;
+    seeds[9] = 2933414;
 
     int seed = seeds[which_seed];
     default_random_engine engine(seed);

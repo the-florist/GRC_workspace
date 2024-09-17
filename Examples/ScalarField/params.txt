@@ -7,18 +7,18 @@
 verbosity = 0
 
 # location / naming of output files
-output_path = "/nfs/st01/hpc-gr-epss/eaf49/new-bkgd-params/Mp1/super-horizon" # Main path for all files. Must exist!
+output_path = "/nfs/st01/hpc-gr-epss/eaf49/new-bkgd-params/sub-horizon/random-seeds/4"
 chk_prefix = ScalarField_
 plot_prefix = ScalarFieldp_
-# restart_file = ScalarField_002100.3d.hdf5
+# restart_file = ScalarField_000500.3d.hdf5
 
 # HDF5files are written every dt = L/N*dt_multiplier*checkpoint_interval
 checkpoint_interval = 500
 # set to 0 to turn off plot files (except at t=0 and t=stop_time)
 # set to -1 to never ever print plotfiles
-plot_interval = 50
-num_plot_vars = 8
-plot_vars = h11 h12 h13 h22 h23 h33 Ham chi
+plot_interval = 40
+num_plot_vars = 7
+plot_vars = h11 h12 h13 h22 h23 h33 Ham
 
 # subpaths - specific directories for hdf5, pout, extraction data
 # (these are created at runtime)
@@ -37,14 +37,14 @@ write_plot_ghosts = 0
 # Initial Data parameters
 # Change the gravitational constant of the Universe!
 # Default is 1.0, for standard geometric units
-E = 0.01 # Energy scale (in units of Mp!)
+E = 1. # Energy scale (in units of Mp!)
 # G_Newton = 1.0
 
 # Scalar field initial data
 scalar_amplitude = 4.0
-scalar_velocity = -0.0000162732888046842
+scalar_velocity = -0.00001627328880468423
 scalar_mass = 1.e-4
-N_fine = 128
+N_fine = 64
 tensor_amplitude = 1.
 
 #################################################
@@ -57,8 +57,8 @@ tensor_amplitude = 1.
 # NB - if you have a non-cubic grid, you can specify 'N1' or 'N1_full',
 # 'N2' or 'N2_full' and 'N3' or 'N3_full' ( then dx_coarsest = L/N(max) )
 # NB - the N values need to be multiples of the block_factor
-N_full = 128
-L_full = 750.
+N_full = 64
+L_full = 3000.
 
 # Maximum number of times you can regrid above coarsest level
 max_level = 0 # There are (max_level+1) grids, so min is zero (does changing this turn off AMR?)

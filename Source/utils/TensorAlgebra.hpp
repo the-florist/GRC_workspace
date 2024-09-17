@@ -298,12 +298,12 @@ compute_christoffel(const Tensor<2, Tensor<1, data_t>> &d1_metric,
     }
     FOR(i, j, k)
     {
-        out.ULL[i][j][k] = 0;
-        FOR(l) { out.ULL[i][j][k] += h_UU[i][l] * out.LLL[l][j][k]; }
+        out.ULL[i][j][k] = 0.;
+        FOR(l) { out.ULL[i][j][k] += h_UU[i][l] * out.LLL[l][j][k]; } 
     }
     FOR(i)
     {
-        out.contracted[i] = 0;
+        out.contracted[i] = 0.;
         FOR(j, k) { out.contracted[i] += h_UU[j][k] * out.ULL[i][j][k]; }
     }
 
