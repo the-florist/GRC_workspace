@@ -105,12 +105,11 @@ void RandomField::compute(Cell<data_t> current_cell) const
         if(m_spec_type == "position")
         {
             if (l==p) { hx[lut[l][p]][r] += 1.; }
-            vars.h[p][l] = hx[lut[l][p]][r];
             trace = abs(hx[0][r] + hx[3][r] + hx[5][r] - 3.);
         }
         else if(m_spec_type == "velocity")
         {
-            vars.A[p][l] = -hx[lut[l][p]][r];
+            hx[lut[l][p]][r] *= -1.;
             trace = abs(hx[0][r] + hx[3][r] + hx[5][r]);
         }
         else { MayDay::Error("Spectral type provided is an invalid option."); }
@@ -129,7 +128,27 @@ void RandomField::compute(Cell<data_t> current_cell) const
     }
 
     // Store values at this point on the grid
-    current_cell.store_vars(vars);
+    //current_cell.store_vars(vars);
+
+    if(m_spec_type == "position")
+    {
+        current_cell.store_vars(hx[lut[0][0]][r], c_h11);
+        current_cell.store_vars(hx[lut[0][1]][r], c_h12);
+        current_cell.store_vars(hx[lut[0][2]][r], c_h13);
+        current_cell.store_vars(hx[lut[1][1]][r], c_h22);
+        current_cell.store_vars(hx[lut[2][1]][r], c_h23);
+        current_cell.store_vars(hx[lut[2][2]][r], c_h33);
+    }
+    else if(m_spec_type == "velocity")
+    {
+        current_cell.store_vars(hx[lut[0][0]][r], c_A11);
+        current_cell.store_vars(hx[lut[0][1]][r], c_A12);
+        current_cell.store_vars(hx[lut[0][2]][r], c_A13);
+        current_cell.store_vars(hx[lut[1][1]][r], c_A22);
+        current_cell.store_vars(hx[lut[2][1]][r], c_A23);
+        current_cell.store_vars(hx[lut[2][2]][r], c_A33);
+    }
+    else { MayDay::Error("Spec type provided is invalid."); }
 }
 
 inline void RandomField::clear_data()

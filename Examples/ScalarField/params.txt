@@ -7,7 +7,7 @@
 verbosity = 0
 
 # location / naming of output files
-output_path = "/nfs/st01/hpc-gr-epss/eaf49/" # convergence-tests/4th-order-stencils/one-mode/N256" # Main path for all files. Must exist!
+output_path = "/nfs/st01/hpc-gr-epss/eaf49/dump" # convergence-tests/4th-order-stencils/one-mode/N256" # Main path for all files. Must exist!
 chk_prefix = ScalarField_
 plot_prefix = ScalarFieldp_
 # restart_file = ScalarField_001000.3d.hdf5
@@ -45,7 +45,7 @@ scalar_amplitude = 10.0
 scalar_velocity = -0.00162845913015181
 scalar_mass = 0.01
 tensor_amplitude = 1.e-4
-N_fine = 128
+N_fine = 16
 
 #################################################
 # Grid parameters
@@ -57,7 +57,7 @@ N_fine = 128
 # NB - if you have a non-cubic grid, you can specify 'N1' or 'N1_full',
 # 'N2' or 'N2_full' and 'N3' or 'N3_full' ( then dx_coarsest = L/N(max) )
 # NB - the N values need to be multiples of the block_factor
-N_full = 64
+N_full = 16
 L_full = 6.5
 
 # Maximum number of times you can regrid above coarsest level
@@ -126,7 +126,7 @@ extrapolating_vars = phi Pi
 # dt will be dx*dt_multiplier on each grid level
 dt_multiplier = 0.25
 stop_time = 40
-max_steps = 1600
+max_steps = 4
 
 # Spatial derivative order (only affects CCZ4 RHS)
 max_spatial_derivative_order = 4 # can be 4 or 6
