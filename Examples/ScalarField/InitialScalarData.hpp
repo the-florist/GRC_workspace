@@ -31,7 +31,7 @@ class InitialScalarData
         double amplitude; //!< Amplitude of k=0 mode of initial SF
         double velocity;  //!< Amplitude of initial SF velocity
         double m;         //!< SF mass
-        double m_pl;      //!< Planck mass (units)
+        double E;      //!< Energy scale [Mp]
     };
 
     //! The constructor
@@ -43,12 +43,11 @@ class InitialScalarData
     //! Function to compute the value of all the initial vars on the grid
     template <class data_t> void compute(Cell<data_t> current_cell) const
     {
-        // calculate and store the scalar field value
-        const data_t phi = m_params.amplitude;
-        const data_t phidot = m_params.velocity;
+        // calculate and store the scalar field and mass values
+        const data_t Mp = 1./m_params.E;
 
-        current_cell.store_vars(phi, c_phi);
-        current_cell.store_vars(phidot, c_Pi);
+        current_cell.store_vars(m_params.amplitude, c_phi);
+        current_cell.store_vars(m_params.velocity, c_Pi);
 
         //calculate and store gauge variables
         data_t lapse = 1.0;
@@ -61,7 +60,7 @@ class InitialScalarData
 
         //calculate and store scalar metric variables
         data_t chi = 1.0; // a
-        data_t K = -3.0*sqrt((8. * M_PI/3./pow(m_params.m_pl, 2.))*(0.5*phidot*phidot + 0.5*pow(m_params.m * phi, 2.0))); // K (Friedman's equations)
+        data_t K = -3.0*sqrt((8. * M_PI/3./pow(Mp, 2.))*(0.5*pow(m_params.velocity, 2.) + 0.5*pow(m_params.m * m_params.amplitude, 2.0))); // K (Friedman's equations)
 
         current_cell.store_vars(chi, c_chi);
         current_cell.store_vars(K, c_K);
