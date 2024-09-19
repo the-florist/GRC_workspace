@@ -14,8 +14,8 @@
     : m_params(a_params), m_bkgd_params(a_bkgd_params), m_spec_type(a_spec_type)
 {
     const double Mp = 1./m_bkgd_params.E;
-    kstar = 50.*(2.*M_PI/m_params.L);
-    epsilon = 100.;//0.5;//0.25 * (sqrt(3.)*2.*M_PI/m_params.L); //0.5;
+    kstar = M_PI*((double) m_params.Nf)/m_params.L; //50.*(2.*M_PI/m_params.L);
+    epsilon = m_params.L/30.; //100.;//0.5;//0.25 * (sqrt(3.)*2.*M_PI/m_params.L); //0.5;
     H0 = sqrt((8.0 * M_PI/3.0/pow(Mp, 2.))
             * (0.5*m_bkgd_params.velocity*m_bkgd_params.velocity 
                 + 0.5*pow(m_bkgd_params.m * m_bkgd_params.amplitude, 2.0)));
@@ -28,8 +28,6 @@
 template <class data_t>
 void RandomField::compute(Cell<data_t> current_cell) const
 {
-    Vars<data_t> vars;
-
     // Pull out the grid parameters
     int Nc = m_params.N;
     int N = m_params.Nf;
@@ -102,7 +100,7 @@ void RandomField::compute(Cell<data_t> current_cell) const
     double trace = 0;
     for(int l=0; l<3; l++) for(int p=l; p<3; p++) 
     {
-        hx[lut[l][p]][r] *= m_params.A/pow(L, 3.); 
+        hx[lut[l][p]][r] *= m_params.A * pow(2*M_PI/L, 3.); 
 
         if(m_spec_type == "position")
         {
@@ -129,16 +127,13 @@ void RandomField::compute(Cell<data_t> current_cell) const
         std::cout << trace << "\n";
     }
 
-    // Store values at this point on the grid
-    //current_cell.store_vars(vars);
-
     if(m_spec_type == "position")
     {
         current_cell.store_vars(hx[lut[0][0]][r], c_h11);
         current_cell.store_vars(hx[lut[0][1]][r], c_h12);
         current_cell.store_vars(hx[lut[0][2]][r], c_h13);
         current_cell.store_vars(hx[lut[1][1]][r], c_h22);
-        current_cell.store_vars(hx[lut[2][1]][r], c_h23);
+        current_cell.store_vars(hx[lut[1][2]][r], c_h23);
         current_cell.store_vars(hx[lut[2][2]][r], c_h33);
     }
     else if(m_spec_type == "velocity")
@@ -147,7 +142,7 @@ void RandomField::compute(Cell<data_t> current_cell) const
         current_cell.store_vars(hx[lut[0][1]][r], c_A12);
         current_cell.store_vars(hx[lut[0][2]][r], c_A13);
         current_cell.store_vars(hx[lut[1][1]][r], c_A22);
-        current_cell.store_vars(hx[lut[2][1]][r], c_A23);
+        current_cell.store_vars(hx[lut[1][2]][r], c_A23);
         current_cell.store_vars(hx[lut[2][2]][r], c_A33);
     }
     else { MayDay::Error("Spec type provided is invalid."); }
@@ -163,7 +158,7 @@ inline void RandomField::clear_data()
 inline void RandomField::calc_spectrum()
 {
     int N = m_params.Nf;
-    int which_seed = 0;
+    int which_seed = 3;
 
     // Setting the lut that maps polarisation vectors to 
     // polarisation tensors.
@@ -336,11 +331,14 @@ inline void RandomField::calc_spectrum()
     std::vector<double> means(2, 0.);
     for(int i=0; i<Nc; i++) for(int j=0; j<Nc; j++) for(int k=0; k<Nc; k++)
     {
-        /*for(int l=0; l<3; l++) for(int p=l; p<3; p++)
+        /*if(m_spec_type == "velocity")
         {
-            hijprint << hx[lut[l][p]][k*skip + N * (j*skip + N * i*skip)] * m_params.A * pow(2.*M_PI/m_params.L, 3.) << ",";
-        }
-        hijprint << "\n";*/
+            for(int l=0; l<3; l++) for(int p=l; p<3; p++)
+            {
+                hijprint << hx[lut[l][p]][k*skip + N * (j*skip + N * i*skip)] * m_params.A * pow(2.*M_PI/m_params.L, 3.) << ",";
+            }
+            hijprint << "\n";
+        }*/
 
         hplusx[(k + N * (j + N * i))*skip] *= m_params.A * pow(2.*M_PI/m_params.L, 3.);
         hcrossx[(k + N * (j + N * i))*skip] *= m_params.A * pow(2.*M_PI/m_params.L, 3.);
@@ -394,6 +392,7 @@ inline void RandomField::calc_spectrum()
     for(int s=0; s<6; s++) { fftw_destroy_plan(hij_plan[s]); }
 
     pout() << "All memory but hx freed, starting BoxLoop\n";
+    //if(m_spec_type == "velocity") { MayDay::Error("Check STDEVS print file."); }
 }
 
 inline int RandomField::flip_index(int I, int N) { return (int)abs(N - I); }
