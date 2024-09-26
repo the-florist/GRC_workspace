@@ -19,7 +19,8 @@
     H0 = sqrt((8.0 * M_PI/3.0/pow(Mp, 2.))
             * (0.5*m_bkgd_params.velocity*m_bkgd_params.velocity 
                 + 0.5*pow(m_bkgd_params.m * m_bkgd_params.amplitude, 2.0)));
-    norm = pow(m_params.N, 3.);
+    
+    norm = m_params.A * pow(2.*M_PI/m_params.L, 3.);
 
     calc_spectrum();
 }
@@ -100,7 +101,7 @@ void RandomField::compute(Cell<data_t> current_cell) const
     double trace = 0;
     for(int l=0; l<3; l++) for(int p=l; p<3; p++) 
     {
-        hx[lut[l][p]][r] *= m_params.A * pow(2*M_PI/L, 3.); 
+        hx[lut[l][p]][r] *= norm; 
 
         if(m_spec_type == "position")
         {
@@ -335,13 +336,13 @@ inline void RandomField::calc_spectrum()
         {
             for(int l=0; l<3; l++) for(int p=l; p<3; p++)
             {
-                hijprint << hx[lut[l][p]][k*skip + N * (j*skip + N * i*skip)] * m_params.A * pow(2.*M_PI/m_params.L, 3.) << ",";
+                hijprint << hx[lut[l][p]][k*skip + N * (j*skip + N * i*skip)] * norm << ",";
             }
             hijprint << "\n";
         }*/
 
-        hplusx[(k + N * (j + N * i))*skip] *= m_params.A * pow(2.*M_PI/m_params.L, 3.);
-        hcrossx[(k + N * (j + N * i))*skip] *= m_params.A * pow(2.*M_PI/m_params.L, 3.);
+        hplusx[(k + N * (j + N * i))*skip] *= norm;
+        hcrossx[(k + N * (j + N * i))*skip] *= norm;
 
         means[0] += hplusx[(k + N * (j + N * i))*skip];
         means[1] += hcrossx[(k + N * (j + N * i))*skip];

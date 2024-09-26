@@ -47,7 +47,7 @@ class SimulationParameters : public SimulationParametersBase
         random_field_params.center =
             center; // already read in SimulationParametersBase
         pp.load("N_full", random_field_params.N, 128);
-        pp.load("N_fine", random_field_params.Nf, 128);
+        pp.load("N_fine", random_field_params.Nf, random_field_params.N);
         pp.load("L_full", random_field_params.L, 4.);
         pp.load("tensor_amplitude", random_field_params.A, 1.);
         pp.load("output_path", random_field_params.print_path);
