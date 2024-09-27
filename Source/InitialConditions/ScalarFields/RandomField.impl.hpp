@@ -267,14 +267,27 @@ inline void RandomField::calc_spectrum()
         // Real parts of h+, hx and hij
         if(kmag != 0)
         {
-            for(int s=0; s<2; s++)
+            if(i==2 && j==2 && k==0)
             {
-                hplus[k + (N/2+1)*(j + N*i)][s] = sqrt(-2. * log(plus_mod) * find_rayleigh_factor(kmag, m_spec_type));
-                hcross[k + (N/2+1)*(j + N*i)][s] = sqrt(-2. * log(cross_mod) * find_rayleigh_factor(kmag, m_spec_type));
-
-                if(s==0) { hplus[k + (N/2+1)*(j + N*i)][s] *= cos(plus_arg); hcross[k + (N/2+1)*(j + N*i)][s] *= cos(cross_arg); }
-                else if(s==1) { hplus[k + (N/2+1)*(j + N*i)][s] *= sin(plus_arg); hcross[k + (N/2+1)*(j + N*i)][s] *= sin(cross_arg); }
+                if(m_spec_type == "position") { 
+                    hplus[k + (N/2+1)*(j + N*i)][0] = 1.;
+                    hcross[k + (N/2+1)*(j + N*i)][0] = 1.;
+                }
+                else if(m_spec_type == "velocity")
+                {
+                    hplus[k + (N/2+1)*(j + N*i)][0] = -kmag;
+                    hcross[k + (N/2+1)*(j + N*i)][0] = -kmag;
+                }
             }
+
+            /*for(int s=0; s<2; s++)
+            {
+                //hplus[k + (N/2+1)*(j + N*i)][s] = sqrt(-2. * log(plus_mod) * find_rayleigh_factor(kmag, m_spec_type));
+                //hcross[k + (N/2+1)*(j + N*i)][s] = sqrt(-2. * log(cross_mod) * find_rayleigh_factor(kmag, m_spec_type));
+
+                //if(s==0) { hplus[k + (N/2+1)*(j + N*i)][s] *= cos(plus_arg); hcross[k + (N/2+1)*(j + N*i)][s] *= cos(cross_arg); }
+                //else if(s==1) { hplus[k + (N/2+1)*(j + N*i)][s] *= sin(plus_arg); hcross[k + (N/2+1)*(j + N*i)][s] *= sin(cross_arg); }
+            }*/
 
             calc_transferse_vectors(i, j, k, N, mhat, nhat);
             for (int l=0; l<3; l++) for (int p=l; p<3; p++) for(int s=0; s<2; s++)
@@ -322,8 +335,8 @@ inline void RandomField::calc_spectrum()
         fftw_execute(hij_plan[l]);
     }
 
-    //std::ofstream hijprint(m_params.print_path+"/hij-printed.dat");
-    //hijprint << std::fixed << setprecision(15);
+    std::ofstream hijprint(m_params.print_path+"/hij-printed.dat");
+    hijprint << std::fixed << setprecision(15);
 
     int Nc = m_params.N;
     int skip = (int)(N/Nc);
@@ -332,14 +345,14 @@ inline void RandomField::calc_spectrum()
     std::vector<double> means(2, 0.);
     for(int i=0; i<Nc; i++) for(int j=0; j<Nc; j++) for(int k=0; k<Nc; k++)
     {
-        /*if(m_spec_type == "velocity")
+        if(m_spec_type == "position")
         {
             for(int l=0; l<3; l++) for(int p=l; p<3; p++)
             {
                 hijprint << hx[lut[l][p]][k*skip + N * (j*skip + N * i*skip)] * norm << ",";
             }
             hijprint << "\n";
-        }*/
+        }
 
         hplusx[(k + N * (j + N * i))*skip] *= norm;
         hcrossx[(k + N * (j + N * i))*skip] *= norm;
@@ -347,7 +360,7 @@ inline void RandomField::calc_spectrum()
         means[0] += hplusx[(k + N * (j + N * i))*skip];
         means[1] += hcrossx[(k + N * (j + N * i))*skip];
     }
-    //hijprint.close();
+    hijprint.close();
     //MayDay::Error("Check hij print file.");
 
     for(int s=0; s<2; s++) { means[s] /= pow(Nc, 3.); }
@@ -375,6 +388,7 @@ inline void RandomField::calc_spectrum()
         pert_chars << "Full box resolution: " << N << "\n";
     	pert_chars << "Coarse box resolution: " << Nc << "\n";
     	pert_chars << "Amplitude: " << m_params.A << "\n";
+        pert_chars << "Means: " << means[0] << ", " << means[1] << "\n";
     	pert_chars << "Std. deviation of plus pol. field: " << stdevs[0] << "\n";
     	pert_chars << "Std. deviation of cross pol. field: " << stdevs[1] << "\n";
     	pert_chars.close();

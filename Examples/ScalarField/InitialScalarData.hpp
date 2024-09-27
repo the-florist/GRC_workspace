@@ -68,8 +68,8 @@ class InitialScalarData
         const data_t h11 = current_cell.load_vars(c_h11);
         const data_t A11 = current_cell.load_vars(c_A11);
 
-        if(h11 == 0) { MayDay::Error("h11 has been overwritten."); }
-        if(A11 == 0) { MayDay::Error("A11 has not been initialised."); }
+        //if(h11 == 0) { MayDay::Error("h11 has been overwritten."); }
+        //if(A11 == 0) { MayDay::Error("A11 has not been initialised."); }
     }
 
   protected:
