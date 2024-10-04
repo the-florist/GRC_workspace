@@ -267,27 +267,36 @@ inline void RandomField::calc_spectrum()
         // Real parts of h+, hx and hij
         if(kmag != 0)
         {
-            if(i==2 && j==2 && k==0)
+            if(i==4 && j==0 && k==0)
             {
                 if(m_spec_type == "position") { 
-                    hplus[k + (N/2+1)*(j + N*i)][0] = 1.;
-                    hcross[k + (N/2+1)*(j + N*i)][0] = 1.;
+                    /*hplus[k + (N/2+1)*(j + N*i)][0] = 0.;//1.;
+                    hcross[k + (N/2+1)*(j + N*i)][0] = 0.;//1.;*/
+
+                    hplus[k + (N/2+1)*(j + N*i)][0] = 1./sqrt(2.);
+                    hcross[k + (N/2+1)*(j + N*i)][0] = 1./sqrt(2.);
+
+                    hplus[k + (N/2+1)*(j + N*i)][1] = 1./sqrt(2.);
+                    hcross[k + (N/2+1)*(j + N*i)][1] = 1./sqrt(2.);
                 }
                 else if(m_spec_type == "velocity")
                 {
-                    hplus[k + (N/2+1)*(j + N*i)][0] = -kmag;
-                    hcross[k + (N/2+1)*(j + N*i)][0] = -kmag;
+                    hplus[k + (N/2+1)*(j + N*i)][0] = 0.;//kmag;
+                    hcross[k + (N/2+1)*(j + N*i)][0] = 0.;//kmag;
                 }
             }
 
-            /*for(int s=0; s<2; s++)
+            for(int s=0; s<2; s++)
             {
                 //hplus[k + (N/2+1)*(j + N*i)][s] = sqrt(-2. * log(plus_mod) * find_rayleigh_factor(kmag, m_spec_type));
                 //hcross[k + (N/2+1)*(j + N*i)][s] = sqrt(-2. * log(cross_mod) * find_rayleigh_factor(kmag, m_spec_type));
 
                 //if(s==0) { hplus[k + (N/2+1)*(j + N*i)][s] *= cos(plus_arg); hcross[k + (N/2+1)*(j + N*i)][s] *= cos(cross_arg); }
                 //else if(s==1) { hplus[k + (N/2+1)*(j + N*i)][s] *= sin(plus_arg); hcross[k + (N/2+1)*(j + N*i)][s] *= sin(cross_arg); }
-            }*/
+
+                hplus[k + (N/2+1)*(j + N*i)][s] *= sqrt(2. * 4. * pow(m_bkgd_params.E, 2.));
+                hcross[k + (N/2+1)*(j + N*i)][s] *= sqrt(2. * 4. * pow(m_bkgd_params.E, 2.));
+            }
 
             calc_transferse_vectors(i, j, k, N, mhat, nhat);
             for (int l=0; l<3; l++) for (int p=l; p<3; p++) for(int s=0; s<2; s++)
@@ -345,7 +354,7 @@ inline void RandomField::calc_spectrum()
     std::vector<double> means(2, 0.);
     for(int i=0; i<Nc; i++) for(int j=0; j<Nc; j++) for(int k=0; k<Nc; k++)
     {
-        if(m_spec_type == "position")
+        if(m_spec_type == "velocity")
         {
             for(int l=0; l<3; l++) for(int p=l; p<3; p++)
             {
@@ -450,7 +459,7 @@ inline double RandomField::find_rayleigh_factor(double km, std::string spec_type
     }
 
     // Apply the normalisation required to translate the scalar PS into tensor PS
-    windowed_value *= 2. * 4. * pow(m_bkgd_params.E, 2.); // 8/Mp where Mp is in units of the energy scale
+    //windowed_value *= 2. * 4. * pow(m_bkgd_params.E, 2.); // 8/Mp where Mp is in units of the energy scale
 
     // Apply the tanh window function and the uniform draw
     windowed_value *= 0.5 * (1.0 - tanh(epsilon * (km - kstar)));

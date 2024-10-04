@@ -7,7 +7,7 @@
 verbosity = 0
 
 # location / naming of output files
-output_path = "/nfs/st01/hpc-gr-epss/eaf49/single-mode/sub-horizon/diag-with-vel" # convergence-tests/4th-order-stencils/one-mode/N256" # Main path for all files. Must exist!
+output_path = "/nfs/st01/hpc-gr-epss/eaf49/single-mode/sub-horizon/linear-no-vel-real-imag" # Main path for all files. Must exist!
 chk_prefix = ScalarField_
 plot_prefix = ScalarFieldp_
 # restart_file = ScalarField_001000.3d.hdf5
@@ -17,8 +17,8 @@ checkpoint_interval = 500
 # set to 0 to turn off plot files (except at t=0 and t=stop_time)
 # set to -1 to never ever print plotfiles
 plot_interval = 5
-num_plot_vars = 6
-plot_vars = h11 h12 h13 h22 h23 h33
+num_plot_vars = 12
+plot_vars = h11 h12 h13 h22 h23 h33 A11 A12 A13 A22 A23 A33
 
 # subpaths - specific directories for hdf5, pout, extraction data
 # (these are created at runtime)
@@ -37,7 +37,7 @@ write_plot_ghosts = 0
 # Initial Data parameters
 # Change the gravitational constant of the Universe!
 # Default is 1.0, for standard geometric units
-E = 1. # Energy scale (in units of Mp!)
+E = 1.0 # Energy scale (in units of Mp!)
 # G_Newton = 1.0
 
 # Scalar field initial data
