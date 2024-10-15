@@ -110,7 +110,7 @@ void RandomField::compute(Cell<data_t> current_cell) const
         }
         else if(m_spec_type == "velocity")
         {
-            hx[lut[l][p]][r] *= -1.;
+            hx[lut[l][p]][r] *= -0.5;
             trace = abs(hx[0][r] + hx[3][r] + hx[5][r]);
         }
         else { MayDay::Error("Spectral type provided is an invalid option."); }
@@ -267,22 +267,28 @@ inline void RandomField::calc_spectrum()
         // Real parts of h+, hx and hij
         if(kmag != 0)
         {
-            if(i==4 && j==0 && k==0)
+            if((i==4 && j==0 && k==0) || (i==0 && j==3 && k==0))
             {
                 if(m_spec_type == "position") { 
-                    hplus[k + (N/2+1)*(j + N*i)][0] = 0.;//1.;
-                    hcross[k + (N/2+1)*(j + N*i)][0] = 0.;//1.;
+                    /*hplus[k + (N/2+1)*(j + N*i)][0] = 0.;//1.;
+                    hcross[k + (N/2+1)*(j + N*i)][0] = 0.;//1.;*/
 
-                    /*hplus[k + (N/2+1)*(j + N*i)][0] = 1./sqrt(2.);
-                    hcross[k + (N/2+1)*(j + N*i)][0] = 1./sqrt(2.);
+                    hplus[k + (N/2+1)*(j + N*i)][0] = sqrt(find_rayleigh_factor(kmag, m_spec_type)); //1./sqrt(2.);
+                    hcross[k + (N/2+1)*(j + N*i)][0] = sqrt(find_rayleigh_factor(kmag, m_spec_type)); //1./sqrt(2.);
 
-                    hplus[k + (N/2+1)*(j + N*i)][1] = 1./sqrt(2.);
-                    hcross[k + (N/2+1)*(j + N*i)][1] = 1./sqrt(2.);*/
+                    hplus[k + (N/2+1)*(j + N*i)][1] = sqrt(find_rayleigh_factor(kmag, m_spec_type)); //1./sqrt(2.);
+                    hcross[k + (N/2+1)*(j + N*i)][1] = sqrt(find_rayleigh_factor(kmag, m_spec_type)); //1./sqrt(2.);
                 }
                 else if(m_spec_type == "velocity")
                 {
-                    hplus[k + (N/2+1)*(j + N*i)][0] = 1.;//kmag;
-                    hcross[k + (N/2+1)*(j + N*i)][0] = 1.;//kmag;
+                    hplus[k + (N/2+1)*(j + N*i)][0] = kmag * sqrt(find_rayleigh_factor(kmag, "position")); //kmag/sqrt(2.);
+                    hcross[k + (N/2+1)*(j + N*i)][0] = kmag * sqrt(find_rayleigh_factor(kmag, "position")); //kmag/sqrt(2.);
+
+		            hplus[k + (N/2+1)*(j + N*i)][1] = -kmag * sqrt(find_rayleigh_factor(kmag, "position")); //-kmag/sqrt(2.);
+                    hcross[k + (N/2+1)*(j + N*i)][1] = -kmag * sqrt(find_rayleigh_factor(kmag, "position")); //-kmag/sqrt(2.);
+
+                    //cout << kmag << ", " << hplus[k + (N/2+1)*(j + N*i)][0] << ", " << hplus[k + (N/2+1)*(j + N*i)][1] << "\n";
+                    //MayDay::Error();
                 }
             }
 
@@ -455,14 +461,14 @@ inline double RandomField::find_rayleigh_factor(double km, std::string spec_type
     }
     else if (m_spec_type == "velocity")
     {
-        windowed_value = (km/2.0 - (H0*H0)/km/2.0 + H0*H0*H0*H0/km/km/km/2.0); 
+        windowed_value = (km/2.0);// - (H0*H0)/km/2.0 + H0*H0*H0*H0/km/km/km/2.0); 
     }
 
     // Apply the normalisation required to translate the scalar PS into tensor PS
     //windowed_value *= 2. * 4. * pow(m_bkgd_params.E, 2.); // 8/Mp where Mp is in units of the energy scale
 
     // Apply the tanh window function and the uniform draw
-    windowed_value *= 0.5 * (1.0 - tanh(epsilon * (km - kstar)));
+    //windowed_value *= 0.5 * (1.0 - tanh(epsilon * (km - kstar)));
     return windowed_value;
 }
 
