@@ -269,27 +269,33 @@ inline void RandomField::calc_spectrum()
         {
             if((i==4 && j==0 && k==0) || (i==0 && j==3 && k==0))
             {
-                if(m_spec_type == "position") { 
+                //if(m_spec_type == "position") { 
                     /*hplus[k + (N/2+1)*(j + N*i)][0] = 0.;//1.;
                     hcross[k + (N/2+1)*(j + N*i)][0] = 0.;//1.;*/
 
-                    hplus[k + (N/2+1)*(j + N*i)][0] = sqrt(find_rayleigh_factor(kmag, m_spec_type)); //1./sqrt(2.);
+                    /*hplus[k + (N/2+1)*(j + N*i)][0] = sqrt(find_rayleigh_factor(kmag, m_spec_type)); //1./sqrt(2.);
                     hcross[k + (N/2+1)*(j + N*i)][0] = sqrt(find_rayleigh_factor(kmag, m_spec_type)); //1./sqrt(2.);
 
                     hplus[k + (N/2+1)*(j + N*i)][1] = sqrt(find_rayleigh_factor(kmag, m_spec_type)); //1./sqrt(2.);
-                    hcross[k + (N/2+1)*(j + N*i)][1] = sqrt(find_rayleigh_factor(kmag, m_spec_type)); //1./sqrt(2.);
-                }
-                else if(m_spec_type == "velocity")
-                {
-                    hplus[k + (N/2+1)*(j + N*i)][0] = kmag * sqrt(find_rayleigh_factor(kmag, "position")); //kmag/sqrt(2.);
-                    hcross[k + (N/2+1)*(j + N*i)][0] = kmag * sqrt(find_rayleigh_factor(kmag, "position")); //kmag/sqrt(2.);
+                    hcross[k + (N/2+1)*(j + N*i)][1] = sqrt(find_rayleigh_factor(kmag, m_spec_type)); //1./sqrt(2.);*/
 
-		            hplus[k + (N/2+1)*(j + N*i)][1] = -kmag * sqrt(find_rayleigh_factor(kmag, "position")); //-kmag/sqrt(2.);
-                    hcross[k + (N/2+1)*(j + N*i)][1] = -kmag * sqrt(find_rayleigh_factor(kmag, "position")); //-kmag/sqrt(2.);
+                    hplus[k + (N/2+1)*(j + N*i)][0] = find_rayleigh_factor(kmag, m_spec_type, 0); //1./sqrt(2.);
+                    hcross[k + (N/2+1)*(j + N*i)][0] = find_rayleigh_factor(kmag, m_spec_type, 0); //1./sqrt(2.);
+
+                    hplus[k + (N/2+1)*(j + N*i)][1] = find_rayleigh_factor(kmag, m_spec_type, 1); //1./sqrt(2.);
+                    hcross[k + (N/2+1)*(j + N*i)][1] = find_rayleigh_factor(kmag, m_spec_type, 1); //1./sqrt(2.);
+                //}
+                /*else if(m_spec_type == "velocity")
+                {
+                    hplus[k + (N/2+1)*(j + N*i)][0] = sqrt(find_rayleigh_factor(kmag, m_spec_type)); //kmag/sqrt(2.);
+                    hcross[k + (N/2+1)*(j + N*i)][0] = sqrt(find_rayleigh_factor(kmag, m_spec_type)); //kmag/sqrt(2.);
+
+		            hplus[k + (N/2+1)*(j + N*i)][1] = -sqrt(find_rayleigh_factor(kmag, m_spec_type)); //-kmag/sqrt(2.);
+                    hcross[k + (N/2+1)*(j + N*i)][1] = -sqrt(find_rayleigh_factor(kmag, m_spec_type)); //-kmag/sqrt(2.);
 
                     //cout << kmag << ", " << hplus[k + (N/2+1)*(j + N*i)][0] << ", " << hplus[k + (N/2+1)*(j + N*i)][1] << "\n";
                     //MayDay::Error();
-                }
+                }*/
             }
 
             for(int s=0; s<2; s++)
@@ -450,18 +456,26 @@ inline void RandomField::apply_symmetry_rules(int i, int j, int k, double field[
     }
 }
 
-inline double RandomField::find_rayleigh_factor(double km, std::string spec_type)
+inline double RandomField::find_rayleigh_factor(double km, std::string spec_type, int comp)
 {
     if(km < 1.e-12) { return 0.; } // P(k=0), for m=0
 
     double windowed_value = 0.;
     if (spec_type == "position")
     {
-        windowed_value = (1.0/km/2.0 + (H0*H0/km/km/km)/2.0);
+        if(comp == 0) { windowed_value = cos(km/H0) - H0*sin(km/H0)/km; }
+        else if(comp == 1) { windowed_value = (H0*cos(km/H0)/km + sin(km/H0)); }
+
+        windowed_value /= sqrt(2.*km);
+        //windowed_value = (1.0/km/2.0 + (H0*H0/km/km/km)/2.0);
     }
     else if (m_spec_type == "velocity")
     {
-        windowed_value = (km/2.0);// - (H0*H0)/km/2.0 + H0*H0*H0*H0/km/km/km/2.0); 
+        if(comp == 0) { windowed_value = sin(km/H0); }
+        else if(comp == 1) { windowed_value = -cos(km/H0); }
+
+        windowed_value *= sqrt(km/2.);
+        //windowed_value = (km/2.0);// - (H0*H0)/km/2.0 + H0*H0*H0*H0/km/km/km/2.0); 
     }
 
     // Apply the normalisation required to translate the scalar PS into tensor PS

@@ -7,7 +7,7 @@
 verbosity = 0
 
 # location / naming of output files
-output_path = "/home/eaf49/rds/hpc-work/dump/" #single-mode/sub-horizon/two-mode-ps/" # Main path for all files. Must exist!
+output_path = "/home/eaf49/rds/hpc-work/single-mode/sub-horizon/two-mode-ps/" # Main path for all files. Must exist!
 chk_prefix = ScalarField_
 plot_prefix = ScalarFieldp_
 # restart_file = ScalarField_001000.3d.hdf5
