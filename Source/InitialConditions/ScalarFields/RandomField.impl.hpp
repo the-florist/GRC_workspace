@@ -327,6 +327,8 @@ inline void RandomField::calc_spectrum()
         }
     }
 
+    //if(m_spec_type=="velocity") { MayDay::Error("Position"); }
+
     //std::ofstream hkprint(m_params.print_path+"/h-k-printed.dat");
     //hkprint << std::fixed << setprecision(12);
 
@@ -461,22 +463,63 @@ inline double RandomField::find_rayleigh_factor(double km, std::string spec_type
     if(km < 1.e-12) { return 0.; } // P(k=0), for m=0
 
     double windowed_value = 0.;
+
+    double mod = 0.;
+    double arg = 0.;
+    double kpr = km/H0;
+    double sign_test = 0.;
+
     if (spec_type == "position")
     {
-        if(comp == 0) { windowed_value = cos(km/H0) - H0*sin(km/H0)/km; }
+        // Mode fn init, Re and Im comps
+        /*if(comp == 0) { windowed_value = cos(km/H0) - H0*sin(km/H0)/km; }
         else if(comp == 1) { windowed_value = (H0*cos(km/H0)/km + sin(km/H0)); }
 
-        windowed_value /= sqrt(2.*km);
+        windowed_value /= sqrt(2.*km);*/
+
+        // Mode fn init, mod and arg comps
+        mod = sqrt((1.0/kpr + 1.0/pow(kpr, 3.))/H0/2.);
+        arg = atan2((cos(kpr) + kpr*sin(kpr)), (kpr*cos(kpr) - sin(kpr)));
+
+        if(comp == 0) { windowed_value = mod*cos(arg); }
+        else if (comp == 1) { windowed_value = mod*sin(arg); }
+
+        //cout << km << ": " << mod*cos(arg) << ", " << mod*sin(arg) << "\n";
+        //MayDay::Error("Position");
+
+        /*sign_test = kpr * cos(kpr) - sin(kpr);
+        if(sign_test < 0) { windowed_value *= -1.; }
+        else if(sign_test == 0) { windowed_value = 0.; }*/
+
+        // PS init
         //windowed_value = (1.0/km/2.0 + (H0*H0/km/km/km)/2.0);
     }
+
     else if (m_spec_type == "velocity")
     {
-        if(comp == 0) { windowed_value = sin(km/H0); }
+        //Mode fn init, Re and Im comps
+        /*if(comp == 0) { windowed_value = sin(km/H0); }
         else if(comp == 1) { windowed_value = -cos(km/H0); }
 
-        windowed_value *= sqrt(km/2.);
+        windowed_value *= sqrt(km/2.);*/
+
+        // Mode fn init, mod and arg comps
+        mod = sqrt(km/2.);
+        arg = -atan2(cos(km/H0), sin(km/H0));
+
+        if(comp == 0) { windowed_value = mod*cos(arg); }
+        else if (comp == 1) { windowed_value = mod*sin(arg); }
+
+	//cout << km << ": " << mod*cos(arg) << ", " << mod*sin(arg) << "\n";
+
+        /*sign_test = sin(km/H0);
+        if(sign_test < 0) { windowed_value *= -1.; }
+        else if(sign_test == 0) { windowed_value = 0.; }*/
+
+        // PS init
         //windowed_value = (km/2.0);// - (H0*H0)/km/2.0 + H0*H0*H0*H0/km/km/km/2.0); 
     }
+    
 
     // Apply the normalisation required to translate the scalar PS into tensor PS
     //windowed_value *= 2. * 4. * pow(m_bkgd_params.E, 2.); // 8/Mp where Mp is in units of the energy scale
