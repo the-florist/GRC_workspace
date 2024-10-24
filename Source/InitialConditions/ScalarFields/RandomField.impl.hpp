@@ -267,8 +267,8 @@ inline void RandomField::calc_spectrum()
         // Real parts of h+, hx and hij
         if(kmag != 0)
         {
-            if((i==4 && j==0 && k==0) || (i==0 && j==3 && k==0))
-            {
+            //if((i==4 && j==0 && k==0) || (i==0 && j==3 && k==0))
+            //{
                 //if(m_spec_type == "position") { 
                     /*hplus[k + (N/2+1)*(j + N*i)][0] = 0.;//1.;
                     hcross[k + (N/2+1)*(j + N*i)][0] = 0.;//1.;*/
@@ -279,11 +279,11 @@ inline void RandomField::calc_spectrum()
                     hplus[k + (N/2+1)*(j + N*i)][1] = sqrt(find_rayleigh_factor(kmag, m_spec_type)); //1./sqrt(2.);
                     hcross[k + (N/2+1)*(j + N*i)][1] = sqrt(find_rayleigh_factor(kmag, m_spec_type)); //1./sqrt(2.);*/
 
-                    hplus[k + (N/2+1)*(j + N*i)][0] = find_rayleigh_factor(kmag, m_spec_type, 0); //1./sqrt(2.);
-                    hcross[k + (N/2+1)*(j + N*i)][0] = find_rayleigh_factor(kmag, m_spec_type, 0); //1./sqrt(2.);
+                    hplus[k + (N/2+1)*(j + N*i)][0] = find_rayleigh_factor(kmag, m_spec_type, 0, plus_mod); //1./sqrt(2.);
+                    hcross[k + (N/2+1)*(j + N*i)][0] = find_rayleigh_factor(kmag, m_spec_type, 0, cross_mod); //1./sqrt(2.);
 
-                    hplus[k + (N/2+1)*(j + N*i)][1] = find_rayleigh_factor(kmag, m_spec_type, 1); //1./sqrt(2.);
-                    hcross[k + (N/2+1)*(j + N*i)][1] = find_rayleigh_factor(kmag, m_spec_type, 1); //1./sqrt(2.);
+                    hplus[k + (N/2+1)*(j + N*i)][1] = find_rayleigh_factor(kmag, m_spec_type, 1, plus_mod); //1./sqrt(2.);
+                    hcross[k + (N/2+1)*(j + N*i)][1] = find_rayleigh_factor(kmag, m_spec_type, 1, cross_mod); //1./sqrt(2.);
                 //}
                 /*else if(m_spec_type == "velocity")
                 {
@@ -296,14 +296,14 @@ inline void RandomField::calc_spectrum()
                     //cout << kmag << ", " << hplus[k + (N/2+1)*(j + N*i)][0] << ", " << hplus[k + (N/2+1)*(j + N*i)][1] << "\n";
                     //MayDay::Error();
                 }*/
-            }
+            //}
 
             for(int s=0; s<2; s++)
             {
                 //hplus[k + (N/2+1)*(j + N*i)][s] = sqrt(-2. * log(plus_mod) * find_rayleigh_factor(kmag, m_spec_type));
                 //hcross[k + (N/2+1)*(j + N*i)][s] = sqrt(-2. * log(cross_mod) * find_rayleigh_factor(kmag, m_spec_type));
 
-                //if(s==0) { hplus[k + (N/2+1)*(j + N*i)][s] *= cos(plus_arg); hcross[k + (N/2+1)*(j + N*i)][s] *= cos(cross_arg); }
+               //if(s==0) { hplus[k + (N/2+1)*(j + N*i)][s] *= cos(plus_arg); hcross[k + (N/2+1)*(j + N*i)][s] *= cos(cross_arg); }
                 //else if(s==1) { hplus[k + (N/2+1)*(j + N*i)][s] *= sin(plus_arg); hcross[k + (N/2+1)*(j + N*i)][s] *= sin(cross_arg); }
 
                 //hplus[k + (N/2+1)*(j + N*i)][s] *= sqrt(2. * 4. * pow(m_bkgd_params.E, 2.));
@@ -353,10 +353,7 @@ inline void RandomField::calc_spectrum()
 
     fftw_execute(plan1);
     fftw_execute(plan2);
-    for(int l=0; l<6; l++)
-    { 
-        fftw_execute(hij_plan[l]);
-    }
+    for(int l=0; l<6; l++) { fftw_execute(hij_plan[l]); }
 
     //std::ofstream hijprint(m_params.print_path+"/hij-printed.dat");
     //hijprint << std::fixed << setprecision(15);
@@ -458,7 +455,7 @@ inline void RandomField::apply_symmetry_rules(int i, int j, int k, double field[
     }
 }
 
-inline double RandomField::find_rayleigh_factor(double km, std::string spec_type, int comp)
+inline double RandomField::find_rayleigh_factor(double km, std::string spec_type, int comp, double rand_mod)
 {
     if(km < 1.e-12) { return 0.; } // P(k=0), for m=0
 
@@ -478,6 +475,7 @@ inline double RandomField::find_rayleigh_factor(double km, std::string spec_type
         windowed_value /= sqrt(2.*km);*/
 
         // Mode fn init, mod and arg comps
+        //mod = sqrt(-2. * log(rand_mod) * (1.0/kpr + 1.0/pow(kpr, 3.))/H0/2.);
         mod = sqrt((1.0/kpr + 1.0/pow(kpr, 3.))/H0/2.);
         arg = atan2((cos(kpr) + kpr*sin(kpr)), (kpr*cos(kpr) - sin(kpr)));
 
@@ -504,13 +502,14 @@ inline double RandomField::find_rayleigh_factor(double km, std::string spec_type
         windowed_value *= sqrt(km/2.);*/
 
         // Mode fn init, mod and arg comps
+        //mod = sqrt(-2. * log(rand_mod) * km/2.);
         mod = sqrt(km/2.);
         arg = -atan2(cos(km/H0), sin(km/H0));
 
         if(comp == 0) { windowed_value = mod*cos(arg); }
         else if (comp == 1) { windowed_value = mod*sin(arg); }
 
-	//cout << km << ": " << mod*cos(arg) << ", " << mod*sin(arg) << "\n";
+	    //cout << km << ": " << mod*cos(arg) << ", " << mod*sin(arg) << "\n";
 
         /*sign_test = sin(km/H0);
         if(sign_test < 0) { windowed_value *= -1.; }

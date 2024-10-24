@@ -59,7 +59,7 @@ class RandomField
         int flip_index(int I, int N);
         int invert_index(int I, int N);
         int invert_index_with_sign(int I, int N);
-        double find_rayleigh_factor(double km, std::string spec_type, int comp);
+        double find_rayleigh_factor(double km, std::string spec_type, int comp, double rand_mod);
         void apply_symmetry_rules(int i, int j, int k, double field[][2], int N);
         void calc_transferse_vectors(int x, int y, int z, int N, double MHat[3], double NHat[3], double a = 0.);
         void Test_norm(double vec[]);
