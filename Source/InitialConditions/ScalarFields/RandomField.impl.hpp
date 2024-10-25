@@ -303,8 +303,8 @@ inline void RandomField::calc_spectrum()
                 //hplus[k + (N/2+1)*(j + N*i)][s] = sqrt(-2. * log(plus_mod) * find_rayleigh_factor(kmag, m_spec_type));
                 //hcross[k + (N/2+1)*(j + N*i)][s] = sqrt(-2. * log(cross_mod) * find_rayleigh_factor(kmag, m_spec_type));
 
-               //if(s==0) { hplus[k + (N/2+1)*(j + N*i)][s] *= cos(plus_arg); hcross[k + (N/2+1)*(j + N*i)][s] *= cos(cross_arg); }
-                //else if(s==1) { hplus[k + (N/2+1)*(j + N*i)][s] *= sin(plus_arg); hcross[k + (N/2+1)*(j + N*i)][s] *= sin(cross_arg); }
+                if(s==0) { hplus[k + (N/2+1)*(j + N*i)][s] *= cos(plus_arg); hcross[k + (N/2+1)*(j + N*i)][s] *= cos(cross_arg); }
+                else if(s==1) { hplus[k + (N/2+1)*(j + N*i)][s] *= sin(plus_arg); hcross[k + (N/2+1)*(j + N*i)][s] *= sin(cross_arg); }
 
                 //hplus[k + (N/2+1)*(j + N*i)][s] *= sqrt(2. * 4. * pow(m_bkgd_params.E, 2.));
                 //hcross[k + (N/2+1)*(j + N*i)][s] *= sqrt(2. * 4. * pow(m_bkgd_params.E, 2.));
@@ -475,8 +475,8 @@ inline double RandomField::find_rayleigh_factor(double km, std::string spec_type
         windowed_value /= sqrt(2.*km);*/
 
         // Mode fn init, mod and arg comps
-        //mod = sqrt(-2. * log(rand_mod) * (1.0/kpr + 1.0/pow(kpr, 3.))/H0/2.);
-        mod = sqrt((1.0/kpr + 1.0/pow(kpr, 3.))/H0/2.);
+        mod = sqrt(-2. * log(rand_mod) * (1.0/kpr + 1.0/pow(kpr, 3.))/H0/2.);
+        //mod = sqrt((1.0/kpr + 1.0/pow(kpr, 3.))/H0/2.);
         arg = atan2((cos(kpr) + kpr*sin(kpr)), (kpr*cos(kpr) - sin(kpr)));
 
         if(comp == 0) { windowed_value = mod*cos(arg); }
@@ -502,8 +502,8 @@ inline double RandomField::find_rayleigh_factor(double km, std::string spec_type
         windowed_value *= sqrt(km/2.);*/
 
         // Mode fn init, mod and arg comps
-        //mod = sqrt(-2. * log(rand_mod) * km/2.);
-        mod = sqrt(km/2.);
+        mod = sqrt(-2. * log(rand_mod) * km/2.);
+        //mod = sqrt(km/2.);
         arg = -atan2(cos(km/H0), sin(km/H0));
 
         if(comp == 0) { windowed_value = mod*cos(arg); }
