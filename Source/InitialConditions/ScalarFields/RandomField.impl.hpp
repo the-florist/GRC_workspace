@@ -14,8 +14,9 @@
     : m_params(a_params), m_bkgd_params(a_bkgd_params), m_spec_type(a_spec_type)
 {
     const double Mp = 1./m_bkgd_params.E;
-    kstar = M_PI*((double) m_params.Nf)/m_params.L; //50.*(2.*M_PI/m_params.L);
-    epsilon = m_params.L/30.; //100.;//0.5;//0.25 * (sqrt(3.)*2.*M_PI/m_params.L); //0.5;
+
+    kstar = M_PI*((double) m_params.Nf)/m_params.L;
+    epsilon = m_params.L/30.;
     H0 = sqrt((8.0 * M_PI/3.0/pow(Mp, 2.))
             * (0.5*m_bkgd_params.velocity*m_bkgd_params.velocity 
                 + 0.5*pow(m_bkgd_params.m * m_bkgd_params.amplitude, 2.0)));
@@ -269,6 +270,7 @@ inline void RandomField::calc_spectrum()
         {
             //if((i==4 && j==0 && k==0) || (i==0 && j==3 && k==0))
             //{
+                double plus_re, cross_re, plus_im, cross_im;
                 //if(m_spec_type == "position") { 
                     /*hplus[k + (N/2+1)*(j + N*i)][0] = 0.;//1.;
                     hcross[k + (N/2+1)*(j + N*i)][0] = 0.;//1.;*/
@@ -279,11 +281,18 @@ inline void RandomField::calc_spectrum()
                     hplus[k + (N/2+1)*(j + N*i)][1] = sqrt(find_rayleigh_factor(kmag, m_spec_type)); //1./sqrt(2.);
                     hcross[k + (N/2+1)*(j + N*i)][1] = sqrt(find_rayleigh_factor(kmag, m_spec_type)); //1./sqrt(2.);*/
 
-                    hplus[k + (N/2+1)*(j + N*i)][0] = find_rayleigh_factor(kmag, m_spec_type, 0, plus_mod); //1./sqrt(2.);
-                    hcross[k + (N/2+1)*(j + N*i)][0] = find_rayleigh_factor(kmag, m_spec_type, 0, cross_mod); //1./sqrt(2.);
+                plus_re = find_rayleigh_factor(kmag, m_spec_type, 0, plus_mod, plus_arg); //1./sqrt(2.);
+                cross_re = find_rayleigh_factor(kmag, m_spec_type, 0, cross_mod, cross_arg); //1./sqrt(2.);
 
-                    hplus[k + (N/2+1)*(j + N*i)][1] = find_rayleigh_factor(kmag, m_spec_type, 1, plus_mod); //1./sqrt(2.);
-                    hcross[k + (N/2+1)*(j + N*i)][1] = find_rayleigh_factor(kmag, m_spec_type, 1, cross_mod); //1./sqrt(2.);
+                plus_im = find_rayleigh_factor(kmag, m_spec_type, 1, plus_mod, plus_arg); //1./sqrt(2.);
+                cross_im = find_rayleigh_factor(kmag, m_spec_type, 1, cross_mod, cross_arg); //1./sqrt(2.);
+
+                hplus[k + (N/2+1)*(j + N*i)][0] = plus_re * cos(plus_arg) - plus_im * sin(plus_arg);
+                hplus[k + (N/2+1)*(j + N*i)][1] = plus_re * sin(plus_arg) + plus_im * cos(plus_arg);
+
+                hcross[k + (N/2+1)*(j + N*i)][0] = cross_re * cos(cross_arg) - cross_im * sin(cross_arg);
+                hcross[k + (N/2+1)*(j + N*i)][1] = cross_re * sin(cross_arg) + cross_im * cos(cross_arg);
+
                 //}
                 /*else if(m_spec_type == "velocity")
                 {
@@ -303,8 +312,8 @@ inline void RandomField::calc_spectrum()
                 //hplus[k + (N/2+1)*(j + N*i)][s] = sqrt(-2. * log(plus_mod) * find_rayleigh_factor(kmag, m_spec_type));
                 //hcross[k + (N/2+1)*(j + N*i)][s] = sqrt(-2. * log(cross_mod) * find_rayleigh_factor(kmag, m_spec_type));
 
-                if(s==0) { hplus[k + (N/2+1)*(j + N*i)][s] *= cos(plus_arg); hcross[k + (N/2+1)*(j + N*i)][s] *= cos(cross_arg); }
-                else if(s==1) { hplus[k + (N/2+1)*(j + N*i)][s] *= sin(plus_arg); hcross[k + (N/2+1)*(j + N*i)][s] *= sin(cross_arg); }
+                //if(s==0) { hplus[k + (N/2+1)*(j + N*i)][s] *= cos(plus_arg); hcross[k + (N/2+1)*(j + N*i)][s] *= cos(cross_arg); }
+                //else if(s==1) { hplus[k + (N/2+1)*(j + N*i)][s] *= sin(plus_arg); hcross[k + (N/2+1)*(j + N*i)][s] *= sin(cross_arg); }
 
                 //hplus[k + (N/2+1)*(j + N*i)][s] *= sqrt(2. * 4. * pow(m_bkgd_params.E, 2.));
                 //hcross[k + (N/2+1)*(j + N*i)][s] *= sqrt(2. * 4. * pow(m_bkgd_params.E, 2.));
@@ -427,7 +436,6 @@ inline void RandomField::calc_spectrum()
     for(int s=0; s<6; s++) { fftw_destroy_plan(hij_plan[s]); }
 
     pout() << "All memory but hx freed, starting BoxLoop\n";
-    //if(m_spec_type == "velocity") { MayDay::Error("Check STDEVS print file."); }
 }
 
 inline int RandomField::flip_index(int I, int N) { return (int)abs(N - I); }
@@ -455,7 +463,7 @@ inline void RandomField::apply_symmetry_rules(int i, int j, int k, double field[
     }
 }
 
-inline double RandomField::find_rayleigh_factor(double km, std::string spec_type, int comp, double rand_mod)
+inline double RandomField::find_rayleigh_factor(double km, std::string spec_type, int comp, double rand_mod, double rand_arg)
 {
     if(km < 1.e-12) { return 0.; } // P(k=0), for m=0
 
@@ -475,12 +483,9 @@ inline double RandomField::find_rayleigh_factor(double km, std::string spec_type
         windowed_value /= sqrt(2.*km);*/
 
         // Mode fn init, mod and arg comps
-        mod = sqrt(-2. * log(rand_mod) * (1.0/kpr + 1.0/pow(kpr, 3.))/H0/2.);
+        mod = sqrt(-1. * log(rand_mod) * (1.0/kpr + 1.0/pow(kpr, 3.))/H0/2.);
         //mod = sqrt((1.0/kpr + 1.0/pow(kpr, 3.))/H0/2.);
         arg = atan2((cos(kpr) + kpr*sin(kpr)), (kpr*cos(kpr) - sin(kpr)));
-
-        if(comp == 0) { windowed_value = mod*cos(arg); }
-        else if (comp == 1) { windowed_value = mod*sin(arg); }
 
         //cout << km << ": " << mod*cos(arg) << ", " << mod*sin(arg) << "\n";
         //MayDay::Error("Position");
@@ -502,12 +507,9 @@ inline double RandomField::find_rayleigh_factor(double km, std::string spec_type
         windowed_value *= sqrt(km/2.);*/
 
         // Mode fn init, mod and arg comps
-        mod = sqrt(-2. * log(rand_mod) * km/2.);
+        mod = sqrt(-1. * log(rand_mod) * km/2.);
         //mod = sqrt(km/2.);
         arg = -atan2(cos(km/H0), sin(km/H0));
-
-        if(comp == 0) { windowed_value = mod*cos(arg); }
-        else if (comp == 1) { windowed_value = mod*sin(arg); }
 
 	    //cout << km << ": " << mod*cos(arg) << ", " << mod*sin(arg) << "\n";
 
@@ -519,6 +521,8 @@ inline double RandomField::find_rayleigh_factor(double km, std::string spec_type
         //windowed_value = (km/2.0);// - (H0*H0)/km/2.0 + H0*H0*H0*H0/km/km/km/2.0); 
     }
     
+    if(comp == 0) { windowed_value = mod*cos(arg); }
+    else if (comp == 1) { windowed_value = mod*sin(arg); }
 
     // Apply the normalisation required to translate the scalar PS into tensor PS
     //windowed_value *= 2. * 4. * pow(m_bkgd_params.E, 2.); // 8/Mp where Mp is in units of the energy scale

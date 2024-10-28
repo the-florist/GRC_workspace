@@ -4,9 +4,11 @@
  */
 
 // Chombo includes
+#include "CH_Timer.H" 
 #include "parstream.H" //Gives us pout()
 
 // System includes
+#include <chrono>
 #include <iostream>
 
 // Our general includes
@@ -28,8 +30,12 @@
 
 int runGRChombo(int argc, char *argv[])
 {
-    //time_t t;
-    //std::cout << "Program start at: " << asctime(localtime(&t)) << "\n";
+    // Set up timing aliases
+    using Clock = std::chrono::steady_clock;
+    using Minutes = std::chrono::duration<double, std::ratio<60, 1>>;
+    
+    std::chrono::time_point<Clock> start_time = Clock::now();
+
     // Load the parameter file and construct the SimulationParameter class
     // To add more parameters edit the SimulationParameters file.
     char *in_file = argv[1];
@@ -69,6 +75,11 @@ int runGRChombo(int argc, char *argv[])
 
     // Engage! Run the evolution
     gr_amr.run(sim_params.stop_time, sim_params.max_steps);
+
+    auto now = Clock::now();
+    auto duration = std::chrono::duration_cast<Minutes>(now - start_time);
+    pout() << "Total simulation time (mins): " << duration.count() << ".\n";
+
     gr_amr.conclude();
 
     return 0;
