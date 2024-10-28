@@ -13,34 +13,21 @@
  inline RandomField::RandomField(params_t a_params, InitialScalarData::params_t a_bkgd_params, std::string a_spec_type)
     : m_params(a_params), m_bkgd_params(a_bkgd_params), m_spec_type(a_spec_type)
 {
+    // Setting the mass scale
     const double Mp = 1./m_bkgd_params.E;
 
+    // Setting physical and window fn parameters
     kstar = M_PI*((double) m_params.Nf)/m_params.L;
     epsilon = m_params.L/30.;
     H0 = sqrt((8.0 * M_PI/3.0/pow(Mp, 2.))
             * (0.5*m_bkgd_params.velocity*m_bkgd_params.velocity 
                 + 0.5*pow(m_bkgd_params.m * m_bkgd_params.amplitude, 2.0)));
     
+    // Fourier transform normalisation
     norm = m_params.A * pow(2.*M_PI/m_params.L, 3.);
-
-    calc_spectrum();
-}
-
-
-template <class data_t>
-void RandomField::compute(Cell<data_t> current_cell) const
-{
-    // Pull out the grid parameters
-    int Nc = m_params.N;
-    int N = m_params.Nf;
-    int skip = (int)(N/Nc);
-
-    double L = m_params.L;
-    double dx = L/Nc;
 
     // Setting the lut that maps polarisation vectors to 
     // polarisation tensors.
-    int lut[3][3];  
     lut[0][0] = 0;
     lut[0][1] = 1;
     lut[0][2] = 2;
@@ -51,8 +38,29 @@ void RandomField::compute(Cell<data_t> current_cell) const
     lut[2][1] = 4;
     lut[2][2] = 5;
 
+    // Generate GRF?
+    use_rand = true;
+
+    // Find the real-space realisation of this field
+    calc_spectrum();
+}
+
+
+template <class data_t>
+void RandomField::compute(Cell<data_t> current_cell) const
+{
+    // Pull out the grid parameters
+    // First find two resolutions, if coarse-graining
+    // for convergence-testing purposes.
+    int Nc = m_params.N;
+    int N = m_params.Nf;
+    int skip = (int)(N/Nc);
+
+    double L = m_params.L;
+    double dx = L/Nc;
     Coordinates<data_t> coords(current_cell, dx, m_params.center);
 
+    // Find the unitless coordinates (i,j,k) and flattened position (r)
     // Coordinate of this cell in program units
     data_t x = coords.x + L/2;
     double y = coords.y + L/2;
@@ -98,7 +106,8 @@ void RandomField::compute(Cell<data_t> current_cell) const
         MayDay::Error("RandomField: Cell index greater than N^3 at coarsest level.");
     }
 
-    // Assign position and momenum to the vars. objects
+    // Normalise the real-space field and transform into NR object
+    // with CPT-BSSN dictionary
     double trace = 0;
     for(int l=0; l<3; l++) for(int p=l; p<3; p++) 
     {
@@ -129,6 +138,7 @@ void RandomField::compute(Cell<data_t> current_cell) const
         std::cout << trace << "\n";
     }
 
+    // Put the field on the grid
     if(m_spec_type == "position")
     {
         current_cell.store_vars(hx[lut[0][0]][r], c_h11);
@@ -152,35 +162,39 @@ void RandomField::compute(Cell<data_t> current_cell) const
 
 inline void RandomField::clear_data()
 {
+    // Clear memory alloc global to the class
     pout() << "Clearing memory allocated to hx array.\n";
-    for(int s=0; s<6; s++) { free(hx[s]); } // This causes a seg fault as is
+    for(int s=0; s<6; s++) { free(hx[s]); }
     free(hx);
 }
 
 inline void RandomField::calc_spectrum()
 {
+    // Pull out largest resolution and choose a random seed
     int N = m_params.Nf;
     int which_seed = 3;
 
-    // Setting the lut that maps polarisation vectors to 
-    // polarisation tensors.
-    int lut[3][3];  
-    lut[0][0] = 0;
-    lut[0][1] = 1;
-    lut[0][2] = 2;
-    lut[1][0] = 1;
-    lut[1][1] = 3;
-    lut[1][2] = 4;
-    lut[2][0] = 2;
-    lut[2][1] = 4;
-    lut[2][2] = 5;
+    // Set up random number generators
+    // Use one random draw per point, per field, per Fourier component
+    std::vector<int> seeds(10, 0);
+    seeds[0] = 3539263;
+    seeds[1] = 7586572;
+    seeds[2] = 5060982;
+    seeds[3] = 6793957;
+    seeds[4] = 4764135;
+    seeds[5] = 2034988;
+    seeds[6] = 9635753;
+    seeds[7] = 9350886;
+    seeds[8] = 6855322;
+    seeds[9] = 2933414;
 
-    // Polarisation basis vectors and k
-    double mhat[3] = {0., 0., 0.};
-    double nhat[3] = {0., 0., 0.}; 
-    double kmag = 0.;
+    int seed = seeds[which_seed];
+    default_random_engine engine(seed);
+    uniform_real_distribution<double> theta_dist(0, 2*M_PI);
+    uniform_real_distribution<double> sigma_dist(0, 1);
+    double plus_mod, cross_mod, plus_arg, cross_arg;
 
-    // Allocate memory for hij, mode functions and plans
+    // Allocate memory for hij & mode functions and construct plans
     fftw_complex** hk;
     hk = (fftw_complex**) fftw_malloc(sizeof(fftw_complex*) * 6);
     fftw_plan hij_plan[6];
@@ -198,7 +212,7 @@ inline void RandomField::calc_spectrum()
     hplus = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * N * N * (N/2+1));
     hcross = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * N * N * (N/2+1));
 
-    // Extra memory for reality check on h+ (only for debug)
+    // Extra memory for reality check on h+
     double (*hplusx);
     hplusx = (double*) malloc(sizeof(double) * N * N * N);
     double (*hcrossx);
@@ -228,107 +242,71 @@ inline void RandomField::calc_spectrum()
         }
     }
 
-    // Set up random number generators (one independent seed per random draw)
-    std::vector<int> seeds(10, 0);
-    seeds[0] = 3539263;
-    seeds[1] = 7586572;
-    seeds[2] = 5060982;
-    seeds[3] = 6793957;
-    seeds[4] = 4764135;
-    seeds[5] = 2034988;
-    seeds[6] = 9635753;
-    seeds[7] = 9350886;
-    seeds[8] = 6855322;
-    seeds[9] = 2933414;
-
-    int seed = seeds[which_seed];
-    default_random_engine engine(seed);
-    uniform_real_distribution<double> theta_dist(0, 2*M_PI);
-    uniform_real_distribution<double> sigma_dist(0, 1);
-    double plus_mod, cross_mod, plus_arg, cross_arg;
+    // Polarisation basis vectors 
+    // and mode fns' real and imaginary components
+    // for construction with a random argument
+    double mhat[3] = {0., 0., 0.};
+    double nhat[3] = {0., 0., 0.}; 
+    std::vector<double> plus_comps(2, 0.);
+    std::vector<double> cross_comps(2, 0.);
 
     pout() << "Starting RandomField loop for " << m_spec_type << " field.\n";
 
+    double kmag = 0.;
     for(int i=0; i<N; i++) for(int j=0; j<N; j++) for(int k=0; k<=N/2; k++)
     {
-        // Putting the 0 mode in the right spot in memory
+        // Put the 0 mode in the right spot in memory
         int I = i;
         int J = j;
         if(i > N/2) { I = invert_index(i, N); }
         if(j > N/2) { J = invert_index(j, N); }
 
+        // Find |k|
         kmag = (double)(pow((pow((double)I, 2.0) + pow((double)J, 2.0) + pow((double)k, 2.0))*4.*M_PI*M_PI/m_params.L/m_params.L, 0.5));
 
-        plus_mod = sigma_dist(engine);
-        cross_mod = sigma_dist(engine);
-        plus_arg = theta_dist(engine);
-        cross_arg = theta_dist(engine);
-
-        // Start of with random numbers filling the entire array
-        // Real parts of h+, hx and hij
-        if(kmag != 0)
+        // If generating GRF, calculate Rayleigh draw on PS
+        // then construct each mode fn by FOILing
+        // onto the random argument in re+im basis.
+        if(use_rand)
         {
-            //if((i==4 && j==0 && k==0) || (i==0 && j==3 && k==0))
-            //{
-                double plus_re, cross_re, plus_im, cross_im;
-                //if(m_spec_type == "position") { 
-                    /*hplus[k + (N/2+1)*(j + N*i)][0] = 0.;//1.;
-                    hcross[k + (N/2+1)*(j + N*i)][0] = 0.;//1.;*/
-
-                    /*hplus[k + (N/2+1)*(j + N*i)][0] = sqrt(find_rayleigh_factor(kmag, m_spec_type)); //1./sqrt(2.);
-                    hcross[k + (N/2+1)*(j + N*i)][0] = sqrt(find_rayleigh_factor(kmag, m_spec_type)); //1./sqrt(2.);
-
-                    hplus[k + (N/2+1)*(j + N*i)][1] = sqrt(find_rayleigh_factor(kmag, m_spec_type)); //1./sqrt(2.);
-                    hcross[k + (N/2+1)*(j + N*i)][1] = sqrt(find_rayleigh_factor(kmag, m_spec_type)); //1./sqrt(2.);*/
-
-                plus_re = find_rayleigh_factor(kmag, m_spec_type, 0, plus_mod, plus_arg); //1./sqrt(2.);
-                cross_re = find_rayleigh_factor(kmag, m_spec_type, 0, cross_mod, cross_arg); //1./sqrt(2.);
-
-                plus_im = find_rayleigh_factor(kmag, m_spec_type, 1, plus_mod, plus_arg); //1./sqrt(2.);
-                cross_im = find_rayleigh_factor(kmag, m_spec_type, 1, cross_mod, cross_arg); //1./sqrt(2.);
-
-                hplus[k + (N/2+1)*(j + N*i)][0] = plus_re * cos(plus_arg) - plus_im * sin(plus_arg);
-                hplus[k + (N/2+1)*(j + N*i)][1] = plus_re * sin(plus_arg) + plus_im * cos(plus_arg);
-
-                hcross[k + (N/2+1)*(j + N*i)][0] = cross_re * cos(cross_arg) - cross_im * sin(cross_arg);
-                hcross[k + (N/2+1)*(j + N*i)][1] = cross_re * sin(cross_arg) + cross_im * cos(cross_arg);
-
-                //}
-                /*else if(m_spec_type == "velocity")
-                {
-                    hplus[k + (N/2+1)*(j + N*i)][0] = sqrt(find_rayleigh_factor(kmag, m_spec_type)); //kmag/sqrt(2.);
-                    hcross[k + (N/2+1)*(j + N*i)][0] = sqrt(find_rayleigh_factor(kmag, m_spec_type)); //kmag/sqrt(2.);
-
-		            hplus[k + (N/2+1)*(j + N*i)][1] = -sqrt(find_rayleigh_factor(kmag, m_spec_type)); //-kmag/sqrt(2.);
-                    hcross[k + (N/2+1)*(j + N*i)][1] = -sqrt(find_rayleigh_factor(kmag, m_spec_type)); //-kmag/sqrt(2.);
-
-                    //cout << kmag << ", " << hplus[k + (N/2+1)*(j + N*i)][0] << ", " << hplus[k + (N/2+1)*(j + N*i)][1] << "\n";
-                    //MayDay::Error();
-                }*/
-            //}
+            plus_mod = sigma_dist(engine);
+            cross_mod = sigma_dist(engine);
+            plus_arg = theta_dist(engine);
+            cross_arg = theta_dist(engine);
 
             for(int s=0; s<2; s++)
             {
-                //hplus[k + (N/2+1)*(j + N*i)][s] = sqrt(-2. * log(plus_mod) * find_rayleigh_factor(kmag, m_spec_type));
-                //hcross[k + (N/2+1)*(j + N*i)][s] = sqrt(-2. * log(cross_mod) * find_rayleigh_factor(kmag, m_spec_type));
-
-                //if(s==0) { hplus[k + (N/2+1)*(j + N*i)][s] *= cos(plus_arg); hcross[k + (N/2+1)*(j + N*i)][s] *= cos(cross_arg); }
-                //else if(s==1) { hplus[k + (N/2+1)*(j + N*i)][s] *= sin(plus_arg); hcross[k + (N/2+1)*(j + N*i)][s] *= sin(cross_arg); }
-
-                //hplus[k + (N/2+1)*(j + N*i)][s] *= sqrt(2. * 4. * pow(m_bkgd_params.E, 2.));
-                //hcross[k + (N/2+1)*(j + N*i)][s] *= sqrt(2. * 4. * pow(m_bkgd_params.E, 2.));
+                plus_comps[s] = find_rayleigh_factor(kmag, m_spec_type, s, plus_mod);
+                cross_comps[s] = find_rayleigh_factor(kmag, m_spec_type, s, cross_mod);
             }
 
-            calc_transferse_vectors(i, j, k, N, mhat, nhat);
-            for (int l=0; l<3; l++) for (int p=l; p<3; p++) for(int s=0; s<2; s++)
+            hplus[k + (N/2+1)*(j + N*i)][0] = plus_comps[0] * cos(plus_arg) - plus_comps[1] * sin(plus_arg);
+            hplus[k + (N/2+1)*(j + N*i)][1] = plus_comps[0] * sin(plus_arg) + plus_comps[1] * cos(plus_arg);
+
+            hcross[k + (N/2+1)*(j + N*i)][0] = cross_comps[0] * cos(cross_arg) - cross_comps[1] * sin(cross_arg);
+            hcross[k + (N/2+1)*(j + N*i)][1] = cross_comps[0] * sin(cross_arg) + cross_comps[1] * cos(cross_arg);
+        }
+
+        // Just use the mode fn in modulus/argument basis
+        else 
+        {
+            for(int s=0; s<2; s++)
             {
-                hk[lut[l][p]][k + (N/2+1)*(j + N*i)][s] = ((mhat[l]*mhat[p] - nhat[l]*nhat[p]) * hplus[k + (N/2+1)*(j + N*i)][s]
-                                                    + (mhat[l]*nhat[p] + nhat[l]*mhat[p]) * hcross[k + (N/2+1)*(j + N*i)][s]) / sqrt(2.0);
+                hplus[k + (N/2+1)*(j + N*i)][s] = find_rayleigh_factor(kmag, m_spec_type, s, plus_mod);
+                hcross[k + (N/2+1)*(j + N*i)][s] = find_rayleigh_factor(kmag, m_spec_type, s, cross_mod);
             }
         }
 
+        // Construct the Fourier-space tensor
+        calc_transverse_vectors(i, j, k, N, mhat, nhat);
+        for (int l=0; l<3; l++) for (int p=l; p<3; p++) for(int s=0; s<2; s++)
+        {
+            hk[lut[l][p]][k + (N/2+1)*(j + N*i)][s] = ((mhat[l]*mhat[p] - nhat[l]*nhat[p]) * hplus[k + (N/2+1)*(j + N*i)][s]
+                                                + (mhat[l]*nhat[p] + nhat[l]*mhat[p]) * hcross[k + (N/2+1)*(j + N*i)][s]) / sqrt(2.0);
+        }
+
         // If at a DC or Nyq point, enforce reality condition
-        if ((i == 0 || i == N/2) && (j == 0 || j == N/2) && (k == 0 || k == N/2)) // reality condition
+        if ((i == 0 || i == N/2) && (j == 0 || j == N/2) && (k == 0 || k == N/2))
         {
             hplus[k + (N/2+1)*(j + N*i)][1] = 0.;
             hcross[k + (N/2+1)*(j + N*i)][1] = 0.;
@@ -336,11 +314,11 @@ inline void RandomField::calc_spectrum()
         }
     }
 
-    //if(m_spec_type=="velocity") { MayDay::Error("Position"); }
-
     //std::ofstream hkprint(m_params.print_path+"/h-k-printed.dat");
     //hkprint << std::fixed << setprecision(12);
 
+    // Apply symmetry rules in Hermitian half
+    // (Necessary to recover original field after FT -> IFT)
     for(int i=0; i<N; i++) for(int j=0; j<N; j++) for(int k=0; k<=N/2; k++)
     {
         apply_symmetry_rules(i, j, k, hplus, N);
@@ -360,6 +338,7 @@ inline void RandomField::calc_spectrum()
 
     pout() << "Moving to configuration space.\n";
 
+    // Perform the FFTW
     fftw_execute(plan1);
     fftw_execute(plan2);
     for(int l=0; l<6; l++) { fftw_execute(hij_plan[l]); }
@@ -371,6 +350,7 @@ inline void RandomField::calc_spectrum()
     int skip = (int)(N/Nc);
     double dx = m_params.L/Nc;
 
+    // Find mean and standard deviations of each mode fn field
     std::vector<double> means(2, 0.);
     for(int i=0; i<Nc; i++) for(int j=0; j<Nc; j++) for(int k=0; k<Nc; k++)
     {
@@ -407,6 +387,7 @@ inline void RandomField::calc_spectrum()
         stdevs[s] = sqrt(stdevs[s]);
     }
 
+    // Print some initial condition info to a file
     if (m_spec_type == "position")
     {
     	ofstream pert_chars(m_params.print_path+"/IC-pert-level.dat");
@@ -463,64 +444,40 @@ inline void RandomField::apply_symmetry_rules(int i, int j, int k, double field[
     }
 }
 
-inline double RandomField::find_rayleigh_factor(double km, std::string spec_type, int comp, double rand_mod, double rand_arg)
+// Calculate the mode function value at a point
+// Optional: Rayleigh draw on the modulus
+//           Convert scalar mode function to tensor one
+//           Apply a window function to tame low mode power
+
+inline double RandomField::find_rayleigh_factor(double km, std::string spec_type, int comp, double rand_mod)
 {
     if(km < 1.e-12) { return 0.; } // P(k=0), for m=0
 
-    double windowed_value = 0.;
+    double windowed_value = 0.; // stores final component value
 
-    double mod = 0.;
-    double arg = 0.;
-    double kpr = km/H0;
-    double sign_test = 0.;
+    double mod = 0.; // stores local modulus
+    double arg = 0.; // stores local argument
+    double kpr = km/H0; // rescaled k (used for "position" field)
 
     if (spec_type == "position")
     {
-        // Mode fn init, Re and Im comps
-        /*if(comp == 0) { windowed_value = cos(km/H0) - H0*sin(km/H0)/km; }
-        else if(comp == 1) { windowed_value = (H0*cos(km/H0)/km + sin(km/H0)); }
+        // Mode fn init, mod and arg basis
+        if(use_rand) { mod = sqrt(-1. * log(rand_mod) * (1.0/kpr + 1.0/pow(kpr, 3.))/H0/2.); }
+        else { mod = sqrt((1.0/kpr + 1.0/pow(kpr, 3.))/H0/2.); }
 
-        windowed_value /= sqrt(2.*km);*/
-
-        // Mode fn init, mod and arg comps
-        mod = sqrt(-1. * log(rand_mod) * (1.0/kpr + 1.0/pow(kpr, 3.))/H0/2.);
-        //mod = sqrt((1.0/kpr + 1.0/pow(kpr, 3.))/H0/2.);
         arg = atan2((cos(kpr) + kpr*sin(kpr)), (kpr*cos(kpr) - sin(kpr)));
-
-        //cout << km << ": " << mod*cos(arg) << ", " << mod*sin(arg) << "\n";
-        //MayDay::Error("Position");
-
-        /*sign_test = kpr * cos(kpr) - sin(kpr);
-        if(sign_test < 0) { windowed_value *= -1.; }
-        else if(sign_test == 0) { windowed_value = 0.; }*/
-
-        // PS init
-        //windowed_value = (1.0/km/2.0 + (H0*H0/km/km/km)/2.0);
     }
 
     else if (m_spec_type == "velocity")
     {
-        //Mode fn init, Re and Im comps
-        /*if(comp == 0) { windowed_value = sin(km/H0); }
-        else if(comp == 1) { windowed_value = -cos(km/H0); }
+        // Mode fn init, mod and arg basis
+        if(use_rand) { mod = sqrt(-1. * log(rand_mod) * km/2.); }
+        else { mod = sqrt(km/2.); }
 
-        windowed_value *= sqrt(km/2.);*/
-
-        // Mode fn init, mod and arg comps
-        mod = sqrt(-1. * log(rand_mod) * km/2.);
-        //mod = sqrt(km/2.);
         arg = -atan2(cos(km/H0), sin(km/H0));
-
-	    //cout << km << ": " << mod*cos(arg) << ", " << mod*sin(arg) << "\n";
-
-        /*sign_test = sin(km/H0);
-        if(sign_test < 0) { windowed_value *= -1.; }
-        else if(sign_test == 0) { windowed_value = 0.; }*/
-
-        // PS init
-        //windowed_value = (km/2.0);// - (H0*H0)/km/2.0 + H0*H0*H0*H0/km/km/km/2.0); 
     }
     
+    // reconstruct the component according to modulus/argument basis
     if(comp == 0) { windowed_value = mod*cos(arg); }
     else if (comp == 1) { windowed_value = mod*sin(arg); }
 
@@ -532,7 +489,8 @@ inline double RandomField::find_rayleigh_factor(double km, std::string spec_type
     return windowed_value;
 }
 
-inline void RandomField::calc_transferse_vectors(int x, int y, int z, int N, double MHat[3], double NHat[3], double a)
+// Calculate transverse vectors used to construct plus and cross polarisation tensors
+inline void RandomField::calc_transverse_vectors(int x, int y, int z, int N, double MHat[3], double NHat[3], double a)
 {
     double mh[3];
     double nh[3];
@@ -585,6 +543,7 @@ inline void RandomField::calc_transferse_vectors(int x, int y, int z, int N, dou
     if (X != 0 && Y != 0 && Z != 0) { Test_norm(MHat); Test_norm(NHat); Test_orth(MHat, NHat); }
 }
 
+// Test basis vector normalisation
 inline void RandomField::Test_norm(double vec[]) 
 {
     double norm = 0;
@@ -597,6 +556,7 @@ inline void RandomField::Test_norm(double vec[])
     }
 }
 
+// Test basis vector orthogonality
 inline void RandomField::Test_orth(double vec1[], double vec2[]) 
 {
     double orth = 0.;

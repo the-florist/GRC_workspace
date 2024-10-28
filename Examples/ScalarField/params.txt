@@ -7,7 +7,7 @@
 verbosity = 0
 
 # location / naming of output files
-output_path = "/home/eaf49/rds/hpc-work/all-modes-rand-tests/both-rands-longer" # Main path for all files. Must exist!
+output_path = "/home/eaf49/rds/hpc-work/paper1-data-sets/sanity-check" # Main path for all files. Must exist!
 chk_prefix = ScalarField_
 plot_prefix = ScalarFieldp_
 # restart_file = ScalarField_001000.3d.hdf5
@@ -125,7 +125,7 @@ extrapolating_vars = phi Pi
 
 # dt will be dx*dt_multiplier on each grid level
 dt_multiplier = 0.25
-stop_time = 10000 # 3000
+stop_time = 3000 # 10000
 max_steps = 3000
 
 # Spatial derivative order (only affects CCZ4 RHS)

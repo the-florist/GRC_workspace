@@ -50,18 +50,20 @@ class RandomField
         const InitialScalarData::params_t m_bkgd_params;
         const std::string m_spec_type;
 
+        bool use_rand;
         bool debug;
         double kstar;
         double epsilon;
         double H0;
         double norm;
+        int lut[3][3];
         
         int flip_index(int I, int N);
         int invert_index(int I, int N);
         int invert_index_with_sign(int I, int N);
-        double find_rayleigh_factor(double km, std::string spec_type, int comp, double rand_mod, double rand_arg);
+        double find_rayleigh_factor(double km, std::string spec_type, int comp, double rand_mod);
         void apply_symmetry_rules(int i, int j, int k, double field[][2], int N);
-        void calc_transferse_vectors(int x, int y, int z, int N, double MHat[3], double NHat[3], double a = 0.);
+        void calc_transverse_vectors(int x, int y, int z, int N, double MHat[3], double NHat[3], double a = 0.);
         void Test_norm(double vec[]);
         void Test_orth(double vec1[], double vec2[]);
 };
