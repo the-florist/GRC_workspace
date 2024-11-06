@@ -33,6 +33,7 @@ class RandomField
             double L;     //!< Box length in physical units
             double A;     //!< Amplitude applied to tensor field
             std::string print_path;
+            int which_seed;
         };
 
         RandomField(params_t a_params, InitialScalarData::params_t a_bkgd_params, std::string a_spec_type);

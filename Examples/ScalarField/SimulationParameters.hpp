@@ -51,6 +51,7 @@ class SimulationParameters : public SimulationParametersBase
         pp.load("L_full", random_field_params.L, 4.);
         pp.load("tensor_amplitude", random_field_params.A, 1.);
         pp.load("output_path", random_field_params.print_path);
+        pp.load("random_seed", random_field_params.which_seed, 0);
     }
 
     void check_params()
@@ -66,6 +67,9 @@ class SimulationParameters : public SimulationParametersBase
         warn_parameter("N_fine", random_field_params.Nf,
                         random_field_params.Nf > random_field_params.N,
                         "finest IC generation level appears to be less than the base resolution");
+        warn_parameter("random_seed", random_field_params.which_seed,
+                        random_field_params.which_seed > 9,
+                        "Requested random seed is not an option");
     }
 
     // Initial data for matter and potential and BH

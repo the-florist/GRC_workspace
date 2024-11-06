@@ -7,18 +7,18 @@
 verbosity = 0
 
 # location / naming of output files
-output_path = "/home/eaf49/rds/hpc-work/paper1-data-sets/sanity-check" # Main path for all files. Must exist!
+output_path = "/home/eaf49/rds/hpc-work/dump/" # Main path for all files. Must exist!
 chk_prefix = ScalarField_
 plot_prefix = ScalarFieldp_
 # restart_file = ScalarField_001000.3d.hdf5
 
 # HDF5files are written every dt = L/N*dt_multiplier*checkpoint_interval
-checkpoint_interval = 20
+checkpoint_interval = 1000
 # set to 0 to turn off plot files (except at t=0 and t=stop_time)
 # set to -1 to never ever print plotfiles
-plot_interval = 5
-num_plot_vars = 12
-plot_vars = h11 h12 h13 h22 h23 h33 A11 A12 A13 A22 A23 A33
+plot_interval = 0
+num_plot_vars = 6
+plot_vars = h11 h12 h13 h22 h23 h33
 
 # subpaths - specific directories for hdf5, pout, extraction data
 # (these are created at runtime)
@@ -44,8 +44,11 @@ E = 1.0 # Energy scale (in units of Mp!)
 scalar_amplitude = 4.0
 scalar_velocity = -0.00001627328880468423
 scalar_mass = 1.e-4
-# N_fine = 64
+# N_fine = 128
 tensor_amplitude = 1.
+
+# Choose a number between 0 and 9
+random_seed = 0
 
 #################################################
 # Grid parameters
@@ -125,7 +128,7 @@ extrapolating_vars = phi Pi
 
 # dt will be dx*dt_multiplier on each grid level
 dt_multiplier = 0.25
-stop_time = 3000 # 10000
+stop_time = 9000 # 10000
 max_steps = 3000
 
 # Spatial derivative order (only affects CCZ4 RHS)

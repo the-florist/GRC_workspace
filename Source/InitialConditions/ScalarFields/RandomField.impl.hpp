@@ -17,7 +17,7 @@
     const double Mp = 1./m_bkgd_params.E;
 
     // Setting physical and window fn parameters
-    kstar = M_PI*((double) m_params.Nf)/m_params.L;
+    kstar = M_PI*((double) m_params.Nf)/m_params.L * 1./2.;
     epsilon = m_params.L/30.;
     H0 = sqrt((8.0 * M_PI/3.0/pow(Mp, 2.))
             * (0.5*m_bkgd_params.velocity*m_bkgd_params.velocity 
@@ -172,7 +172,6 @@ inline void RandomField::calc_spectrum()
 {
     // Pull out largest resolution and choose a random seed
     int N = m_params.Nf;
-    int which_seed = 3;
 
     // Set up random number generators
     // Use one random draw per point, per field, per Fourier component
@@ -188,7 +187,7 @@ inline void RandomField::calc_spectrum()
     seeds[8] = 6855322;
     seeds[9] = 2933414;
 
-    int seed = seeds[which_seed];
+    int seed = seeds[m_params.which_seed];
     default_random_engine engine(seed);
     uniform_real_distribution<double> theta_dist(0, 2*M_PI);
     uniform_real_distribution<double> sigma_dist(0, 1);
@@ -462,8 +461,8 @@ inline double RandomField::find_rayleigh_factor(double km, std::string spec_type
     if (spec_type == "position")
     {
         // Mode fn init, mod and arg basis
-        if(use_rand) { mod = sqrt(-1. * log(rand_mod) * (1.0/kpr + 1.0/pow(kpr, 3.))/H0/2.); }
-        else { mod = sqrt((1.0/kpr + 1.0/pow(kpr, 3.))/H0/2.); }
+        if(use_rand) { mod = sqrt(-2. * log(rand_mod) * (1.0/km/2. + H0*H0/pow(km, 3.)/2.)); }
+        else { mod = sqrt((1.0/km/2. + H0*H0/pow(km, 3.)/2.)); }
 
         arg = atan2((cos(kpr) + kpr*sin(kpr)), (kpr*cos(kpr) - sin(kpr)));
     }
@@ -471,10 +470,10 @@ inline double RandomField::find_rayleigh_factor(double km, std::string spec_type
     else if (m_spec_type == "velocity")
     {
         // Mode fn init, mod and arg basis
-        if(use_rand) { mod = sqrt(-1. * log(rand_mod) * km/2.); }
+        if(use_rand) { mod = sqrt(-2. * log(rand_mod) * km/2.); }
         else { mod = sqrt(km/2.); }
 
-        arg = -atan2(cos(km/H0), sin(km/H0));
+        arg = -atan2(cos(kpr), sin(kpr));
     }
     
     // reconstruct the component according to modulus/argument basis
@@ -482,10 +481,10 @@ inline double RandomField::find_rayleigh_factor(double km, std::string spec_type
     else if (comp == 1) { windowed_value = mod*sin(arg); }
 
     // Apply the normalisation required to translate the scalar PS into tensor PS
-    //windowed_value *= 2. * 4. * pow(m_bkgd_params.E, 2.); // 8/Mp where Mp is in units of the energy scale
+    windowed_value *= 2. * 4. * pow(m_bkgd_params.E, 2.); // 8/Mp where Mp is in units of the energy scale
 
     // Apply the tanh window function and the uniform draw
-    //windowed_value *= 0.5 * (1.0 - tanh(epsilon * (km - kstar)));
+    windowed_value *= 0.5 * (1.0 - tanh(epsilon * (km - kstar)));
     return windowed_value;
 }
 
