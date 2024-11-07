@@ -481,7 +481,7 @@ inline double RandomField::find_rayleigh_factor(double km, std::string spec_type
     else if (comp == 1) { windowed_value = mod*sin(arg); }
 
     // Apply the normalisation required to translate the scalar PS into tensor PS
-    windowed_value *= 2. * 4. * pow(m_bkgd_params.E, 2.); // 8/Mp where Mp is in units of the energy scale
+    //windowed_value *= 2. * 4. * pow(m_bkgd_params.E, 2.); // 8/Mp where Mp is in units of the energy scale
 
     // Apply the tanh window function and the uniform draw
     windowed_value *= 0.5 * (1.0 - tanh(epsilon * (km - kstar)));
