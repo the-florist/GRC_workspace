@@ -17,7 +17,7 @@
     const double Mp = 1./m_bkgd_params.E;
 
     // Setting physical and window fn parameters
-    kstar = M_PI*((double) m_params.Nf)/m_params.L * 1./2.;
+    kstar = M_PI*((double) 64.)/m_params.L * 3./4.;
     epsilon = m_params.L/30.;
     H0 = sqrt((8.0 * M_PI/3.0/pow(Mp, 2.))
             * (0.5*m_bkgd_params.velocity*m_bkgd_params.velocity 
