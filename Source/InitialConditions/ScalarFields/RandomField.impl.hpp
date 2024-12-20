@@ -39,7 +39,7 @@
     lut[2][2] = 5;
 
     // Generate GRF?
-    use_rand = true;
+    use_rand = false;
 
     // Find the real-space realisation of this field
     calc_spectrum();
@@ -288,13 +288,22 @@ inline void RandomField::calc_spectrum()
         }
 
         // Just use the mode fn in modulus/argument basis
-        else 
+        if(!use_rand && (i==4 && j==0 && k==0))
         {
+            plus_arg = theta_dist(engine);
+            cross_arg = theta_dist(engine);
+
             for(int s=0; s<2; s++)
             {
                 hplus[k + (N/2+1)*(j + N*i)][s] = find_rayleigh_factor(kmag, m_spec_type, s, plus_mod);
                 hcross[k + (N/2+1)*(j + N*i)][s] = find_rayleigh_factor(kmag, m_spec_type, s, cross_mod);
             }
+
+            hplus[k + (N/2+1)*(j + N*i)][0] *= cos(plus_arg);
+            hplus[k + (N/2+1)*(j + N*i)][1] *= sin(plus_arg);
+
+            hcross[k + (N/2+1)*(j + N*i)][0] *= cos(cross_arg);
+            hcross[k + (N/2+1)*(j + N*i)][1] *= sin(cross_arg);
         }
 
         // Construct the Fourier-space tensor
@@ -478,8 +487,8 @@ inline double RandomField::find_rayleigh_factor(double km, std::string spec_type
     }
     
     // reconstruct the component according to modulus/argument basis
-    if(comp == 0) { windowed_value = mod*cos(arg); }
-    else if (comp == 1) { windowed_value = mod*sin(arg); }
+    if(comp == 0) { windowed_value = mod; }//*cos(arg); }
+    else if (comp == 1) { windowed_value = mod; }//*sin(arg); }
 
     // Apply the normalisation required to translate the scalar PS into tensor PS
     //windowed_value *= 2. * 4. * pow(m_bkgd_params.E, 2.); // 8/Mp where Mp is in units of the energy scale
