@@ -39,7 +39,7 @@
     lut[2][2] = 5;
 
     // Generate GRF?
-    use_rand = false;
+    use_rand = true;
 
     // Find the real-space realisation of this field
     calc_spectrum();
@@ -267,7 +267,7 @@ inline void RandomField::calc_spectrum()
         // If generating GRF, calculate Rayleigh draw on PS
         // then construct each mode fn by FOILing
         // onto the random argument in re+im basis.
-        if(use_rand)
+        if(use_rand && (i==4 && j==0 && k==0))
         {
             plus_mod = sigma_dist(engine);
             cross_mod = sigma_dist(engine);
@@ -290,21 +290,41 @@ inline void RandomField::calc_spectrum()
         // Just use the mode fn in modulus/argument basis
         if(!use_rand && (i==4 && j==0 && k==0))
         {
+            //double arg = 0.;
+            //double kpr = kmag/H0;
+            //if(m_spec_type == "position") { arg = atan2((cos(kpr) + kpr*sin(kpr)), (kpr*cos(kpr) - sin(kpr))); }
+            //else if(m_spec_type == "velocity") { arg = -atan2(cos(kpr), sin(kpr)); }
+           
+	    plus_mod = sigma_dist(engine);
+            cross_mod = sigma_dist(engine);	
             plus_arg = theta_dist(engine);
             cross_arg = theta_dist(engine);
 
             for(int s=0; s<2; s++)
             {
-                hplus[k + (N/2+1)*(j + N*i)][s] = find_rayleigh_factor(kmag, m_spec_type, s, plus_mod);
-                hcross[k + (N/2+1)*(j + N*i)][s] = find_rayleigh_factor(kmag, m_spec_type, s, cross_mod);
+                hplus[k + (N/2+1)*(j + N*i)][s] = find_rayleigh_factor(kmag, "position", s, plus_mod);
+                hcross[k + (N/2+1)*(j + N*i)][s] = find_rayleigh_factor(kmag, "position", s, cross_mod);
             }
 
-            hplus[k + (N/2+1)*(j + N*i)][0] *= cos(plus_arg);
-            hplus[k + (N/2+1)*(j + N*i)][1] *= sin(plus_arg);
+            if(m_spec_type == "position")
+            {
+                hplus[k + (N/2+1)*(j + N*i)][0] *= cos(plus_arg);
+                hplus[k + (N/2+1)*(j + N*i)][1] *= sin(plus_arg);
 
-            hcross[k + (N/2+1)*(j + N*i)][0] *= cos(cross_arg);
-            hcross[k + (N/2+1)*(j + N*i)][1] *= sin(cross_arg);
-        }
+                hcross[k + (N/2+1)*(j + N*i)][0] *= cos(cross_arg);
+                hcross[k + (N/2+1)*(j + N*i)][1] *= sin(cross_arg);
+            }
+
+	        else if(m_spec_type == "velocity")
+            {
+                hplus[k + (N/2+1)*(j + N*i)][0] *= -sin(plus_arg)*kmag;
+                hplus[k + (N/2+1)*(j + N*i)][1] *= cos(plus_arg)*kmag;
+
+                hcross[k + (N/2+1)*(j + N*i)][0] *= -sin(cross_arg)*kmag;
+                hcross[k + (N/2+1)*(j + N*i)][1] *= cos(cross_arg)*kmag;
+            }
+
+	}
 
         // Construct the Fourier-space tensor
         calc_transverse_vectors(i, j, k, N, mhat, nhat);
@@ -471,24 +491,34 @@ inline double RandomField::find_rayleigh_factor(double km, std::string spec_type
     if (spec_type == "position")
     {
         // Mode fn init, mod and arg basis
-        if(use_rand) { mod = sqrt(-1. * log(rand_mod) * (1.0/kpr + 1.0/pow(kpr, 3.))/H0/2.); }
-        else { mod = sqrt((1.0/kpr + 1.0/pow(kpr, 3.))/H0/2.); }
+        //if(use_rand) { mod = sqrt(-1. * log(rand_mod) * (1.0/kpr + 1.0/pow(kpr, 3.))/H0/2.); }
+        //else { mod = sqrt((1.0/kpr + 1.0/pow(kpr, 3.))/H0/2.); }
 
+	mod = sqrt((1.0/kpr + 1.0/pow(kpr, 3.))/H0/2.); //sqrt(-1. * log(rand_mod) * (1.0/kpr + 1.0/pow(kpr, 3.))/H0/2.);
         arg = atan2((cos(kpr) + kpr*sin(kpr)), (kpr*cos(kpr) - sin(kpr)));
     }
 
     else if (m_spec_type == "velocity")
     {
         // Mode fn init, mod and arg basis
-        if(use_rand) { mod = sqrt(-1. * log(rand_mod) * km/2.); }
-        else { mod = sqrt(km/2.); }
+        //if(use_rand) { mod = sqrt(-1. * log(rand_mod) * km/2.); }
+        //else { mod = sqrt(km/2.); }
 
+	mod = sqrt(km/2.);//sqrt(-1. * log(rand_mod) * km/2.);
         arg = -atan2(cos(km/H0), sin(km/H0));
     }
     
     // reconstruct the component according to modulus/argument basis
-    if(comp == 0) { windowed_value = mod; }//*cos(arg); }
-    else if (comp == 1) { windowed_value = mod; }//*sin(arg); }
+    if(comp == 0) 
+    { 
+	    windowed_value = mod; 
+	    if (use_rand) { windowed_value *= cos(arg); }
+    }
+    else if (comp == 1) 
+    { 
+	    windowed_value = mod; 
+	    if (use_rand) { windowed_value *= sin(arg); }
+    }
 
     // Apply the normalisation required to translate the scalar PS into tensor PS
     //windowed_value *= 2. * 4. * pow(m_bkgd_params.E, 2.); // 8/Mp where Mp is in units of the energy scale
